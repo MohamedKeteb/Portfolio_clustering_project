@@ -26,6 +26,7 @@ def get_returns(start_date, end_date, ticker_list):
     data = df['Adj Close'].pct_change()
     return data
 
+
 def plot_stock_return(data): 
 
     
@@ -52,8 +53,20 @@ def plot_stock_return(data):
     fig.show()
 
 
+
 def multiple_clusterings(n_repeat, data, model):
-   '''
+     Y = pd.DataFrame(index=data.index)
+     for i in range(n_repeat):
+        model.fit(data)
+        predicted_labels = model.predict(data)
+        data_with_clusters = pd.DataFrame(predicted_labels, index=data.index)
+        y_i = "Clustering n°%i" % (i+1)
+        Y[y_i] = data_with_clusters
+     return Y 
+   
+
+    
+'''
    ----------------------------------------------------------------
     ## Type of data ##
 
@@ -76,15 +89,3 @@ def multiple_clusterings(n_repeat, data, model):
     the label of a given stock for each clustering method
 
     '''
-   
-    Y = pd.DataFrame(index=data.index)
-    
-    for i in range(n_repeat):
-        model.fit(data)
-        predicted_labels = model.predict(data)
-        data_with_clusters = pd.DataFrame(predicted_labels, index=data.index)
-        y_i = "Clustering n°%i" % (i+1)
-        Y[y_i] = data_with_clusters
-
-    return Y
-    
