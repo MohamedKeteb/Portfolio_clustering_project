@@ -1,0 +1,35 @@
+# installing PyPortfolioOpt
+!pip install pyportfolioopt
+
+# Importing libraries for portfolio optimization
+from pypfopt.efficient_frontier import EfficientFrontier
+from pypfopt import risk_models
+from pypfopt import expected_returns
+
+# Getting dataframes info for Stocks using yfinance
+aapl_df = yf.download('AAPL', start = '2010-07-01', end = '2023-02-11')
+tsla_df = yf.download('TSLA', start = '2010-07-01', end = '2023-02-11')
+dis_df = yf.download('DIS', start = '2010-07-01', end = '2023-02-11')
+amd_df = yf.download('AMD', start = '2010-07-01', end = '2023-02-11')
+
+# Extracting Adjusted Close for each stock
+aapl_df = aapl_df['Adj Close']
+tsla_df = tsla_df['Adj Close']
+dis_df = dis_df['Adj Close']
+amd_df = amd_df['Adj Close']
+
+# Merging and creating an Adj Close dataframe for stocks
+df = pd.concat([aapl_df, tsla_df, dis_df, amd_df], join = 'outer', axis = 1)
+df.columns = ['aapl', 'tsla', 'dis', 'amd']
+df # Visualizing dataframe for input
+
+# Calculating the annualized expected returns and the annualized sample covariance matrix
+mu = expected_returns.mean_historical_return(df) #expected returns
+S = risk_models.sample_cov(df) #Covariance matrix
+
+# Optimizing for maximal Sharpe ratio
+ef = EfficientFrontier(mu, S) # Providing expected returns and covariance matrix as input
+weights = ef.max_sharpe() # Optimizing weights for Sharpe ratio maximization 
+
+clean_weights = ef.clean_weights() # clean_weights rounds the weights and clips near-zeros
+
