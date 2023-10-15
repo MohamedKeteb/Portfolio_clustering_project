@@ -1,6 +1,10 @@
 import pandas as pd 
+import numpy as np 
 import yfinance as yf
 import plotly.express as px 
+from sklearn.pipeline import Pipeline 
+from sklearn.cluster import KMeans 
+from sklearn.preprocessing import StandardScaler 
 
 def get_returns(start_date, end_date, ticker_list): 
     
@@ -23,8 +27,8 @@ def get_returns(start_date, end_date, ticker_list):
     '''
 
     df = pd.DataFrame(yf.download(ticker_list, start_date, end_date))
-    data = df['Adj Close'].pct_change()
-    return data
+    data = np.log(df['Close']/df['Open']).dropna()
+    return df
 
 
 def plot_stock_return(data): 
@@ -55,19 +59,7 @@ def plot_stock_return(data):
 
 
 def multiple_clusterings(n_repeat, data, model):
-     Y = pd.DataFrame(index=data.index)
-     for i in range(n_repeat):
-        model.fit(data)
-        predicted_labels = model.predict(data)
-        data_with_clusters = pd.DataFrame(predicted_labels, index=data.index)
-        y_i = "Clustering n°%i" % (i+1)
-        Y[y_i] = data_with_clusters
-     return Y 
-   
-
-    
-'''
-   ----------------------------------------------------------------
+   '''
     ## Type of data ##
 
     n_repeat : integer --> number of time we apply the clustering method
@@ -89,3 +81,41 @@ def multiple_clusterings(n_repeat, data, model):
     the label of a given stock for each clustering method
 
     '''
+   Y = pd.DataFrame(index=data.index)
+   pipeline = Pipeline([
+      ('scaler', StandardScaler()),   # Étape de standardisation
+      ('kmeans', KMeans(n_clusters=5)) # Étape K-Means avec 3 clusters
+      ])
+   for i in range(n_repeat):
+    pipeline.fit(data)
+    predicted_labels = pipeline.named_steps['kmeans'].labels_
+    data_with_clusters = pd.DataFrame(predicted_labels, index=data.index)
+    y_i = "Clustering n°%i" % (i+1)
+    Y[y_i] = data_with_clusters
+    
+   return Y
+
+
+def cluster_composition(multiple_clustering):
+
+    n_clustering = len(multiple_clustering.transpose()) - 1 ## minus 1 because we don't want to take into account the 
+                                                            ## first column that corresponds to the tickers name
+
+    names = ['Cluster 1', 'Cluster 2', 'Cluster 3', 'Cluster 4', 'Cluster 5']
+
+    Y = pd.DataFrame(index=names, columns=multiple_clustering.columns)
+
+    for i in range(n_clustering): ## we range across the different clustering so as to recover the clustering composition at each step
+        clustering = multiple_clustering.iloc[:, i]
+        distinct_values = clustering.unique()
+
+        for k, value in enumerate(distinct_values): 
+            l = []
+            for j in range(len(stock_symbols)): 
+                if multiple_clustering.iloc[j, i] == value:
+                    l.append(stock_symbols[j])
+
+            Y.iloc[k, i] = l
+    
+    return Y
+
