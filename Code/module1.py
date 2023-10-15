@@ -111,9 +111,9 @@ def cluster_composition(multiple_clustering):
 
         for k, value in enumerate(distinct_values): 
             l = []
-            for j in range(len(stock_symbols)): 
+            for j in range(len(multiple_clustering.index)): 
                 if multiple_clustering.iloc[j, i] == value:
-                    l.append(stock_symbols[j])
+                    l.append(multiple_clustering.index[j])
 
             Y.iloc[k, i] = l
     
