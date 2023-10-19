@@ -119,3 +119,84 @@ def cluster_composition(multiple_clustering):
     
     return Y
 
+
+def cluster_return(cluster, weights):
+    '''
+    ----------------------------------------------------------------
+    GENERAL IDEA : each cluster is seen as a new asset and the goal 
+                   of this routine is to compute the return of this 
+                   asset (cluster) given its compositions and weights 
+                   put on the different sub-assets that compose this 
+                   cluster
+    ----------------------------------------------------------------
+
+    ----------------------------------------------------------------
+    PARAMS : 
+    
+    - cluster : pandas dataframe composed of tickers (strings) corresponding to the stocks 
+                that compose this cluster 
+                [shape : (1, n_stocks_in_cluster)]
+                
+    
+    - weights : pandas dataframe composed of floats that correspond to the weights of each 
+                tickers in the cluster
+                !! Note that the i-th component of the weights list 
+                corresponds to the weight of the i-th ticker in the 
+                list cluster !! 
+                [shape : (1, n_stocks_in_cluster)]
+
+                
+    - return_data : pandas dataframe containing the return of the 
+                    stocks 
+                    [shape : (n_stocks_in_cluster, n_days_observed)]
+    ----------------------------------------------------------------
+    '''
+    tickers_data = data.loc[cluster]
+    result_data = pd.DataFrame(weights.values.dot(tickers_data.values), columns=tickers_data.columns)
+
+    return result_data
+    
+
+def cluster_portfolio_return(cluster_composition, weights_matrix, return_data):
+    '''
+    ----------------------------------------------------------------
+    GENERAL IDEA : compute the return of a portfolio composed of 
+                   assets (which are clusters) by using the 
+                   cluster_return function.
+    ----------------------------------------------------------------
+
+    ----------------------------------------------------------------
+    PARAMS : 
+
+    - cluster_composition : pandas dataframe. Corresponds to ONE ROW
+                            of the dataframe returned by the 
+                            cluster_composition function
+                            [shape : (n_clusters, 1)]
+                
+    
+    - weights_matrix : pandas dataframe, the weights are distributed in 
+                       the same order as the stock_symbols list
+                       [shape (1, n_stocks_in_cluster)]
+
+                
+    - return_data : pandas dataframe containing the return of the 
+                    stocks 
+                    [shape (n_stocks_in_cluster, n_days_observed)]
+    ----------------------------------------------------------------
+    '''
+    
+    n_clusters, n_repeat = cluster_composition.shape 
+    
+    micro_portfolio_return = pd.DataFrame(index=cluster_composition.index, columns=return_data.columns).transpose()
+    
+    for i in range(n_clusters):
+        cluster = cluster_composition[cluster_composition.index[i]] ## get all the tickers in one cluster
+        
+        coordonnee_tickers = [stock_symbols.index(element) for element in cluster]
+
+        weight_cluster = pd.DataFrame(weights_matrix[coordonnee_tickers])
+
+        micro_portfolio_return[cluster_composition.index[i]] = cluster_return(cluster, weight_cluster).transpose()
+        
+    return micro_portfolio_return.transpose()
+            
