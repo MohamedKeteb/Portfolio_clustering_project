@@ -82,10 +82,12 @@ def multiple_clusterings(n_repeat, data, model):
 
     '''
    Y = pd.DataFrame(index=data.index)
+
    pipeline = Pipeline([
       ('scaler', StandardScaler()),   # Étape de standardisation
-      ('kmeans', KMeans(n_clusters=5)) # Étape K-Means avec 3 clusters
+      ('kmeans', KMeans(n_clusters=5)) # Étape K-Means avec 3 clusters ## MODIFIER POUR QUE CA PASSE POUR TOUS LES MODELES
       ])
+   
    for i in range(n_repeat):
     pipeline.fit(data)
     predicted_labels = pipeline.named_steps['kmeans'].labels_
