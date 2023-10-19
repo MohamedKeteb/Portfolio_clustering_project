@@ -120,7 +120,7 @@ def cluster_composition(multiple_clustering):
     return Y
 
 
-def cluster_return(cluster, weights):
+def cluster_return(cluster, weights, return_data):
     '''
     ----------------------------------------------------------------
     GENERAL IDEA : each cluster is seen as a new asset and the goal 
@@ -151,7 +151,7 @@ def cluster_return(cluster, weights):
                     [shape : (n_stocks_in_cluster, n_days_observed)]
     ----------------------------------------------------------------
     '''
-    tickers_data = data.loc[cluster]
+    tickers_data = return_data.loc[cluster]
     result_data = pd.DataFrame(weights.values.dot(tickers_data.values), columns=tickers_data.columns)
 
     return result_data
@@ -185,7 +185,8 @@ def cluster_portfolio_return(cluster_composition, weights_matrix, return_data):
     ----------------------------------------------------------------
     '''
     
-    n_clusters, n_repeat = cluster_composition.shape 
+    n_clusters = cluster_composition.shape 
+    stock_symbols = list(return_data.index)
     
     micro_portfolio_return = pd.DataFrame(index=cluster_composition.index, columns=return_data.columns).transpose()
     
@@ -196,7 +197,8 @@ def cluster_portfolio_return(cluster_composition, weights_matrix, return_data):
 
         weight_cluster = pd.DataFrame(weights_matrix[coordonnee_tickers])
 
-        micro_portfolio_return[cluster_composition.index[i]] = cluster_return(cluster, weight_cluster).transpose()
+        micro_portfolio_return[cluster_composition.index[i]] = cluster_return(cluster, weight_cluster, return_data).transpose()
         
     return micro_portfolio_return.transpose()
-            
+
+
