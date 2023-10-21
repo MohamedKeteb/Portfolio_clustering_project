@@ -242,6 +242,57 @@ def cluster_weights(cluster, centroid, data):
         weight = 1/distance
         weights.append(weight)
               
-    weights_matrix = pd.DataFrame(np.array(weights)/len(weights)).transpose() 
+    weights_matrix = pd.DataFrame(np.array(weights)/sum(weights)).transpose() 
 
     return weights_matrix
+
+
+
+def gaussian_weights(cluster, centroid, data):
+    scaler = StandardScaler()
+
+    normalized_data = scaler.fit_transform(data.loc[cluster])
+    weights = []
+    for stock in cluster:
+        d = np.linalg.norm(np.array(centroid)- np.array(data.loc[stock]))
+        weight = np.exp(- d**2/2)
+        weights.append(weight)
+
+
+    return pd.DataFrame(np.array(weights)/sum(weights)).transpose() 
+
+
+    
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
