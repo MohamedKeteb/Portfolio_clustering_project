@@ -219,7 +219,7 @@ def cluster_portfolio_return(cluster_composition, weights_matrix, return_data):
     return micro_portfolio_return.transpose()
 
 
-def cluster_weights(cluster, centroi, data):
+def cluster_weights(cluster, centroid, data):
     
     '''
     ----------------------------------------------------------------------
