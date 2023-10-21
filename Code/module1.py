@@ -118,7 +118,7 @@ def cluster_composition(multiple_clustering):
     n_clustering = len(multiple_clustering.transpose()) - 1 ## minus 1 because we don't want to take into account the 
                                                             ## first column that corresponds to the tickers name
 
-    names = ['Cluster 1', 'Cluster 2', 'Cluster 3', 'Cluster 4', 'Cluster 5']
+    names = ['Cluster 1', 'Cluster 2', 'Cluster 3', 'Cluster 4', 'Cluster 5'] ## MODIFIER, C'EST MOCHE
 
     Y = pd.DataFrame(index=names, columns=multiple_clustering.columns)
 
@@ -219,3 +219,29 @@ def cluster_portfolio_return(cluster_composition, weights_matrix, return_data):
     return micro_portfolio_return.transpose()
 
 
+def cluster_weights(cluster, centroid):
+    
+    '''
+    ----------------------------------------------------------------------
+    GENERAL IDEA : Compute the distance from the centre of the cluster 
+                    to each stcoks, the disatnce is the eucledian distance 
+                    and the weights are the inverse of the distances 
+    
+    ----------------------------------------------------------------------
+    cluster : list of list and each list is a stocks in the cluster
+    centroid : a list wich represent the center of the given cluster 
+    ----------------------------------------------------------------------
+    output : 
+
+    DataFrame of the weights shape (1, n_stocks_in_cluster) 
+    
+    '''
+    weights = []
+    for stock in cluster :
+        distance = np.linalg.norm(np.array(centroid)- np.array(data.loc[stock]))
+        weight = 1/distance
+        weights.append(weight)
+              
+    weights_matrix = pd.DataFrame(np.array(weights)).transpose() 
+
+    return weights_matrix
