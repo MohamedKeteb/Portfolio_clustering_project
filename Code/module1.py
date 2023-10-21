@@ -242,6 +242,6 @@ def cluster_weights(cluster, centroid, data):
         weight = 1/distance
         weights.append(weight)
               
-    weights_matrix = pd.DataFrame(np.array(weights)).transpose() 
+    weights_matrix = pd.DataFrame(np.array(weights)/len(weights)).transpose() 
 
     return weights_matrix
