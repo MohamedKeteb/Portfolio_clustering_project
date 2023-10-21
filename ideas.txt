@@ -4,3 +4,9 @@
 ----------------------------------------------------------------
 
 1. Cluster on something else than returns --> maybe on volatilities 
+
+
+2. Work on the data prior to clustering methods. Try to find a way to 
+more clearly separate return values (including metadata?) so that clustering 
+is more effective.
+
