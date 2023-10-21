@@ -57,45 +57,60 @@ def plot_stock_return(data):
     fig.show()
 
 
-
-def multiple_clusterings(n_repeat, data, model):
-   '''
-    ## Type of data ##
-
-    n_repeat : integer --> number of time we apply the clustering method
-    model : sklearn model we use --> e.g. GaussianMixture()
-    data : pd.DataFrame --> data we want to fit to the model
-
-    -------------
-
-    ## Output ##
-
-    Outputs a pandas DataFrame object of shape (len(data.index), n_repeat)
-
-    -------------
-
-    ## Genera idea ##
-
-    The idea is here to train the model on the dataset data multiple time (here n_repeat time)
-    and create a DataFrame whose columns are the cluster labels of each stock and whose rows are
-    the label of a given stock for each clustering method
-
-    '''
-   Y = pd.DataFrame(index=data.index)
-
-   pipeline = Pipeline([
-      ('scaler', StandardScaler()),   # Étape de standardisation
-      ('kmeans', KMeans(n_clusters=5)) # Étape K-Means avec 3 clusters ## MODIFIER POUR QUE CA PASSE POUR TOUS LES MODELES
-      ])
-   
-   for i in range(n_repeat):
-    pipeline.fit(data)
-    predicted_labels = pipeline.named_steps['kmeans'].labels_
-    data_with_clusters = pd.DataFrame(predicted_labels, index=data.index)
-    y_i = "Clustering n°%i" % (i+1)
-    Y[y_i] = data_with_clusters
+def multiple_clusterings(n_repeat, data, model, model_name):
     
-   return Y
+    '''
+      ## Type of data ##
+    
+      n_repeat : integer --> number of time we apply the clustering method
+      model : sklearn model we use --> e.g. GaussianMixture()
+      data : pd.DataFrame --> data we want to fit to the model
+      model_name : string --> sklearn model name, we use it to create the pipleine
+
+    
+      -------------
+    
+      ## Output ##
+    
+      Y : a pandas DataFrame object of shape (len(data.index), n_repeat)
+      C : a pandas DataFrame object of shpe (n_clusters, n_repeat)
+    
+      -------------
+    
+      ## Genera idea ##
+    
+      The idea is here to train the model on the dataset data multiple time (here n_repeat time)
+      and create a DataFrame whose columns are the cluster labels of each stock and whose rows are
+      the label of a given stock for each clustering method
+    '''
+
+    
+    
+    pipeline = Pipeline([
+    ('scaler', StandardScaler()),   # Étape de standardisation
+    (model_name, model) 
+    ])
+
+    Y = pd.DataFrame(index=data.index)
+    
+
+    dict_centroids = {}
+    for i in range(n_repeat):
+        pipeline.fit(data)
+        predicted_labels = pipeline.named_steps[model_name].labels_
+        centroids = pipeline.named_steps[model_name].cluster_centers_.tolist()
+        
+        data_with_clusters = pd.DataFrame(predicted_labels, index=data.index)
+        
+        y_i = "Clustering n°%i" % (i+1)
+        Y[y_i] = data_with_clusters
+        dict_centroids[y_i] = centroids
+    C = pd.DataFrame(dict_centroids, index = ["Cluster %i" % (i+1) for i in range(5)])
+    
+    
+    
+
+    return Y, C
 
 
 def cluster_composition(multiple_clustering):
