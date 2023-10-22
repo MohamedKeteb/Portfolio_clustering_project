@@ -1,5 +1,3 @@
-# installing PyPortfolioOpt
-!pip install pyportfolioopt
 
 # Importing libraries for portfolio optimization
 from pypfopt.efficient_frontier import EfficientFrontier
