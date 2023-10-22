@@ -281,6 +281,33 @@ def markowitz(returns):
 
     return clean_weights
 
+def portfolio_pnl_sharpe(clusters_returns, weights, risk_free_rate=0.03):
+    """
+    Computes the PnL and Sharpe ratio for a given portfolio composition.
+
+    Parameters:
+    - clusters_returns : DataFrame of asset returns where each column represents a cluster and each row a time period.
+    - weights (dict): Dictionary of cluster weights (obtained with markowitz). Key is cluster name, value is the weight.
+    - risk_free_rate (float): Annualized risk-free rate. Default is 0.03 (3%).
+
+    Returns:
+    - pnl (pd.Series): Cumulative PnL of the portfolio.
+    - sharpe_ratio (float): Sharpe ratio of the portfolio.
+    """
+    
+    # Calculate the daily portfolio return
+    portfolio_returns = clusters_returns.dot(pd.Series(weights))
+
+    # Calculate cumulative PnL
+    pnl = (portfolio_returns + 1).cumprod()
+
+    # Calculate Sharpe Ratio
+    expected_portfolio_return = portfolio_returns.mean() * 252 # Annualize daily mean return
+    portfolio_std_dev = portfolio_returns.std() * np.sqrt(252)  # Annualize daily standard deviation
+    sharpe_ratio = (expected_portfolio_return - risk_free_rate) / portfolio_std_dev
+
+    return pnl, sharpe_ratio
+
         
 
 
