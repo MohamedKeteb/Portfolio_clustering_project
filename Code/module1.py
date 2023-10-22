@@ -5,6 +5,7 @@ import plotly.express as px
 from sklearn.pipeline import Pipeline 
 from sklearn.cluster import KMeans 
 from sklearn.preprocessing import StandardScaler 
+from pypfopt.efficient_frontier import EfficientFrontier
 
 def get_returns(start_date, end_date, ticker_list): 
     
@@ -261,8 +262,25 @@ def gaussian_weights(cluster, centroid, data):
 
     return pd.DataFrame(np.array(weights)/sum(weights)).transpose() 
 
+def markowitz(returns):
+    """
+    Function to obtain the optimized portfolio based on the Sharpe ratio.
 
-    
+    Parameters:
+    - returns : Expected returns for each asset.
+    - cov_matrix: Covariance matrix of asset returns.
+
+    Returns:
+    - clean_weights (dict) : Optimized weights for each asset.
+    """
+
+    # Optimize for the maximum Sharpe ratio
+    ef = EfficientFrontier(returns, returns.cov())
+    ef.max_sharpe()
+    clean_weights = ef.clean_weights()
+
+    return clean_weights
+
         
 
 
