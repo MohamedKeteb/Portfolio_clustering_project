@@ -1,0 +1,102 @@
+# %%
+import pandas as pd
+import numpy as np
+import yfinance as yf
+from sklearn.pipeline import Pipeline
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
+from bs4 import BeautifulSoup
+import requests 
+
+# %%
+## we make some manipulations to correctly import module1
+
+import os
+import sys
+
+# on a obtenu le chemin absolu vers notre répertoire en utilisant
+# le terminal (ls, pwd, cd)
+module_1_directory = '/Users/khelifanail/Documents/GitHub/Portfolio_clustering_project/code'
+
+# Ajouter le chemin du répertoire 'code' au chemin de recherche Python
+sys.path.append(module_1_directory)
+
+# Maintenant, vous pouvez importer module1
+import module1
+
+# %%
+import csv 
+
+with open('S&P500_symbols.csv', mode='r') as file:
+    # Create a CSV reader
+    csv_reader = csv.reader(file)
+    
+    # Transform the CSV data into a list
+    stock_symbols = []
+    for row in csv_reader:
+        stock_symbols.append(row[0])
+
+# Close the file
+file.close()
+
+stock_symbols.pop(0)
+
+# %%
+n_stocks = len(stock_symbols) # number of stocks = 502
+
+start = "2022-01-01" # start date
+end = "2022-12-31" # end date
+
+df = pd.DataFrame(yf.download(stock_symbols, start, end)) # data on the 502 assets
+data = np.log(df["Close"]/df["Open"]).transpose() # compute the returns of these assets
+data = data.dropna()
+
+# %% [markdown]
+# Ici on va tester le clustering avec du kmeans, k=5 clusters.
+
+# %%
+model = KMeans(n_clusters=5)
+model_name = 'kmeans'
+
+Y, C = module1.multiple_clusterings(100, data, model, model_name)
+
+
+
+# %%
+Y_symbol=module1.cluster_composition(Y)
+cluster=[0,0,0,0,0]
+centroid=[0,0,0,0,0]
+weight=[0,0,0,0,0]
+returncluster=[0,0,0,0,0]
+for i in range(5):
+    cluster[i]=Y_symbol.iloc[i,0]
+    centroid[i]= C.iloc[i,0]
+    weight[i]=module1.cluster_weights(cluster[i], centroid[i], data)
+    returncluster[i]=module1.cluster_return(cluster[i], weight[i], data)
+
+# %%
+# Convertir la liste de DataFrames returncluster en un seul DataFrame
+from pypfopt.efficient_frontier import EfficientFrontier
+def markowitz(expected_returns, cov_matrix):
+    """
+    Function to obtain the optimized portfolio based on the Sharpe ratio.
+
+    Parameters:
+    - expected_returns : Expected returns for each asset.
+    - cov_matrix : Covariance matrix of asset returns.
+
+    Returns:
+    - clean_weights (dict) : Optimized weights for each asset.
+    """
+
+    # Optimize for the maximum Sharpe ratio
+    ef = EfficientFrontier(expected_returns, cov_matrix)
+    ef.max_sharpe()
+    clean_weights = ef.clean_weights()
+
+    return clean_weights
+
+all_returns = pd.concat(returncluster)
+mean_returns = all_returns.mean(axis=1)
+cov_matrix = all_returns.transpose().cov()
+print(mean_returns)

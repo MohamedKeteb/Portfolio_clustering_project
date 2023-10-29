@@ -5,6 +5,7 @@ import plotly.express as px
 from sklearn.pipeline import Pipeline 
 from sklearn.cluster import KMeans 
 from sklearn.preprocessing import StandardScaler 
+from pypfopt.efficient_frontier import EfficientFrontier
 
 def get_returns(start_date, end_date, ticker_list): 
     
@@ -242,6 +243,101 @@ def cluster_weights(cluster, centroid, data):
         weight = 1/distance
         weights.append(weight)
               
-    weights_matrix = pd.DataFrame(np.array(weights)/len(weights)).transpose() 
+    weights_matrix = pd.DataFrame(np.array(weights)/sum(weights)).transpose() 
 
     return weights_matrix
+
+
+
+def gaussian_weights(cluster, centroid, data):
+    scaler = StandardScaler()
+
+    normalized_data = scaler.fit_transform(data.loc[cluster])
+    weights = []
+    for stock in cluster:
+        d = np.linalg.norm(np.array(centroid)- np.array(data.loc[stock]))
+        weight = np.exp(- d**2/2)
+        weights.append(weight)
+
+
+    return pd.DataFrame(np.array(weights)/sum(weights)).transpose() 
+
+def markowitz(expected_returns, cov_matrix):
+    """
+    Function to obtain the optimized portfolio based on the Sharpe ratio.
+
+    Parameters:
+    - expected_returns : Expected returns for each asset.
+    - cov_matrix : Covariance matrix of asset returns.
+
+    Returns:
+    - clean_weights (dict) : Optimized weights for each asset.
+    """
+
+    # Optimize for the maximum Sharpe ratio
+    ef = EfficientFrontier(expected_returns, cov_matrix)
+    ef.max_sharpe()
+    clean_weights = ef.clean_weights()
+
+    return clean_weights
+
+def portfolio_pnl_sharpe(clusters_returns, weights, risk_free_rate=0.03):
+    """
+    Computes the PnL and Sharpe ratio for a given portfolio composition.
+
+    Parameters:
+    - clusters_returns : DataFrame of asset returns where each column represents a cluster and each row a time period.
+    - weights (dict): Dictionary of cluster weights (obtained with markowitz). Key is cluster name, value is the weight.
+    - risk_free_rate (float): Annualized risk-free rate. Default is 0.03 (3%).
+
+    Returns:
+    - pnl (pd.Series): Cumulative PnL of the portfolio.
+    - sharpe_ratio (float): Sharpe ratio of the portfolio.
+    """
+    
+    # Calculate the daily portfolio return
+    portfolio_returns = clusters_returns.dot(pd.Series(weights))
+
+    # Calculate cumulative PnL
+    pnl = (portfolio_returns + 1).cumprod()
+
+    # Calculate Sharpe Ratio
+    expected_portfolio_return = portfolio_returns.mean() * 252 # Annualize daily mean return
+    portfolio_std_dev = portfolio_returns.std() * np.sqrt(252)  # Annualize daily standard deviation
+    sharpe_ratio = (expected_portfolio_return - risk_free_rate) / portfolio_std_dev
+
+    return pnl, sharpe_ratio
+
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
