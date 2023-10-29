@@ -116,7 +116,7 @@ def multiple_clusterings(n_repeat, data, model, model_name):
 
 def cluster_composition(multiple_clustering):
 
-    n_clustering = len(multiple_clustering.transpose()) - 1 ## minus 1 because we don't want to take into account the 
+    n_clustering = len(multiple_clustering.transpose())  ## minus 1 because we don't want to take into account the 
                                                             ## first column that corresponds to the tickers name
 
     names = ['Cluster 1', 'Cluster 2', 'Cluster 3', 'Cluster 4', 'Cluster 5'] ## MODIFIER, C'EST MOCHE
