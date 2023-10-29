@@ -262,20 +262,20 @@ def gaussian_weights(cluster, centroid, data):
 
     return pd.DataFrame(np.array(weights)/sum(weights)).transpose() 
 
-def markowitz(returns):
+def markowitz(expected_returns, cov_matrix):
     """
     Function to obtain the optimized portfolio based on the Sharpe ratio.
 
     Parameters:
-    - returns : Expected returns for each asset.
-    - cov_matrix: Covariance matrix of asset returns.
+    - expected_returns : Expected returns for each asset.
+    - cov_matrix : Covariance matrix of asset returns.
 
     Returns:
     - clean_weights (dict) : Optimized weights for each asset.
     """
 
     # Optimize for the maximum Sharpe ratio
-    ef = EfficientFrontier(returns, returns.cov())
+    ef = EfficientFrontier(expected_returns, cov_matrix)
     ef.max_sharpe()
     clean_weights = ef.clean_weights()
 
