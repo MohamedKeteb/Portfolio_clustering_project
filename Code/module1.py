@@ -220,8 +220,6 @@ def clustering_return(clustering_composition, clustering_composition_centroid, r
     ## We iterate on the number of clusterings and the 
     ## number of clusters
 
-    Y = pd.DataFrame(index = cluster_composition.index, columns=return_data.columns)
-
     for i in range(n_cluster):
 
         ## We consider the cluster and the centroid
@@ -233,14 +231,35 @@ def clustering_return(clustering_composition, clustering_composition_centroid, r
         ## Notice that we can also consider gaussian weights
         weights_L2 = cluster_weights(cluster, centroid, return_data)
                 
-        ## BEWARE : .mean() --> big shortcut by taking the mean 
-        cluster_return = return_data.loc[cluster]
+        ## We use the tickers to get back the returns corresponding to 
+        ## the stocks in the cluster 
+        cluster_data = return_data.loc[cluster]
 
-        cluster_return_weighted = weights_L2.values.dot(cluster_return.values)
+        ## We now want to multiply each columns of cluster_data 
+        ## by its corresponding weights, here are the steps
+
+        # 1 - Convert DataFrames to NumPy arrays for efficient computation
+        array_cluster_data = cluster_data.to_numpy()
+        array_weights_gaussian = weights_L2.to_numpy()
+
+        # Transpose B to make it a shape (238, 1)
+        array_weights_gaussian = array_weights_gaussian.T
 
 
+        # Perform the Euclidean scalar product for each column in A and B
+        result = np.sum(array_cluster_data * array_weights_gaussian, axis=0)
 
-    return result_
+        # The 'result' array will contain the scalar products for each column of A
+        # It will have shape (230,)
+
+        # If you want to store the result in a new DataFrame, you can do:
+
+        
+        result_df = pd.DataFrame(result, columns=[cluster_composition.index[i]])
+
+        return result_df
+
+    
     
 
 def cluster_portfolio_return(cluster_composition, weights_matrix, return_data):
