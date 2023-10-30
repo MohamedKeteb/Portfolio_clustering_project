@@ -224,12 +224,12 @@ def clustering_return(clustering_composition, clustering_composition_centroid, r
 
         ## We consider the cluster and the centroid
         ## which corresponds to it
-        cluster = list(clustering_composition.iloc[i])
+        cluster = clustering_composition.iloc[i]
 
-        centroid = list(clustering_composition_centroid.iloc[i])
+        centroid = clustering_composition_centroid.iloc[i]
 
         ## Notice that we can also consider gaussian weights
-        weights_L2 = cluster_weights(cluster, centroid, return_data)
+        weights_L2 = cluster_weights(list(cluster), list(centroid), return_data)
                 
         ## We use the tickers to get back the returns corresponding to 
         ## the stocks in the cluster 
@@ -248,11 +248,6 @@ def clustering_return(clustering_composition, clustering_composition_centroid, r
 
         # Perform the Euclidean scalar product for each column in A and B
         result = np.sum(array_cluster_data * array_weights_gaussian, axis=0)
-
-        # The 'result' array will contain the scalar products for each column of A
-        # It will have shape (230,)
-
-        # If you want to store the result in a new DataFrame, you can do:
 
         
         result_df = pd.DataFrame(result, columns=[clustering_composition.index[i]])
