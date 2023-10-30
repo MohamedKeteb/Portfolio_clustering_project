@@ -224,9 +224,9 @@ def clustering_return(clustering_composition, clustering_composition_centroid, r
 
         ## We consider the cluster and the centroid
         ## which corresponds to it
-        cluster = clustering_composition.iloc[i]
+        cluster = list(clustering_composition.iloc[i])
 
-        centroid = clustering_composition_centroid.iloc[i]
+        centroid = list(clustering_composition_centroid.iloc[i])
 
         ## Notice that we can also consider gaussian weights
         weights_L2 = cluster_weights(cluster, centroid, return_data)
