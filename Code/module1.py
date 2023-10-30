@@ -214,7 +214,7 @@ def clustering_return(clustering_composition, clustering_composition_centroid, r
 
     ## We first get back the number of clusters and the 
     ## number of time we repeated the clustering
-    n_cluster =  len(cluster_composition.index)
+    n_cluster =  len(clustering_composition.index)
 
 
     ## We iterate on the number of clusterings and the 
@@ -255,7 +255,7 @@ def clustering_return(clustering_composition, clustering_composition_centroid, r
         # If you want to store the result in a new DataFrame, you can do:
 
         
-        result_df = pd.DataFrame(result, columns=[cluster_composition.index[i]])
+        result_df = pd.DataFrame(result, columns=[clustering_composition.index[i]])
 
         return result_df
 
