@@ -30,6 +30,7 @@ def get_returns(start_date, end_date, ticker_list):
     df = pd.DataFrame(yf.download(ticker_list, start_date, end_date))
     data = np.log(df['Close']/df['Open']).dropna()
     return df
+    "Jérôme pour Naïl: Tu returns df ou data ??+ décrire la dimension du DataFrame obtenu"
 
 
 def plot_stock_return(data): 
@@ -74,7 +75,7 @@ def multiple_clusterings(n_repeat, data, model, model_name):
       ## Output ##
     
       Y : a pandas DataFrame object of shape (len(data.index), n_repeat)
-      C : a pandas DataFrame object of shpe (n_clusters, n_repeat)
+      C : a pandas DataFrame object of shape (n_clusters, n_repeat)
     
       -------------
     
@@ -112,13 +113,15 @@ def multiple_clusterings(n_repeat, data, model, model_name):
     
 
     return Y, C
-
+    "Jérôme Pour Naïl: explique les sorties Y, C à quoi chacune correspond"
 
 def cluster_composition(multiple_clustering):
 
     n_clustering = len(multiple_clustering.transpose())  ## minus 1 because we don't want to take into account the 
                                                             ## first column that corresponds to the tickers name
 
+    "Jérôme Pour Naïl: au dessus tu commentes 'minus 1 ... ' mais tu fais pas de minus 1 dans ton len"
+    "Jérôme Pour NaÏl: Faudrait faire une fonction plus générale qui est adaptée pour k clusters non ? ça prendrait le k en argument"
     names = ['Cluster 1', 'Cluster 2', 'Cluster 3', 'Cluster 4', 'Cluster 5'] ## MODIFIER, C'EST MOCHE
 
     Y = pd.DataFrame(index=names, columns=multiple_clustering.columns)
@@ -136,7 +139,8 @@ def cluster_composition(multiple_clustering):
             Y.iloc[k, i] = l
     
     return Y
-
+    "Jérôme pour Naïl: Il faudrait expliqué ici aussi le paramètre qu'on rentre dans la fonction et sa sortie: taille, ce à quoi ils correspondent"
+    
 def cluster_weights(cluster, centroid, data):
     
     '''
@@ -147,7 +151,7 @@ def cluster_weights(cluster, centroid, data):
     
     ----------------------------------------------------------------------
     Input : cluster, centroide and the Data
-    cluster : list of list and each list is a stocks in the cluster
+    cluster : list of cluster, and each cluster is a list of stock
     centroid : a list wich represent the center of the given cluster 
     ----------------------------------------------------------------------
     output : 
@@ -164,7 +168,7 @@ def cluster_weights(cluster, centroid, data):
     weights_matrix = pd.DataFrame(np.array(weights)/sum(weights)).transpose() # we standardize  the weights 
 
     return weights_matrix
-
+    
 
 
 def gaussian_weights(cluster, centroid, data):
@@ -280,7 +284,7 @@ def clustering_return(clustering_composition, clustering_composition_centroid, r
         result_df = pd.DataFrame(result, columns=[clustering_composition.index[i]])
 
         return result_df
-
+    "Jérôme pour NaÏl: faut réadapter les descpritions des parametres"
     
     
 
