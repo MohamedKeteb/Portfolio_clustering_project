@@ -7,6 +7,8 @@ The central theme of our research revolves around the application of clustering 
 
 ## **Repository Structure**
 
+Everyones of those following files are in the folder **Code**.
+
 1.**module1**: This module contains all the foundational functions used for portfolio construction leveraging clustering techniques.
 
 2.**Draft 1**: This is a comprehensive walkthrough detailing the step-by-step process of constructing a portfolio using the functions from module1. The empirical experiments in this draft make use of data fetched from Yahoo Finance, and the focus is predominantly on stocks from the S&P 500 index.
