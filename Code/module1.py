@@ -297,8 +297,6 @@ def clustering_return(cluster_composition, cluster_composition_centroid, return_
 
             Z.iloc[i, j] = result_list
 
-
-
     return Z
     "Jérôme pour NaÏl: faut réadapter les descpritions des parametres"
     
