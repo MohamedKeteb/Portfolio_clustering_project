@@ -269,7 +269,7 @@ def clustering_return(cluster_composition, cluster_composition_centroid, return_
             centroid = clustering_composition_centroid.iloc[i, 0]
 
             ## Notice that we can also consider gaussian weights
-            weights_L2 = cluster_weights(cluster, centroid, return_data)
+            weights_gaussian = gaussian_weights(cluster, centroid, return_data)
                     
             ## We use the tickers to get back the returns corresponding to 
             ## the stocks in the cluster 
@@ -280,7 +280,7 @@ def clustering_return(cluster_composition, cluster_composition_centroid, return_
 
             # 1 - Convert DataFrames to NumPy arrays for efficient computation
             array_cluster_data = cluster_data.to_numpy()
-            array_weights_L2 = weights_L2.to_numpy().T
+            array_weights_L2 = weights_gaussian.to_numpy().T
 
 
 
@@ -302,7 +302,7 @@ def clustering_return(cluster_composition, cluster_composition_centroid, return_
     
     
 
-def cluster_portfolio_return(cluster_composition, weights_matrix, return_data):
+"""def cluster_portfolio_return(cluster_composition, weights_matrix, return_data):
     '''
     ----------------------------------------------------------------
     GENERAL IDEA : compute the return of a portfolio composed of 
@@ -345,7 +345,7 @@ def cluster_portfolio_return(cluster_composition, weights_matrix, return_data):
 
         micro_portfolio_return[cluster_composition[i]] = cluster_return(cluster, weight_cluster, return_data).transpose()
         
-    return micro_portfolio_return.transpose()
+    return micro_portfolio_return.transpose()"""
 
 
 def markowitz(expected_returns, cov_matrix):
