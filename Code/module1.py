@@ -196,9 +196,10 @@ def gaussian_weights(cluster, centroid, data):
     
 
     
-    scaler = StandardScaler()
+    # scaler = StandardScaler()
 
-    normalized_data = scaler.fit_transform(data.loc[cluster]) # we scale the data 
+    # normalized_data = scaler.fit_transform(data.loc[cluster]) # we scale the data 
+    
     weights = []
     for stock in cluster:  
         d = np.linalg.norm(np.array(centroid)- np.array(data.loc[stock])) # euclidean distance between the center and the stock 
@@ -222,9 +223,10 @@ def clustering_return(clustering_composition, clustering_composition_centroid, r
     ----------------------------------------------------------------
     PARAMS : 
     
-    - cluster : pandas dataframe composed of tickers (strings) corresponding to the stocks 
-                that compose this cluster 
-                [shape : (1, n_stocks_in_cluster)]
+    - clustering_composition : pandas dataframe composed of tickers (strings) 
+                               corresponding to the stocks 
+                               that compose this cluster 
+                               [shape : (1, n_stocks_in_cluster)]
                 
     
     - weights : pandas dataframe composed of floats that correspond to the weights of each 
@@ -241,6 +243,8 @@ def clustering_return(clustering_composition, clustering_composition_centroid, r
     ----------------------------------------------------------------
     '''
 
+    
+
     ## We first get back the number of clusters and the 
     ## number of time we repeated the clustering
     n_cluster =  len(clustering_composition.index)
@@ -253,12 +257,12 @@ def clustering_return(clustering_composition, clustering_composition_centroid, r
 
         ## We consider the cluster and the centroid
         ## which corresponds to it
-        cluster = clustering_composition.iloc[i]
+        cluster = clustering_composition.iloc[i, 0]
 
-        centroid = clustering_composition_centroid.iloc[i]
+        centroid = clustering_composition_centroid.iloc[i, 0]
 
         ## Notice that we can also consider gaussian weights
-        weights_L2 = cluster_weights(list(cluster), list(centroid), return_data)
+        weights_L2 = cluster_weights(cluster, centroid, return_data)
                 
         ## We use the tickers to get back the returns corresponding to 
         ## the stocks in the cluster 
@@ -269,14 +273,12 @@ def clustering_return(clustering_composition, clustering_composition_centroid, r
 
         # 1 - Convert DataFrames to NumPy arrays for efficient computation
         array_cluster_data = cluster_data.to_numpy()
-        array_weights_gaussian = weights_L2.to_numpy()
+        array_weights_L2 = weights_L2.to_numpy().T
 
-        # Transpose B to make it a shape (238, 1)
-        array_weights_gaussian = array_weights_gaussian.T
 
 
         # Perform the Euclidean scalar product for each column in A and B
-        result = np.sum(array_cluster_data * array_weights_gaussian, axis=0)
+        result = np.sum(array_cluster_data * array_weights_L2, axis=0)
 
         
         result_df = pd.DataFrame(result, columns=[clustering_composition.index[i]])

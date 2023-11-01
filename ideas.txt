@@ -13,4 +13,7 @@ is more effective.
 
 3. module1.py line 236, big shortcut ? 
 
-4. markowitz 
+4. pour stocker les return quotidiens de chaque cluster (vu comme un actif), 
+créer un dataframe dont le coefficient du i-ème clustering et du j-ème cluster 
+est une liste de longueur le nombre de jour et qui contient les returns quotidiens
+du cluster
