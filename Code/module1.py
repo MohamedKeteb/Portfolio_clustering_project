@@ -195,8 +195,6 @@ def gaussian_weights(cluster, centroid, data):
     '''
     
 
-
-
     
     scaler = StandardScaler()
 
@@ -316,7 +314,7 @@ def cluster_portfolio_return(cluster_composition, weights_matrix, return_data):
     ----------------------------------------------------------------
     '''
     
-    n_clusters = cluster_composition.shape 
+    n_clusters = len(cluster_composition)
 
     stock_symbols = list(return_data.index)
     
