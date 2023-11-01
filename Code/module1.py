@@ -318,16 +318,16 @@ def cluster_portfolio_return(cluster_composition, weights_matrix, return_data):
 
     stock_symbols = list(return_data.index)
     
-    micro_portfolio_return = pd.DataFrame(index=cluster_composition.index, columns=return_data.columns).transpose()
+    micro_portfolio_return = pd.DataFrame(index=cluster_composition, columns=return_data.columns).transpose()
     
     for i in range(n_clusters):
-        cluster = cluster_composition[cluster_composition.index[i]] ## get all the tickers in one cluster
+        cluster_return = return_data.loc[cluster_composition[i]] ## get all the tickers in one cluster
         
         coordonnee_tickers = [stock_symbols.index(element) for element in cluster]
 
         weight_cluster = pd.DataFrame(weights_matrix[coordonnee_tickers])
 
-        micro_portfolio_return[cluster_composition.index[i]] = cluster_return(cluster, weight_cluster, return_data).transpose()
+        micro_portfolio_return[cluster_composition[i]] = cluster_return(cluster, weight_cluster, return_data).transpose()
         
     return micro_portfolio_return.transpose()
 
