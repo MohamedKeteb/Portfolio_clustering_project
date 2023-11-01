@@ -12,3 +12,5 @@ is more effective.
 
 
 3. module1.py line 236, big shortcut ? 
+
+4. markowitz 
