@@ -10,10 +10,25 @@
 more clearly separate return values (including metadata?) so that clustering 
 is more effective.
 
-
 3. module1.py line 236, big shortcut ? 
 
 4. pour stocker les return quotidiens de chaque cluster (vu comme un actif), 
 créer un dataframe dont le coefficient du i-ème clustering et du j-ème cluster 
 est une liste de longueur le nombre de jour et qui contient les returns quotidiens
 du cluster
+
+5. Plot les PnL et Sharpe Ratio pour choisir le meilleur 
+portefeuille 
+
+6. Plot les 100 portefeuilles dans un axe (Volatilité, Sharpe 
+Ratio)
+
+7. Naïl : créer un nouveau fichier brouillon de module1.py où on met les 
+codes qu'on pourrait recycler et qu'on veut pas supprimer + 
+recommenter les codes dans module.1py + rataper draft1.pypfopt
+
+8. Mohamed : lire et comprendre une partie du code signet et le documenter 
+dans un fichier .txt sur le répertoire
+
+9 Jérôme : utiliser la fonction clustering_return pour faire marcher Markowitz 
+et les PnL

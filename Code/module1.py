@@ -12,7 +12,7 @@ def get_returns(start_date, end_date, ticker_list):
     '''
     ----------------------------------------------------------------
     GENERAL IDEA : create a dataframe of returns for a given period of time 
-              in [start, end] for a list of tickers
+                   in [start, end] for a list of tickers
     ----------------------------------------------------------------
 
     ----------------------------------------------------------------
