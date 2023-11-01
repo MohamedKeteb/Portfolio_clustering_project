@@ -210,7 +210,7 @@ def gaussian_weights(cluster, centroid, data):
     return pd.DataFrame(np.array(weights)/sum(weights)).transpose() #  we standardize  the weights 
 
 
-def clustering_return(clustering_composition, clustering_composition_centroid, return_data):
+def clustering_return(cluster_composition, cluster_composition_centroid, return_data):
     '''
     ----------------------------------------------------------------
     GENERAL IDEA : each cluster is seen as a new asset and the goal 
@@ -243,47 +243,63 @@ def clustering_return(clustering_composition, clustering_composition_centroid, r
     ----------------------------------------------------------------
     '''
 
-    
+    ## ATTENTION : cluster_composition et cluster_composition_centroid have 
+    ## to be the outcome of the cluster_composition() function coded above
 
     ## We first get back the number of clusters and the 
     ## number of time we repeated the clustering
-    n_cluster =  len(clustering_composition.index)
+    n_cluster, n_repeat =  cluster_composition.shape
+
+    Z = pd.DataFrame(index=cluster_composition.index, columns=cluster_composition.columns)
+
+    for j in range(n_repeat):
+
+        ## We iterate on the number of clusterings and the 
+        ## number of clusters
+
+        clustering_composition = pd.DataFrame(cluster_composition.iloc[:, j])
+        clustering_composition_centroid = pd.DataFrame(cluster_composition_centroid.iloc[:, j])
+
+        for i in range(n_cluster):
+
+            ## We consider the cluster and the centroid
+            ## which corresponds to it
+            cluster = clustering_composition.iloc[i, 0]
+
+            centroid = clustering_composition_centroid.iloc[i, 0]
+
+            ## Notice that we can also consider gaussian weights
+            weights_L2 = cluster_weights(cluster, centroid, return_data)
+                    
+            ## We use the tickers to get back the returns corresponding to 
+            ## the stocks in the cluster 
+            cluster_data = return_data.loc[cluster]
+
+            ## We now want to multiply each columns of cluster_data 
+            ## by its corresponding weights, here are the steps
+
+            # 1 - Convert DataFrames to NumPy arrays for efficient computation
+            array_cluster_data = cluster_data.to_numpy()
+            array_weights_L2 = weights_L2.to_numpy().T
 
 
-    ## We iterate on the number of clusterings and the 
-    ## number of clusters
 
-    for i in range(n_cluster):
+            # Perform the Euclidean scalar product for each column in A and B
+            result = np.sum(array_cluster_data * array_weights_L2, axis=0)
 
-        ## We consider the cluster and the centroid
-        ## which corresponds to it
-        cluster = clustering_composition.iloc[i, 0]
+            
+            result_df = pd.DataFrame(result, columns=[clustering_composition.index[i]]).transpose()
 
-        centroid = clustering_composition_centroid.iloc[i, 0]
+            ## result_df.values.tolist() returns a list composed of one list, this
+            ## explains why we take the first element of the list
 
-        ## Notice that we can also consider gaussian weights
-        weights_L2 = cluster_weights(cluster, centroid, return_data)
-                
-        ## We use the tickers to get back the returns corresponding to 
-        ## the stocks in the cluster 
-        cluster_data = return_data.loc[cluster]
+            result_list = result_df.values.tolist()[0] 
 
-        ## We now want to multiply each columns of cluster_data 
-        ## by its corresponding weights, here are the steps
-
-        # 1 - Convert DataFrames to NumPy arrays for efficient computation
-        array_cluster_data = cluster_data.to_numpy()
-        array_weights_L2 = weights_L2.to_numpy().T
+            Z.iloc[i, j] = result_list
 
 
 
-        # Perform the Euclidean scalar product for each column in A and B
-        result = np.sum(array_cluster_data * array_weights_L2, axis=0)
-
-        
-        result_df = pd.DataFrame(result, columns=[clustering_composition.index[i]])
-
-        return result_df
+    return Z
     "Jérôme pour NaÏl: faut réadapter les descpritions des parametres"
     
     
