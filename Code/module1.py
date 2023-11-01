@@ -176,7 +176,7 @@ def gaussian_weights(cluster, centroid, data):
     '''
     ----------------------------------------------------------------------
     GENERAL IDEA : Compute the distance from the centre of the cluster 
-                    to each stcoks, the disatnce is the eucledian distance 
+                    to each stocks, the disatnce is the eucledian distance 
                     and the weights are this time the gaussian weights. 
                     The exponential allows weights to be lowered more 
                     rapidly as distance increases. 
@@ -203,7 +203,7 @@ def gaussian_weights(cluster, centroid, data):
     weights = []
     for stock in cluster:  
         d = np.linalg.norm(np.array(centroid)- np.array(data.loc[stock])) # euclidean distance between the center and the stock 
-        weight = np.exp(- d**2/2) # Gaussian weights formula with a deviation of 2 
+        weight = np.exp(- 2*(d**2)) # Gaussian weights formula with a deviation of 2 
         weights.append(weight)
 
 
