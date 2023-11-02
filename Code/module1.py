@@ -120,10 +120,8 @@ def multiple_clusterings(n_repeat, data, model, model_name):
 
 def cluster_composition(multiple_clustering):
 
-    n_clustering = len(multiple_clustering.transpose())  ## minus 1 because we don't want to take into account the 
-                                                            ## first column that corresponds to the tickers name
+    n_clustering = len(multiple_clustering.transpose())  
 
-    "Jérôme Pour Naïl: au dessus tu commentes 'minus 1 ... ' mais tu fais pas de minus 1 dans ton len"
     "Jérôme Pour NaÏl: Faudrait faire une fonction plus générale qui est adaptée pour k clusters non ? ça prendrait le k en argument"
     names =  ["Cluster %i" % (i+1) for i in range(5)] 
 
