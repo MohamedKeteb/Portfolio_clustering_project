@@ -75,7 +75,10 @@ def multiple_clusterings(n_repeat, data, model, model_name):
       ## Output ##
     
       Y : a pandas DataFrame object of shape (len(data.index), n_repeat)
-      C : a pandas DataFrame object of shape (n_clusters, n_repeat)
+        we have the composition of each cluster (nb_cluster = 5) for each clustering 
+        (nb_clustering = 10)
+      C : a pandas DataFrame object of shape (n_clusters, n_repeat), for each clustering 
+        and each cluster we have the centroid of the cluster shape (1, nb_days_observed) 
     
       -------------
     
@@ -122,7 +125,7 @@ def cluster_composition(multiple_clustering):
 
     "Jérôme Pour Naïl: au dessus tu commentes 'minus 1 ... ' mais tu fais pas de minus 1 dans ton len"
     "Jérôme Pour NaÏl: Faudrait faire une fonction plus générale qui est adaptée pour k clusters non ? ça prendrait le k en argument"
-    names = ['Cluster 1', 'Cluster 2', 'Cluster 3', 'Cluster 4', 'Cluster 5'] ## MODIFIER, C'EST MOCHE
+    names =  ["Cluster %i" % (i+1) for i in range(5)] 
 
     Y = pd.DataFrame(index=names, columns=multiple_clustering.columns)
 
@@ -190,14 +193,13 @@ def gaussian_weights(cluster, centroid, data):
     ----------------------------------------------------------------------
     output : 
 
-    DataFrame of the weights shape (1, n_stocks_in_cluster) 
+    DataFrame of the weights (1, n_stocks_in_cluster) 
     
     '''
     
 
-    
+    # Another possibility is to scle the data : 
     # scaler = StandardScaler()
-
     # normalized_data = scaler.fit_transform(data.loc[cluster]) # we scale the data 
     
     weights = []
@@ -207,7 +209,7 @@ def gaussian_weights(cluster, centroid, data):
         weights.append(weight)
 
 
-    return pd.DataFrame(np.array(weights)/sum(weights)).transpose() #  we standardize  the weights 
+    return pd.DataFrame(np.array(weights)/sum(weights)).transpose() #  we standardize the weights 
 
 
 def clustering_return(cluster_composition, cluster_composition_centroid, return_data):
@@ -229,18 +231,17 @@ def clustering_return(cluster_composition, cluster_composition_centroid, return_
                                [shape : (1, n_stocks_in_cluster)]
                 
     
-    - weights : pandas dataframe composed of floats that correspond to the weights of each 
-                tickers in the cluster
-                !! Note that the i-th component of the weights list 
-                corresponds to the weight of the i-th ticker in the 
-                list cluster !! 
-                [shape : (1, n_stocks_in_cluster)]
-
+    - cluster_composition_centroid : pandas dataframe composed of the centroids
+                                    (Vector (1, nb_days_observed = 230)) 
+                                    corresponding to the clusters (k = 5) 
                 
     - return_data : pandas dataframe containing the return of the 
                     stocks 
-                    [shape : (n_stocks_in_cluster, n_days_observed)]
+                    [shape : (n_stocks_in_cluster, nb_days_observed)]
     ----------------------------------------------------------------
+
+    OUTPUT : DataFrame (nb_cluster, nb_clustering) which contains 
+    the weighted return of each cluster
     '''
 
     ## ATTENTION : cluster_composition et cluster_composition_centroid have 
@@ -301,51 +302,6 @@ def clustering_return(cluster_composition, cluster_composition_centroid, return_
     "Jérôme pour NaÏl: faut réadapter les descpritions des parametres"
     
     
-
-"""def cluster_portfolio_return(cluster_composition, weights_matrix, return_data):
-    '''
-    ----------------------------------------------------------------
-    GENERAL IDEA : compute the return of a portfolio composed of 
-                   assets (which are clusters) by using the 
-                   cluster_return function.
-    ----------------------------------------------------------------
-
-    ----------------------------------------------------------------
-    PARAMS : 
-
-    - cluster_composition : pandas dataframe. Corresponds to ONE ROW
-                            of the dataframe returned by the 
-                            cluster_composition function
-                            [shape : (n_clusters, 1)]
-                
-    
-    - weights_matrix : pandas dataframe, the weights are distributed in 
-                       the same order as the stock_symbols list
-                       [shape (1, n_stocks_in_cluster)]
-
-                
-    - return_data : pandas dataframe containing the return of the 
-                    stocks 
-                    [shape (n_stocks_in_cluster, n_days_observed)]
-    ----------------------------------------------------------------
-    '''
-    
-    n_clusters = len(cluster_composition)
-
-    stock_symbols = list(return_data.index)
-    
-    micro_portfolio_return = pd.DataFrame(index=cluster_composition, columns=return_data.columns).transpose()
-    
-    for i in range(n_clusters):
-        cluster_return = return_data.loc[cluster_composition[i]] ## get all the tickers in one cluster
-        
-        coordonnee_tickers = [stock_symbols.index(element) for element in cluster]
-
-        weight_cluster = pd.DataFrame(weights_matrix[coordonnee_tickers])
-
-        micro_portfolio_return[cluster_composition[i]] = cluster_return(cluster, weight_cluster, return_data).transpose()
-        
-    return micro_portfolio_return.transpose()"""
 
 
 def markowitz(expected_returns, cov_matrix):
