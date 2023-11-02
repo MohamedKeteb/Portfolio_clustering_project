@@ -302,14 +302,13 @@ def clustering_return(cluster_composition, cluster_composition_centroid, return_
     "Jérôme pour NaÏl: faut réadapter les descpritions des parametres"
     
     
-
-
+"To use Markowitz, you juste have to calcuate the mean and the variance of each returns of clusters"
 def markowitz(expected_returns, cov_matrix):
     """
     Function to obtain the optimized portfolio based on the Sharpe ratio.
 
     Parameters:
-    - expected_returns : Expected returns for each asset.
+    - expected_returns : Expected returns for each asset (cluster), it's a dataframe of shape(n_cluster,), this type of data frame is called a serie( use the function squeeze() to get a serie from a data frame of shape (n,1)).
     - cov_matrix : Covariance matrix of asset returns.
 
     Returns:
