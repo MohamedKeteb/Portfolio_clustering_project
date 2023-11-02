@@ -32,3 +32,12 @@ dans un fichier .txt sur le répertoire
 
 9 Jérôme : utiliser la fonction clustering_return pour faire marcher Markowitz 
 et les PnL
+
+
+Questions :
+1. Markowitz marche bien pour beaucoup d'actifs 
+or on est limité dans le nombre qu'on fixe parce que si on en 
+met 10, il y a de tout petits clusters 
+
+2. Comment synthétiser les 100 clusterings en un seul pour 
+obtenir quelque chose de plus robuste ?

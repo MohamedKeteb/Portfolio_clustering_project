@@ -102,3 +102,8 @@ annual_cov_matrix = daily_cov_matrix * 251  # Annualiser la matrice de covarianc
 optimized_weights = module1.markowitz(annual_expected_returns, annual_cov_matrix)
 
 print(optimized_weights)
+
+# %%
+
+print(Y_symbol)
+# %%
