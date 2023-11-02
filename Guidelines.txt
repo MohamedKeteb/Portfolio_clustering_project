@@ -16,3 +16,5 @@ returns, which we calculated in 3/.
 for 100 micro-portfolios, and rank them.
 
 6. Test this procedure with K-Means, EM (Expectation-Maximization), Gaussian Mixture, and SSBM (Stochastic Block Model).
+
+
