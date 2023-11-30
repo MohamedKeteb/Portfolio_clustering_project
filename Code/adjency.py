@@ -36,3 +36,20 @@ class Adjency:
 
         return A
     
+    def correlation_adjency(self):
+
+        n_stocks = self.data.shape[0]
+
+        A = np.zeros((n_stocks, n_stocks))
+
+        for i in range(n_stocks):
+
+            for j in range(i, n_stocks):
+
+                if i == j: 
+                    A[i, j] = 1
+
+                else: 
+                    x = self.data.iloc[i,0]
+                    y = self.data.iloc[j, 0]
+                    A[i, j] = np.corrcoef(x, y)[0, 1]
