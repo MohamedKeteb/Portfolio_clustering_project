@@ -21,7 +21,7 @@ class Adjency:
     def gaussian_adjency(self, sigma):
 
         def gaussian_distance(x, y, sigma):
-            return np.exp(-(np.linalg.norm(np.array([x, y], ord=2))^2)/(2*sigma^2))
+            return np.exp(-(np.linalg.norm(np.array([x, y]))^2)/(2*sigma^2))
 
         n_stocks = self.data.shape[0]
         A = np.zeros((n_stocks,n_stocks))
