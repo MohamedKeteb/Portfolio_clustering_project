@@ -53,3 +53,6 @@ class Adjency:
                     x = self.data.iloc[i,0]
                     y = self.data.iloc[j, 0]
                     A[i, j] = np.corrcoef(x, y)[0, 1]
+
+
+        return A
