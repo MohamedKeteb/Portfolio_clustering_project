@@ -32,7 +32,7 @@ class Adjency:
                     A[i, j] = 1 
 
                 else: 
-                    A[i, j] = gaussian_distance(self.data.iloc[i, 0], self.data.ioc[j, 0], sigma)
+                    A[i, j] = gaussian_distance(self.data.iloc[i, 0], self.data.iloc[j, 0], sigma)
 
         return A
     
