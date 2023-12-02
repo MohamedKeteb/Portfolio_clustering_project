@@ -119,9 +119,11 @@ class Adjency:
         
         n_stocks = self.data.shape[0]
 
-        A = np.zeros((n_stocks, n_stocks))
 
         if type == 'volume': 
+
+            A = np.zeros((n_stocks, n_stocks))
+
             for i in range(n_stocks):
 
                 for j in range(i, n_stocks):
@@ -134,7 +136,10 @@ class Adjency:
                         y = np.array(self.data.iloc[j,1].replace('[', '').replace(']', '').split(', '), dtype=float)
                         A[i, j] = np.corrcoef(x, y)[0, 1]
 
-        if type == 'returns':
+        elif type == 'returns':
+
+            A = np.zeros((n_stocks, n_stocks))
+
             for i in range(n_stocks):
 
                 for j in range(i, n_stocks):
@@ -147,4 +152,5 @@ class Adjency:
                         y = np.array(self.data.iloc[j,0].replace('[', '').replace(']', '').split(', '), dtype=float)
                         A[i, j] = np.corrcoef(x, y)[0, 1]
 
-        return A
+        
+        return A + A.transpose() -  np.eye(n_stocks)
