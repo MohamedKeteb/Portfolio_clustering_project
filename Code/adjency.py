@@ -130,8 +130,8 @@ class Adjency:
                         A[i, j] = 1
 
                     else: 
-                        x = np.array(self.data.iloc[i,2].replace('[', '').replace(']', '').split(', '), dtype=float)
-                        y = np.array(self.data.iloc[j,2].replace('[', '').replace(']', '').split(', '), dtype=float)
+                        x = np.array(self.data.iloc[i,1].replace('[', '').replace(']', '').split(', '), dtype=float)
+                        y = np.array(self.data.iloc[j,1].replace('[', '').replace(']', '').split(', '), dtype=float)
                         A[i, j] = np.corrcoef(x, y)[0, 1]
 
         if type == 'returns':
