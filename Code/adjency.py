@@ -112,7 +112,7 @@ class Adjency:
         """
         a popular similarity measure in the literature is given by the Pearson correlation
         coefficient that measures linear dependence between variables and takes values in 
-        [−1, 1]. By interpreting the correlation matrix as a weighted network whose (signed) 
+        [-1, 1]. By interpreting the correlation matrix as a weighted network whose (signed) 
         edge weights capture the pairwise correlations, we cluster the multivariate time series by
         clustering the underlying signed network
         """
@@ -154,4 +154,22 @@ class Adjency:
                         A[i, j] = np.corrcoef(x, y)[0, 1]
 
         
-        return A + A.transpose() -  np.eye(n_stocks)
+        return pd.DataFrame(A + A.transpose() -  np.eye(n_stocks))
+
+
+    def signed_adjency(self, matrix): 
+
+        '''
+        idea : decompose the matrix into its positive and negative 
+        forms 
+
+        parameters : 
+        -matrix : has to be a pandas data frame
+        '''
+
+        negative_mat = matrix.copy()
+        positive_mat = matrix.copy()
+
+        negative_mat[negative_mat > 0] = 0  # Remplace les valeurs positives par zéro dans negative_B
+        positive_mat[positive_mat < 0] = 0
+
