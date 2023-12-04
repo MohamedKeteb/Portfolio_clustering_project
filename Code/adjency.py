@@ -1,7 +1,5 @@
 import pandas as pd 
 import numpy as np
-import ast ## to convert string into
-
 
 class Adjency: 
 
@@ -63,7 +61,8 @@ class Adjency:
             x = np.array(data.iloc[i][0].replace('[', '').replace(']', '').split(', '), dtype=float)## open
             y = np.array(data.iloc[i][1].replace('[', '').replace(']', '').split(', '), dtype=float) ## close
             z = (y - x) / x
-            df2.iloc[i, 0] = str(z)
+            data_z = [str(elem) for elem in z]
+            df2.iloc[i, 0] = '[' + ', '.join(data_z) + ']'
 
         self.data = df2 
 
@@ -134,8 +133,8 @@ class Adjency:
                         A[i, j] = 1
 
                     else: 
-                        x = np.array(ast.literal_eval(self.data.iloc[i, 1]), dtype=float)
-                        y = np.array(ast.literal_eval(self.data.iloc[j, 1]), dtype=float)
+                        x = np.array(self.data.iloc[i,1].replace('[', '').replace(']', '').split(', '), dtype=float)
+                        y = np.array(self.data.iloc[j,1].replace('[', '').replace(']', '').split(', '), dtype=float)
 
                         A[i, j] = np.corrcoef(x, y)[0, 1]
 
@@ -151,8 +150,8 @@ class Adjency:
                         A[i, j] = 1
 
                     else: 
-                        x = np.array(ast.literal_eval(self.data.iloc[i, 0]), dtype=float)
-                        y = np.array(ast.literal_eval(self.data.iloc[j, 0]), dtype=float)
+                        x = np.array(self.data.iloc[i,0].replace('[', '').replace(']', '').split(', '), dtype=float)
+                        y = np.array(self.data.iloc[j, 0].replace('[', '').replace(']', '').split(', '), dtype=float)
 
                         A[i, j] = np.corrcoef(x, y)[0, 1]
 
