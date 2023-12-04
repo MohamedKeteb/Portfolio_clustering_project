@@ -1,5 +1,7 @@
 import pandas as pd 
 import numpy as np
+import ast ## to convert string into
+
 
 class Adjency: 
 
@@ -132,8 +134,9 @@ class Adjency:
                         A[i, j] = 1
 
                     else: 
-                        x = np.array(self.data.iloc[i,1].replace('[', '').replace(']', '').split(', '), dtype=float)
-                        y = np.array(self.data.iloc[j,1].replace('[', '').replace(']', '').split(', '), dtype=float)
+                        x = np.array(ast.literal_eval(self.data.iloc[i, 1]), dtype=float)
+                        y = np.array(ast.literal_eval(self.data.iloc[j, 1]), dtype=float)
+
                         A[i, j] = np.corrcoef(x, y)[0, 1]
 
         elif type == 'returns':
@@ -148,8 +151,9 @@ class Adjency:
                         A[i, j] = 1
 
                     else: 
-                        x = np.array(self.data.iloc[i,0].replace('[', '').replace(']', '').split(', '), dtype=float)
-                        y = np.array(self.data.iloc[j,0].replace('[', '').replace(']', '').split(', '), dtype=float)
+                        x = np.array(ast.literal_eval(self.data.iloc[i, 0]), dtype=float)
+                        y = np.array(ast.literal_eval(self.data.iloc[j, 0]), dtype=float)
+
                         A[i, j] = np.corrcoef(x, y)[0, 1]
 
         
