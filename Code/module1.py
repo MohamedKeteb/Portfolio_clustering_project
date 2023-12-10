@@ -6,7 +6,6 @@ from sklearn.pipeline import Pipeline
 from sklearn.cluster import KMeans 
 from sklearn.preprocessing import StandardScaler 
 from pypfopt.efficient_frontier import EfficientFrontier
-from scipy import sparse
 
 def get_returns(start_date, end_date, ticker_list): 
     
@@ -347,50 +346,6 @@ def portfolio_pnl_sharpe(clusters_returns, weights, risk_free_rate=0.03):
     sharpe_ratio = (expected_portfolio_return - risk_free_rate) / portfolio_std_dev
 
     return pnl, sharpe_ratio
-
-def signed_adjency(mat):
-    '''
-    L'idée est ici, à partir d'une matrice de corrélation mat, de renvoyer deux matrices 
-    A_positive et A_negative qui correspondraient aux matrices des corrélations positives et négatives 
-    associées  
-    '''
-
-    A_pos = mat.applymap(lambda x: x if x >= 0 else 0)
-    A_neg = mat.applymap(lambda x: abs(x) if x < 0 else 0)
-    
-    return A_pos, A_neg
-        
-def apply_SPONGE(correlation_matrix, k): 
-
-    '''
-    IDÉE : étant donné une matrice de correlation obtenue à partir d'une base de donnée et de la similarité de pearson, renvoyer un vecteur associant 
-           à chaque actif le numéro du cluster auquel il appartient une fois qu'on lui a appliqué SPONGE (à partir du package signet)
-
-    PARAMS : 
-
-    - correlation_matrix : a square dataframe of size (number_of_stocks, number_of_stocks)
-    - k : the number of clusters to identify. If a list is given, the output is a corresponding list
-
-    RETURNS : array of int, or list of array of int: Output assignment to clusters.
-
-    '''
-    
-    ## On respecte le format imposé par signet. Pour cela il faut changer le type des matrices A_pos et A_neg, qui ne peuvent pas rester des dataframes 
-
-    A_pos, A_neg = signed_adjency(correlation_matrix)
-
-    A_pos_sparse = sparse.csc_matrix(A_pos.values)
-    A_neg_sparse = sparse.csc_matrix(A_neg.values)
-
-    data = (A_pos_sparse, A_neg_sparse)
-
-    cluster = Cluster(data)
-
-    ## On applique la méthode SPONGE : clusters the graph using the Signed Positive Over Negative Generalised Eigenproblem (SPONGE) clustering.
-
-    return cluster.SPONGE(k )
-
-
 
 
 
