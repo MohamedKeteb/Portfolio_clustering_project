@@ -341,7 +341,7 @@ def portfolio_pnl_sharpe(clusters_returns, weights, risk_free_rate=0.03):
     pnl = (portfolio_returns + 1).cumprod()
 
     # Calculate Sharpe Ratio
-    expected_portfolio_return = portfolio_returns.mean() * 252 # Annualize daily mean return
+    expected_portfolio_return = (1+portfolio_returns.mean())**252 -1
     portfolio_std_dev = portfolio_returns.std() * np.sqrt(252)  # Annualize daily standard deviation
     sharpe_ratio = (expected_portfolio_return - risk_free_rate) / portfolio_std_dev
 
