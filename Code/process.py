@@ -97,5 +97,5 @@ def correlation_matrix(lookback_window, df_cleaned):
  
     df = df_cleaned.iloc[:, :lookback_window+1] ## + 1 because we don't want to take into account the first column
     df.set_index('ticker', inplace=True)
-    correlation_matrix = df.iloc[:, :31].corr(method='pearson')
+    correlation_matrix = df.iloc[:, :31].transpose().corr(method='pearson')
     return correlation_matrix
