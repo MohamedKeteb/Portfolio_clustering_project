@@ -99,3 +99,110 @@ def correlation_matrix(lookback_window, df_cleaned):
     df.set_index('ticker', inplace=True)
     correlation_matrix = df.iloc[:, :31].transpose().corr(method='pearson')
     return correlation_matrix
+
+    ## ==> AVERAGE ON WEIGHTS ?
+
+## we compute the return_centroid of each cluster to attribute intra-cluster weights according to the distance between stocks within the cluster and this 
+## centroid
+
+def cluster_composition_and_centroid(df_cleaned, correlation_matrix, number_of_clusters):
+
+    '''
+    ----------------------------------------------------------------
+    GENERAL IDEA : 
+    1. Get the composition of each cluster (so as to compute the return 
+    of each cluster seen as a new asset)
+    2. Get the centroid of each cluster (so as to compute intra-cluster
+    weights that will be used to compute the overall return of each 
+    cluster (with the idea that each stock has a different contribution
+    to the overall cluster))
+    ----------------------------------------------------------------
+
+    ----------------------------------------------------------------
+    PARAMS : 
+    
+    - df_cleaned : pandas dataframe containing the returns of the 
+                   stocks
+
+    - correlation_matrix : pandas dataframe as given by the previous  
+                           correlation_matrix function
+
+    - number_of_clusters : integer, corresponding to the number of 
+                           clusters
+
+    ----------------------------------------------------------------
+    '''
+    ## STEP 1: run the SPONGE clustering algorithm with a number of clusters fixed to be number_of_clusters and using 
+    ##         the correlation matrix correlation_matrix ==> we store the results in result
+
+    result = pd.DataFrame(index=list(correlation_matrix.columns), columns=['Cluster label'], data=apply_SPONGE(correlation_matrix, number_of_clusters))
+
+
+    ## STEP 2: compute the composition of each cluster (in terms of stocks)
+
+    cluster_composition = []
+
+    for i in range(1, number_of_clusters):
+
+        if i in result['Cluster label'].values: ## we check that the i-th cluster is not empty
+
+            cluster_composition.append([f'cluster {i}', list(result[result['Cluster label'] == i].index)])
+
+    number_of_stocks = len(df_cleaned.iloc[0, :].values) ## we first get the total number of stocks we have in our portfolio 
+
+    ## STEP 3: compute the centroid of each cluster 
+
+    for i in range(len(cluster_composition)):
+
+        return_centroid = np.zeros(number_of_stocks) ## we prepare the return_centroid array to stock the centroid
+
+        for elem in cluster_composition[i][1]:
+
+            return_centroid = return_centroid + df_cleaned.loc[elem, :].values
+
+        cluster_composition[i].append(return_centroid) ## the third element contains the centroid of the cluster in question
+
+    return cluster_composition
+
+
+
+def constituent_weights(df_cleaned, cluster_composition, sigma): ## sigma corresponds to some dispersion cofficient
+    
+    '''
+    ----------------------------------------------------------------
+    GENERAL IDEA : compute the constituent weights (i.e.
+    the intra-cluster weights of each stock)
+    ----------------------------------------------------------------
+
+    ----------------------------------------------------------------
+    PARAMS : 
+    
+    - df_cleaned : pandas dataframe containing the returns of the 
+                   stocks
+
+    - cluster_composition : numpy array as returned by the 
+                            cluster_composition_and_centroid 
+                            function
+
+    - sigma : parameter of dispersion
+
+    ----------------------------------------------------------------
+    '''
+
+    constituent_weights = []
+
+    for i in range(len(cluster_composition)):
+
+        weights = []
+
+        for elem in cluster_composition[i][1]:
+
+            elem_returns = df_cleaned.loc[elem, :].values
+
+            distance_to_centroid = np.sum((cluster_composition[i][2] - elem_returns)**2)
+
+            weights.append([elem, np.exp(-distance_to_centroid/(2*(sigma**2)))])
+        
+        constituent_weights.append([cluster_composition[i][0], weights])
+
+    return constituent_weights
