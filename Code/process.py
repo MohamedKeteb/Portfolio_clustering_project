@@ -366,15 +366,15 @@ def training_phase(lookback_window, df_cleaned, number_of_clusters):
     
     return W
 
-def portfolio_return(evaluation_window):
-    evaluation_set = df_cleaned.iloc[:, L+1:L+1+evaluation_window]
+def portfolio_return(evaluation_window, df_cleaned, training_window, final_weights):
+    evaluation_set = df_cleaned.iloc[:, training_window+1:training_window+1+evaluation_window]
 
-    evaluation_set = df_cleaned.iloc[:, L+1:L+1+evaluation_window]
+    evaluation_set = df_cleaned.iloc[:, training_window+1:training_window+1+evaluation_window]
 
     portfolio_return = pd.DataFrame(index=evaluation_set.columns, columns=['portfolio return'], data=np.zeros(len(evaluation_set.columns)))
 
     for elem1 in portfolio_return.index:
-        for elem2 in W:
+        for elem2 in final_weights:
             portfolio_return.loc[str(elem1), 'portfolio return'] += elem2[1]*evaluation_set.loc[elem2[0], str(elem1)]
 
     return portfolio_return
