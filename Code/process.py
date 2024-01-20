@@ -188,6 +188,11 @@ def constituent_weights(df_cleaned, cluster_composition, sigma): ## sigma corre
     - sigma : parameter of dispersion
 
     ----------------------------------------------------------------
+
+    ----------------------------------------------------------------
+    OUTPUT : modifies in-place the numpy ndarray returned by the 
+             cluster_composition_and_centroid function
+    ----------------------------------------------------------------
     '''
 
     constituent_weights = []
@@ -207,3 +212,48 @@ def constituent_weights(df_cleaned, cluster_composition, sigma): ## sigma corre
         constituent_weights.append([cluster_composition[i][0], weights])
 
     return constituent_weights
+
+def cluster_return(constituent_weights, df_cleaned):
+
+    '''
+    ----------------------------------------------------------------
+    GENERAL IDEA : compute the return of each cluster.
+                   The steps are : 
+                   1. find the assets composing each cluster
+                   2. compute the consituent_weights weighted-average 
+                   return of all those stocks, which is by definition 
+                   the return of the cluster
+                
+    ----------------------------------------------------------------
+
+    ----------------------------------------------------------------
+    PARAMS : 
+    
+    - df_cleaned : pandas dataframe containing the returns of the 
+                   stocks
+
+    - constituent_weights : numpy array as returned by the 
+                            constituent_weights function 
+                            
+
+    - sigma : parameter of dispersion
+
+    ----------------------------------------------------------------
+
+    ----------------------------------------------------------------
+    OUTPUT : create a single column pandas dataframe containing the 
+             return of each cluster over the 5530 days
+    ----------------------------------------------------------------
+    '''
+
+    ## len(constituent_weights) =  number of cluster cluster (by construction)
+    cluster_return = pd.DataFrame(index=None, columns=[f"cluster {i+1}" for i in range(len(constituent_weights))])
+
+    for i in range(len(constituent_weights)):
+        res = 0
+        for elem in constituent_weights[i][1]:
+            res += elem[1]*df_cleaned.loc[elem[0], :].values
+        
+        cluster_return[f"cluster {i+1}"] = res
+
+    return cluster_return
