@@ -97,7 +97,7 @@ def correlation_matrix(lookback_window, df_cleaned):
  
     df = df_cleaned.iloc[:, :lookback_window+1] ## + 1 because we don't want to take into account the first column
     df.set_index('ticker', inplace=True)
-    correlation_matrix = df.iloc[:, :31].transpose().corr(method='pearson')
+    correlation_matrix = df.iloc[:, :lookback_window+1].transpose().corr(method='pearson') ## MODIFIÉ
     return correlation_matrix
 
     ## ==> AVERAGE ON WEIGHTS ?
@@ -105,7 +105,7 @@ def correlation_matrix(lookback_window, df_cleaned):
 ## we compute the return_centroid of each cluster to attribute intra-cluster weights according to the distance between stocks within the cluster and this 
 ## centroid
 
-def cluster_composition_and_centroid(df_cleaned, correlation_matrix, number_of_clusters):
+def cluster_composition_and_centroid(df_cleaned, correlation_matrix, number_of_clusters, lookback_window):
 
     '''
     ----------------------------------------------------------------
@@ -130,6 +130,8 @@ def cluster_composition_and_centroid(df_cleaned, correlation_matrix, number_of_c
     - number_of_clusters : integer, corresponding to the number of 
                            clusters
 
+    - lookback_window : integer, corresponding to the number of lookback 
+                        days (in terms of historcal returns)
     ----------------------------------------------------------------
     '''
     ## STEP 1: run the SPONGE clustering algorithm with a number of clusters fixed to be number_of_clusters and using 
@@ -149,25 +151,25 @@ def cluster_composition_and_centroid(df_cleaned, correlation_matrix, number_of_c
 
             cluster_composition.append([f'cluster {i}', list(result[result['Cluster label'] == i].index)])
 
-    number_of_stocks = len(df_cleaned.iloc[0, :].values) ## we first get the total number of stocks we have in our portfolio 
-
     ## STEP 3: compute the centroid of each cluster 
 
     for i in range(len(cluster_composition)):
 
-        return_centroid = np.zeros(number_of_stocks) ## we prepare the return_centroid array to stock the centroid
+        cluster_size = len(cluster_composition[i][1]) ## we average over the size of each cluster to compute the centroid
+
+        return_centroid = np.zeros(lookback_window) ## we prepare the return_centroid array to stock the centroid
 
         for elem in cluster_composition[i][1]:
 
-            return_centroid = return_centroid + df_cleaned.loc[elem, :].values
+            return_centroid = return_centroid + df_cleaned.loc[elem, :][:lookback_window].values
 
-        cluster_composition[i].append(return_centroid) ## the third element contains the centroid of the cluster in question
+        cluster_composition[i].append(return_centroid/cluster_size) ## the third element contains the centroid of the cluster in question
 
     return cluster_composition
 
 
 
-def constituent_weights(df_cleaned, cluster_composition, sigma): ## sigma corresponds to some dispersion cofficient
+def constituent_weights(df_cleaned, cluster_composition, sigma, lookback_window): ## sigma corresponds to some dispersion cofficient
     
     '''
     ----------------------------------------------------------------
@@ -187,6 +189,8 @@ def constituent_weights(df_cleaned, cluster_composition, sigma): ## sigma corre
 
     - sigma : parameter of dispersion
 
+    - lookback_window : integer, corresponding to the number of lookback 
+                        days (in terms of historcal returns)
     ----------------------------------------------------------------
 
     ----------------------------------------------------------------
@@ -203,7 +207,7 @@ def constituent_weights(df_cleaned, cluster_composition, sigma): ## sigma corre
 
         for elem in cluster_composition[i][1]:
 
-            elem_returns = df_cleaned.loc[elem, :].values
+            elem_returns = df_cleaned.loc[elem, :][:lookback_window].values
 
             distance_to_centroid = np.sum((cluster_composition[i][2] - elem_returns)**2)
 
@@ -213,7 +217,7 @@ def constituent_weights(df_cleaned, cluster_composition, sigma): ## sigma corre
 
     return constituent_weights
 
-def cluster_return(constituent_weights, df_cleaned):
+def cluster_return(constituent_weights, df_cleaned, lookback_window):
 
     '''
     ----------------------------------------------------------------
@@ -234,10 +238,9 @@ def cluster_return(constituent_weights, df_cleaned):
 
     - constituent_weights : numpy array as returned by the 
                             constituent_weights function 
-                            
 
-    - sigma : parameter of dispersion
-
+    - lookback_window : integer, corresponding to the number of lookback 
+                        days (in terms of historcal returns)
     ----------------------------------------------------------------
 
     ----------------------------------------------------------------
@@ -252,7 +255,7 @@ def cluster_return(constituent_weights, df_cleaned):
     for i in range(len(constituent_weights)):
         res = 0
         for elem in constituent_weights[i][1]:
-            res += elem[1]*df_cleaned.loc[elem[0], :].values
+            res += elem[1]*df_cleaned.loc[elem[0], :][:lookback_window].values
         
         cluster_return[f"cluster {i+1}"] = res
 
