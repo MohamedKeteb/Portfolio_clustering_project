@@ -350,13 +350,13 @@ def training_phase(lookback_window, df_cleaned, number_of_clusters):
     ## poids très proches ... ==> dû au fait qu'on regarde sur un trop petit échantillon (30 jours) ? 
 
     ## ÉTAPE 3 : on obtient les poids constitutifs de chaque actifs au sein d'un même cluster
-    constituent_weights = constituent_weights(df_cleaned=df_cleaned, cluster_composition=cluster_composition, sigma=10, lookback_window=lookback_window)
+    constituent_weights_res = constituent_weights(df_cleaned=df_cleaned, cluster_composition=cluster_composition, sigma=10, lookback_window=lookback_window)
 
     ## ÉTAPE 4 : on obtient les rendements de chaque cluster vu comme un actif
-    cluster_return = cluster_return(constituent_weights=constituent_weights, df_cleaned=df_cleaned, lookback_window=lookback_window) 
+    cluster_return = cluster_return(constituent_weights=constituent_weights_res, df_cleaned=df_cleaned, lookback_window=lookback_window) 
 
     ## ÉTAPE 5 : on obtient les poids de markowitz de chaque cluster
-    markowitz_weight = makowitz_weights(cluster_return=cluster_return, lookback_window=lookback_window)
+    markowitz_weights_res = makowitz_weights(cluster_return=cluster_return, lookback_window=lookback_window)
 
     ## ÉTAPE 6 : on remonte aux poids de chaque actif dans l'ensemble
-    W = final_weights(markowitz_weights=markowitz_weight, constituent_weights=constituent_weights)
+    W = final_weights(markowitz_weights=markowitz_weights_res, constituent_weights=constituent_weights_res)
