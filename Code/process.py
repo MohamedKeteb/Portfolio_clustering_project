@@ -338,25 +338,25 @@ def final_weights(markowitz_weights, constituent_weights):
 
     return W
 
-def training_phase(lookback_window, df_cleaned):
+def training_phase(lookback_window, df_cleaned, number_of_clusters):
 
     ## ÉTAPE 1 : on obtient la matrice de corrélation des actifs sur la lookback_window
-    correlation_matrix = correlation_matrix(lookback_window=lookback_window, df_cleaned=df_cleaned)
+    correlation_matrix_res = correlation_matrix(lookback_window=lookback_window, df_cleaned=df_cleaned)
 
     ## ÉTAPE 2 : on obtient la composition des clusters et les centroïdes de ceux-ci
     # PROBLÈME DES ARRONDIS
-    cluster_composition = cluster_composition_and_centroid(df_cleaned=df_cleaned, correlation_matrix=correlation_matrix, number_of_clusters=20, lookback_window=30)
+    cluster_composition = cluster_composition_and_centroid(df_cleaned=df_cleaned, correlation_matrix=correlation_matrix_res, number_of_clusters=number_of_clusters, lookback_window=lookback_window)
 
     ## poids très proches ... ==> dû au fait qu'on regarde sur un trop petit échantillon (30 jours) ? 
 
     ## ÉTAPE 3 : on obtient les poids constitutifs de chaque actifs au sein d'un même cluster
-    constituent_weights = constituent_weights(df_cleaned=df_cleaned, cluster_composition=cluster_composition, sigma=10, lookback_window=30)
+    constituent_weights = constituent_weights(df_cleaned=df_cleaned, cluster_composition=cluster_composition, sigma=10, lookback_window=lookback_window)
 
     ## ÉTAPE 4 : on obtient les rendements de chaque cluster vu comme un actif
-    cluster_return = cluster_return(constituent_weights=constituent_weights, df_cleaned=df_cleaned, lookback_window=30) 
+    cluster_return = cluster_return(constituent_weights=constituent_weights, df_cleaned=df_cleaned, lookback_window=lookback_window) 
 
     ## ÉTAPE 5 : on obtient les poids de markowitz de chaque cluster
-    markowitz_weight = makowitz_weights(cluster_return=cluster_return, lookback_window=30)
+    markowitz_weight = makowitz_weights(cluster_return=cluster_return, lookback_window=lookback_window)
 
     ## ÉTAPE 6 : on remonte aux poids de chaque actif dans l'ensemble
     W = final_weights(markowitz_weights=markowitz_weight, constituent_weights=constituent_weights)
