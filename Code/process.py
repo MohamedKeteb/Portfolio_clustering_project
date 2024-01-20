@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd
 import ast
 import sys
+import plotly.graph_objects as go
+
 
 ## path Nail : '/Users/khelifanail/Documents/GitHub/Portfolio_clustering_project'
 ## path Jerome : 'C:/Users/33640/OneDrive/Documents/GitHub/Portfolio_clustering_project'
@@ -338,6 +340,7 @@ def final_weights(markowitz_weights, constituent_weights):
 
     return W
 
+
 def training_phase(lookback_window, df_cleaned, number_of_clusters):
 
     ## ÉTAPE 1 : on obtient la matrice de corrélation des actifs sur la lookback_window
@@ -362,3 +365,83 @@ def training_phase(lookback_window, df_cleaned, number_of_clusters):
     W = final_weights(markowitz_weights=markowitz_weights_res, constituent_weights=constituent_weights_res)
     
     return W
+
+def portfolio_return(evaluation_window):
+    evaluation_set = df_cleaned.iloc[:, L+1:L+1+evaluation_window]
+
+    evaluation_set = df_cleaned.iloc[:, L+1:L+1+evaluation_window]
+
+    portfolio_return = pd.DataFrame(index=evaluation_set.columns, columns=['portfolio return'], data=np.zeros(len(evaluation_set.columns)))
+
+    for elem1 in portfolio_return.index:
+        for elem2 in W:
+            portfolio_return.loc[str(elem1), 'portfolio return'] += elem2[1]*evaluation_set.loc[elem2[0], str(elem1)]
+
+    return portfolio_return
+
+def Sharpe_and_PnL(portfolio_return):
+    portfolio_return = np.array(portfolio_return)
+
+    # Calcul du rendement moyen du portefeuille
+    Rp = np.mean(portfolio_return)
+
+    # Calcul de l'écart type du portefeuille
+    sigma_p = np.std(portfolio_return)
+
+    # Taux sans risque (ou rendement moyen du marché)
+    Rf = 0.02  # Remplacez par le taux sans risque ou le rendement moyen du marché approprié
+
+    # Calcul du Sharpe ratio
+    SR = (Rp - Rf) / sigma_p
+
+    # Calcul des PNL
+    PNL = np.cumsum(portfolio_return)
+
+    return SR, PNL
+
+
+def plot_PnL(SR, PNL):
+
+    # Création du graphique
+    fig = go.Figure()
+
+    # Ajout de la trace pour les PNL
+    fig.add_trace(go.Scatter(x=np.arange(31, 61), y=PNL, mode='lines', name='PNL'))
+
+    # Ajout d'une ligne pour le Sharpe ratio
+    fig.add_shape(
+        type='line',
+        x0=31, x1=60, y0=0, y1=0,
+        line=dict(color='red', width=2),
+        opacity=0.7,
+        name='Sharpe Ratio'
+    )
+
+    # Ajout d'une annotation pour le Sharpe ratio
+    fig.add_annotation(
+        x=45,
+        y=PNL[-1],
+        text=f'Sharpe Ratio: {SR:.4f}',
+        showarrow=True,
+        arrowhead=2,
+        arrowsize=1,
+        arrowwidth=2,
+        arrowcolor='red',
+        font=dict(size=10),
+        bordercolor='red',
+        borderwidth=2,
+        bgcolor='white',
+        opacity=0.8
+    )
+
+    # Mise en forme du graphique
+    fig.update_layout(
+        title='Évolution des PNL et Sharpe Ratio',
+        xaxis_title='Période',
+        yaxis_title='PNL Cumulatif',
+        legend=dict(x=0, y=1),
+        template='plotly_white'
+    )
+
+    # Affichage du graphique
+    fig.show()
