@@ -155,15 +155,13 @@ def cluster_composition_and_centroid(df_cleaned, correlation_matrix, number_of_c
 
     for i in range(len(cluster_composition)):
 
-        cluster_size = len(cluster_composition[i][1]) ## we average over the size of each cluster to compute the centroid
-
         return_centroid = np.zeros(lookback_window) ## we prepare the return_centroid array to stock the centroid
 
         for elem in cluster_composition[i][1]:
 
             return_centroid = return_centroid + df_cleaned.loc[elem, :][:lookback_window].values
 
-        cluster_composition[i].append(return_centroid/cluster_size) ## the third element contains the centroid of the cluster in question
+        cluster_composition[i].append(return_centroid) ## the third element contains the centroid of the cluster in question
 
     return cluster_composition
 
