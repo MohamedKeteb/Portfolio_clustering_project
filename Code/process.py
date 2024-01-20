@@ -137,6 +137,7 @@ def cluster_composition_and_centroid(df_cleaned, correlation_matrix, number_of_c
 
     result = pd.DataFrame(index=list(correlation_matrix.columns), columns=['Cluster label'], data=apply_SPONGE(correlation_matrix, number_of_clusters))
 
+    df_cleaned.set_index('ticker', inplace=True)
 
     ## STEP 2: compute the composition of each cluster (in terms of stocks)
 
