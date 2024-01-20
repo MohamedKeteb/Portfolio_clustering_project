@@ -34,6 +34,40 @@ def check_nan_inf(df):
 def remove_rows_with_nan(df):
     return df.dropna()
 
+def df_cleaned():
+    # Nail path : '/Users/khelifanail/Documents/GitHub/Portfolio_clustering_project/Data/DATA_Statapp.csv'
+    # Jerome path : 'C:\Users\33640\OneDrive\Documents\GitHub\Portfolio_clustering_project\Data\DATA_Statapp.csv'
+    # Mohamed path : '/Users/khelifanail/Documents/GitHub/Portfolio_clustering_project/Data/DATA_Statapp.csv'
+    df = pd.read_csv('/Users/khelifanail/Documents/GitHub/Portfolio_clustering_project/Data/DATA_Statapp.csv')
+
+    # Apply conversion function to 'open' and 'close' columns
+    df['open'] = df['open'].apply(safe_literal_eval)
+    df['close'] = df['close'].apply(safe_literal_eval)
+
+    # Calculate returns for each line
+    df['return'] = df.apply(lambda row: [(close - open) / open for open, close in zip(row['open'], row['close'])], axis=1)
+
+    new_df = df[['ticker', 'return']] # create a new data frame with the column ticker and return 
+
+    # Créons le DataFrame à partir des listes dans 'return'
+    # On suppose ici que 'new_df' est déjà défini et contient la colonne 'return'
+
+    # Convertir chaque liste dans la colonne 'return' en plusieurs colonnes dans le nouveau DataFrame
+    returns_df = pd.DataFrame(new_df['return'].tolist())
+
+    # Ajouter la colonne 'ticker' du 'new_df' au début de 'returns_df'
+    returns_df.insert(0, 'ticker', new_df['ticker'])
+
+    # Renommer les colonnes pour refléter qu'elles sont des rendements
+    returns_df.columns = ['ticker'] + [f'return_{i}' for i in range(len(returns_df.columns) - 1)]
+
+    df_cleaned = remove_rows_with_nan(returns_df)
+    df_cleaned.reset_index(drop=True, inplace=True)
+
+    check_nan_inf(df_cleaned)
+
+    return df_cleaned
+
 
 def signed_adjency(mat):
     '''
@@ -336,3 +370,29 @@ def final_weights(markowitz_weights, constituent_weights):
             W.append([elem[0], elem[1] * m_weights])
 
     return W
+
+def training_phase(lookback_window):
+
+    ## ÉTAPE 1 : on nettoie les données des rendements
+    df_cleaned = df_cleaned()
+
+    ## ÉTAPE 2 : on obtient la matrice de corrélation des actifs sur la lookback_window
+    correlation_matrix = correlation_matrix(lookback_window, df_cleaned)
+
+    ## ÉTAPE 3 : on obtient la composition des clusters et les centroïdes de ceux-ci
+    # PROBLÈME DES ARRONDIS
+    cluster_composition = cluster_composition_and_centroid(df_cleaned=df_cleaned, correlation_matrix=correlation_matrix, number_of_clusters=20, lookback_window=30)
+
+    ## poids très proches ... ==> dû au fait qu'on regarde sur un trop petit échantillon (30 jours) ? 
+
+    ## ÉTAPE 4 : on obtient les poids constitutifs de chaque actifs au sein d'un même cluster
+    constituent_weights = constituent_weights(df_cleaned=df_cleaned, cluster_composition=cluster_composition, sigma=10, lookback_window=30)
+
+    ## ÉTAPE 5 : on obtient les rendements de chaque cluster vu comme un actif
+    cluster_return = cluster_return(constituent_weights=constituent_weights, df_cleaned=df_cleaned, lookback_window=30) 
+
+    ## ÉTAPE 6 : on obtient les poids de markowitz de chaque cluster
+    markowitz_weight = makowitz_weights(cluster_return=cluster_return, lookback_window=30)
+
+    ## ÉTAPE 7 : on remonte aux poids de chaque actif dans l'ensemble
+    W = final_weights(markowitz_weights=markowitz_weight, constituent_weights=constituent_weights)
