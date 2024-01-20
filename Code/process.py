@@ -9,6 +9,8 @@ sys.path.append(r'/Users/khelifanail/Documents/GitHub/Portfolio_clustering_proje
 
 from signet.cluster import Cluster 
 from scipy import sparse
+from pypfopt.efficient_frontier import EfficientFrontier
+
 
 
 # Function to safely convert a string into a list
@@ -243,7 +245,7 @@ def cluster_return(constituent_weights, df_cleaned, lookback_window):
 
     ----------------------------------------------------------------
     OUTPUT : create a single column pandas dataframe containing the 
-             return of each cluster over the 5530 days
+             return of each cluster over the lookback_window days
     ----------------------------------------------------------------
     '''
 
@@ -258,3 +260,79 @@ def cluster_return(constituent_weights, df_cleaned, lookback_window):
         cluster_return[f"cluster {i+1}"] = res
 
     return cluster_return
+
+def makowitz_weights(cluster_return, lookback_window):
+
+    '''
+    ----------------------------------------------------------------
+    GENERAL IDEA : compute the markowitz weights of each cluster in 
+                   the synthetic portfolio using the pypfopt package
+    ----------------------------------------------------------------
+
+    ----------------------------------------------------------------
+    PARAMS : 
+
+    - cluster_return : numpy array as returned by the 
+                       cluster_return function 
+
+    - lookback_window : integer, corresponding to the number of lookback 
+                        days (in terms of historcal returns)
+    ----------------------------------------------------------------
+
+    ----------------------------------------------------------------
+    OUTPUT : returns the markowitz weights of each cluster
+    ----------------------------------------------------------------
+    '''
+
+    ## on construit la matrice de corrélation associée à ces returns, c'est donc une matrice de corrélation de return de cluster
+
+    cov_matrix = cluster_return.cov()
+
+    ## on construit le vecteur d'expected return du cluster (250 jours de trading par an, on passe de rendements journaliers à rendements annualisés)
+    expected_returns = (cluster_return.mean(axis=0) + 1)**(250/lookback_window) - 1 ## on fait ici le choix de prendre le rendement moyen comme objectif
+
+    ef = EfficientFrontier(expected_returns=expected_returns, cov_matrix=cov_matrix)
+    ef.max_sharpe()
+
+    markowitz_weights = ef.clean_weights()
+
+    return markowitz_weights
+
+
+def final_weights(markowitz_weights, constituent_weights):
+
+    '''
+    ----------------------------------------------------------------
+    GENERAL IDEA : compute the final weights of each individual stock
+                   in the overal portfolio using both the constituent 
+                   and the markowitz weights
+    ----------------------------------------------------------------
+
+    ----------------------------------------------------------------
+    PARAMS : 
+
+    - markowitz_weights : numpy array as returned by the 
+                          markowitz_weights function 
+
+    - constituent_weights : integer, corresponding to the number of lookback 
+                            days (in terms of historcal returns)
+    ----------------------------------------------------------------
+
+    ----------------------------------------------------------------
+    OUTPUT : returns the markowitz weights of each cluster
+    ----------------------------------------------------------------
+    '''
+
+    ### On cherche désormais à calculer le poids de chaque actif dans le portefeuille total
+
+    W = []
+
+    for i in range(len(constituent_weights)):
+
+        m_weights = markowitz_weights[constituent_weights[i][0]]
+
+        for elem in constituent_weights[i][1]:
+
+            W.append([elem[0], elem[1] * m_weights])
+
+    return W
