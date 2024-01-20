@@ -341,7 +341,7 @@ def final_weights(markowitz_weights, constituent_weights):
 def training_phase(lookback_window, df_cleaned):
 
     ## ÉTAPE 1 : on obtient la matrice de corrélation des actifs sur la lookback_window
-    correlation_matrix = correlation_matrix(lookback_window, df_cleaned)
+    correlation_matrix = correlation_matrix(lookback_window=lookback_window, df_cleaned=df_cleaned)
 
     ## ÉTAPE 2 : on obtient la composition des clusters et les centroïdes de ceux-ci
     # PROBLÈME DES ARRONDIS
