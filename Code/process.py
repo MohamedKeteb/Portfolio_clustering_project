@@ -34,11 +34,7 @@ def check_nan_inf(df):
 def remove_rows_with_nan(df):
     return df.dropna()
 
-def df_cleaned():
-    # Nail path : '/Users/khelifanail/Documents/GitHub/Portfolio_clustering_project/Data/DATA_Statapp.csv'
-    # Jerome path : 'C:\Users\33640\OneDrive\Documents\GitHub\Portfolio_clustering_project\Data\DATA_Statapp.csv'
-    # Mohamed path : '/Users/khelifanail/Documents/GitHub/Portfolio_clustering_project/Data/DATA_Statapp.csv'
-    df = pd.read_csv('/Users/khelifanail/Documents/GitHub/Portfolio_clustering_project/Data/DATA_Statapp.csv')
+def df_cleaned(df):
 
     # Apply conversion function to 'open' and 'close' columns
     df['open'] = df['open'].apply(safe_literal_eval)
@@ -371,10 +367,10 @@ def final_weights(markowitz_weights, constituent_weights):
 
     return W
 
-def training_phase(lookback_window):
+def training_phase(lookback_window, df):
 
     ## ÉTAPE 1 : on nettoie les données des rendements
-    df_cleaned = df_cleaned()
+    df_cleaned = df_cleaned(df)
 
     ## ÉTAPE 2 : on obtient la matrice de corrélation des actifs sur la lookback_window
     correlation_matrix = correlation_matrix(lookback_window, df_cleaned)
