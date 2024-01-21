@@ -443,7 +443,6 @@ def consolidated_W(lookback_window, df_cleaned, number_of_clusters, number_of_re
 
     return consolidated_W
 
-
 def portfolio_annualized_returns(evaluation_window, df_cleaned, training_window, consolidated_W):
 
     '''
@@ -484,11 +483,13 @@ def portfolio_annualized_returns(evaluation_window, df_cleaned, training_window,
     portfolio_annualized_returns = pd.DataFrame(index=evaluation_set.columns, columns=['portfolio annualized return'], data=np.zeros(len(evaluation_set.columns)))
 
     for elem1 in portfolio_annualized_returns.index:
-            portfolio_annualized_returns.loc[str(elem1), 'portfolio annualized return'] += consolidated_W.loc[elem1, 'weight']*evaluation_set.loc[elem1, str(elem1)]
+        for stock in list(evaluation_set.index):
+            portfolio_annualized_returns.loc[str(elem1), 'portfolio annualized return'] += consolidated_W.loc[stock, 'weight']*evaluation_set.loc[stock, str(elem1)]
 
     portfolio_annualized_returns = (portfolio_annualized_returns + 1)**(250/evaluation_window) - 1
 
     return portfolio_annualized_returns
+
 
 
 
