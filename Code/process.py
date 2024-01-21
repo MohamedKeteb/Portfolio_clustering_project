@@ -80,6 +80,35 @@ def apply_SPONGE(correlation_matrix, k):
 
     return cluster.SPONGE(k)
 
+def apply_signed_laplacian(correlation_matrix, k): 
+
+    '''
+    IDÉE : étant donné une matrice de correlation obtenue à partir d'une base de donnée et de la similarité de pearson, renvoyer un vecteur associant 
+           à chaque actif le numéro du cluster auquel il appartient une fois qu'on lui a appliqué SPONGE (à partir du package signet)
+
+    PARAMS : 
+
+    - correlation_matrix : a square dataframe of size (number_of_stocks, number_of_stocks)
+    - k : the number of clusters to identify. If a list is given, the output is a corresponding list
+
+    RETURNS : array of int, or list of array of int: Output assignment to clusters.
+
+    '''
+    
+    ## On respecte le format imposé par signet. Pour cela il faut changer le type des matrices A_pos et A_neg, qui ne peuvent pas rester des dataframes 
+
+    A_pos, A_neg = signed_adjency(correlation_matrix)
+
+    A_pos_sparse = sparse.csc_matrix(A_pos.values)
+    A_neg_sparse = sparse.csc_matrix(A_neg.values)
+
+    data = (A_pos_sparse, A_neg_sparse)
+
+    cluster = Cluster(data)
+
+    ## On applique la méthode SPONGE : clusters the graph using the Signed Positive Over Negative Generalised Eigenproblem (SPONGE) clustering.
+
+    return cluster.spectral_cluster_laplacian(k)
 
 def correlation_matrix(lookback_window, df_cleaned):
 
@@ -110,7 +139,7 @@ def correlation_matrix(lookback_window, df_cleaned):
 ## we compute the return_centroid of each cluster to attribute intra-cluster weights according to the distance between stocks within the cluster and this 
 ## centroid
 
-def cluster_composition_and_centroid(df_cleaned, correlation_matrix, number_of_clusters, lookback_window):
+def cluster_composition_and_centroid(df_cleaned, correlation_matrix, number_of_clusters, lookback_window, clustering_method='SPONGE'):
 
     '''
     ----------------------------------------------------------------
@@ -142,7 +171,11 @@ def cluster_composition_and_centroid(df_cleaned, correlation_matrix, number_of_c
     ## STEP 1: run the SPONGE clustering algorithm with a number of clusters fixed to be number_of_clusters and using 
     ##         the correlation matrix correlation_matrix ==> we store the results in result
 
-    result = pd.DataFrame(index=list(correlation_matrix.columns), columns=['Cluster label'], data=apply_SPONGE(correlation_matrix, number_of_clusters))
+    if clustering_method == 'SPONGE':
+        result = pd.DataFrame(index=list(correlation_matrix.columns), columns=['Cluster label'], data=apply_SPONGE(correlation_matrix, number_of_clusters))
+
+    if clustering_method == 'signed_laplacian':
+        result = pd.DataFrame(index=list(correlation_matrix.columns), columns=['Cluster label'], data=apply_signed_laplacian(correlation_matrix, number_of_clusters))
 
     ## STEP 2: compute the composition of each cluster (in terms of stocks)
 
@@ -340,7 +373,7 @@ def final_weights(markowitz_weights, constituent_weights):
     return W
 
 
-def training_phase(lookback_window, df_cleaned, number_of_clusters):
+def training_phase(lookback_window, df_cleaned, number_of_clusters, clustering_method='SPONGE'):
 
     '''
     ----------------------------------------------------------------
@@ -371,7 +404,7 @@ def training_phase(lookback_window, df_cleaned, number_of_clusters):
 
     ## ÉTAPE 2 : on obtient la composition des clusters et les centroïdes de ceux-ci
     # PROBLÈME DES ARRONDIS
-    cluster_composition = cluster_composition_and_centroid(df_cleaned=df_cleaned, correlation_matrix=correlation_matrix_res, number_of_clusters=number_of_clusters, lookback_window=lookback_window)
+    cluster_composition = cluster_composition_and_centroid(df_cleaned=df_cleaned, correlation_matrix=correlation_matrix_res, number_of_clusters=number_of_clusters, lookback_window=lookback_window, clustering_method=clustering_method)
 
     ## poids très proches ... ==> dû au fait qu'on regarde sur un trop petit échantillon (30 jours) ? 
 
@@ -394,7 +427,7 @@ def training_phase(lookback_window, df_cleaned, number_of_clusters):
     return W
 
 
-def consolidated_W(lookback_window, df_cleaned, number_of_clusters, number_of_repetitions):
+def consolidated_W(lookback_window, df_cleaned, number_of_clusters, number_of_repetitions, clustering_method='SPONGE'):
 
     '''
     ----------------------------------------------------------------
@@ -420,7 +453,7 @@ def consolidated_W(lookback_window, df_cleaned, number_of_clusters, number_of_re
     history = []
 
     for _ in range(number_of_repetitions):
-        W = training_phase(lookback_window=lookback_window, df_cleaned=df_cleaned, number_of_clusters=number_of_clusters)
+        W = training_phase(lookback_window=lookback_window, df_cleaned=df_cleaned, number_of_clusters=number_of_clusters, clustering_method=clustering_method)
         history.append(W)
 
     consolidated_W = pd.DataFrame(index=df_cleaned.index, columns=['weight'])
