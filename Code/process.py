@@ -322,7 +322,8 @@ def final_weights(markowitz_weights, constituent_weights):
     ----------------------------------------------------------------
 
     ----------------------------------------------------------------
-    OUTPUT : returns the markowitz weights of each cluster
+    OUTPUT : returns the final weights of each asset, i.e. the 
+             overall portfolio weights
     ----------------------------------------------------------------
     '''
 
@@ -342,6 +343,29 @@ def final_weights(markowitz_weights, constituent_weights):
 
 
 def training_phase(lookback_window, df_cleaned, number_of_clusters):
+
+    '''
+    ----------------------------------------------------------------
+    GENERAL IDEA : synthetic function that combines all the previous
+    ----------------------------------------------------------------
+
+    ----------------------------------------------------------------
+    PARAMS : 
+
+    - lookback_window : integer, corresponding to the number of 
+                        lookback days (in terms of historcal returns)
+
+    - df_cleaned : cleaned pandas dataframe containing the returns 
+                   of the stocks
+
+    - number_of_clusters : integer, corresponding to the number of 
+                           clusters
+    ----------------------------------------------------------------
+
+    ----------------------------------------------------------------
+    OUTPUT : returns the overall weights of each cluster
+    ----------------------------------------------------------------
+    '''
 
     ## ÉTAPE 1 : on obtient la matrice de corrélation des actifs sur la lookback_window
     correlation_matrix_res = correlation_matrix(lookback_window=lookback_window, df_cleaned=df_cleaned)
@@ -366,36 +390,93 @@ def training_phase(lookback_window, df_cleaned, number_of_clusters):
     
     return W
 
-def portfolio_return(evaluation_window, df_cleaned, training_window, final_weights):
-    evaluation_set = df_cleaned.iloc[:, training_window+1:training_window+1+evaluation_window]
+def portfolio_daily_returns(evaluation_window, df_cleaned, training_window, final_weights):
+
+    '''
+    ----------------------------------------------------------------
+    GENERAL IDEA : given the overall weights of each asset in the 
+                   portfolio, compute the portfolio return over an 
+                   evaluation window that does not overlap with the 
+                   training_window. 
+    ----------------------------------------------------------------
+
+    ----------------------------------------------------------------
+    PARAMS : 
+
+    - evaluation_window : integer, corresponding to the number of 
+                          future days (in terms of historcal returns) 
+                          on which we evaluate the portfolio
+
+    - training_window : integer, corresponding to the number of 
+                        lookback days (in terms of historcal returns) 
+                        on which we train and construct the portfolio
+
+    - df_cleaned : cleaned pandas dataframe containing the returns 
+                   of the stocks
+
+    - final_weights : numpy ndarray, containing the final weights 
+                      of each asset, i.e. the overall portfolio 
+                      weights
+    ----------------------------------------------------------------
+
+    ----------------------------------------------------------------
+    OUTPUT : returns the portfolio return of each cluster in a 
+             pandas dataframe
+    ----------------------------------------------------------------
+    '''
 
     evaluation_set = df_cleaned.iloc[:, training_window+1:training_window+1+evaluation_window]
 
-    portfolio_return = pd.DataFrame(index=evaluation_set.columns, columns=['portfolio return'], data=np.zeros(len(evaluation_set.columns)))
+    portfolio_daily_returns = pd.DataFrame(index=evaluation_set.columns, columns=['portfolio return'], data=np.zeros(len(evaluation_set.columns)))
 
-    for elem1 in portfolio_return.index:
+    for elem1 in portfolio_daily_returns.index:
         for elem2 in final_weights:
-            portfolio_return.loc[str(elem1), 'portfolio return'] += elem2[1]*evaluation_set.loc[elem2[0], str(elem1)]
+            portfolio_daily_returns.loc[str(elem1), 'portfolio return'] += elem2[1]*evaluation_set.loc[elem2[0], str(elem1)]
 
-    return portfolio_return
+    return portfolio_daily_returns
 
-def Sharpe_and_PnL(portfolio_return):
-    portfolio_return = np.array(portfolio_return)
+def Sharpe_and_PnL(portfolio_daily_returns, risk_free_rate):
+
+    '''
+    ----------------------------------------------------------------
+    GENERAL IDEA : givent the portfolio_daily_returns, compute two 
+                   indicators of the performance of the portfolio 
+                   (namely the sharpe ratio and the PnL)
+    ----------------------------------------------------------------
+
+    ----------------------------------------------------------------
+    PARAMS : 
+
+    - portfolio_daily_returns : pandas dataframe, returns the portfolio 
+                                return of each cluster in a pandas 
+                                dataframe
+                            
+    - risk_free_rate : float, risk free rate of the market 
+                       corresponding to the assets in our portfolio 
+    ----------------------------------------------------------------
+
+    ----------------------------------------------------------------
+    OUTPUT : returns two floats, corresponding to the PnL and the 
+             sharpe ratio of the portfolio
+    ----------------------------------------------------------------
+    '''
+    
+    portfolio_daily_returns = np.array(portfolio_daily_returns)
 
     # Calcul du rendement moyen du portefeuille
-    Rp = np.mean(portfolio_return)
+    Rp = np.mean(portfolio_daily_returns)
 
     # Calcul de l'écart type du portefeuille
-    sigma_p = np.std(portfolio_return)
+    sigma_p = np.std(portfolio_daily_returns)
 
     # Taux sans risque (ou rendement moyen du marché)
-    Rf = 0.02  # Remplacez par le taux sans risque ou le rendement moyen du marché approprié
+    Rf = risk_free_rate  # Remplacez par le taux sans risque ou le rendement moyen du marché approprié
 
     # Calcul du Sharpe ratio
     SR = (Rp - Rf) / sigma_p
 
     # Calcul des PNL
-    PNL = np.cumsum(portfolio_return)
+    PNL = np.cumsum(portfolio_daily_returns)
 
     return SR, PNL
 
