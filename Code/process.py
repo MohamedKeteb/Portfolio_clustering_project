@@ -394,7 +394,7 @@ def training_phase(lookback_window, df_cleaned, number_of_clusters):
     return W
 
 
-def consolidated_W(W, number_of_repetitions):
+def consolidated_W(lookback_window, df_cleaned, number_of_clusters, number_of_repetitions):
 
     '''
     ----------------------------------------------------------------
@@ -417,12 +417,29 @@ def consolidated_W(W, number_of_repetitions):
     ----------------------------------------------------------------
     '''
 
-    consolidated_W = []
+    history = []
 
-    for i in range(number_of_repetitions):
-        consolidated_W = consolidated_W + W
+    for _ in range(number_of_repetitions):
+        W = process.training_phase(lookback_window=lookback_window, df_cleaned=df_cleaned, number_of_clusters=number_of_clusters)
+        history.append(W)
 
-    consolidated_W = consolidated_W / number_of_repetitions
+    consolidated_W = pd.DataFrame(index=df_cleaned.index, columns=['weights'])
+
+    stock_name = list(df_cleaned.index)
+
+
+    for i in range(len(stock_name)):
+
+        consolidated_W.loc[stock_name[i], 'weight'] = 0
+
+        for j in range(number_of_repetitions):
+
+            if stock_name[i] in history[j].index:
+                
+                consolidated_W.loc[stock_name[i], 'weight'] += history[j].loc[stock_name[i], 'weight']
+        
+        consolidated_W.loc[stock_name[i], 'weight'] /= number_of_repetitions
+
 
     return consolidated_W
 
