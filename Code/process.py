@@ -423,7 +423,7 @@ def consolidated_W(lookback_window, df_cleaned, number_of_clusters, number_of_re
         W = training_phase(lookback_window=lookback_window, df_cleaned=df_cleaned, number_of_clusters=number_of_clusters)
         history.append(W)
 
-    consolidated_W = pd.DataFrame(index=df_cleaned.index, columns=['weights'])
+    consolidated_W = pd.DataFrame(index=df_cleaned.index, columns=['weight'])
 
     stock_name = list(df_cleaned.index)
 
