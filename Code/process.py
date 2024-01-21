@@ -429,13 +429,13 @@ def portfolio_annualized_returns(evaluation_window, df_cleaned, training_window,
 
     evaluation_set = df_cleaned.iloc[:, training_window+1:training_window+1+evaluation_window]
 
-    portfolio_annualized_returns = pd.DataFrame(index=evaluation_set.columns, columns=['portfolio return'], data=np.zeros(len(evaluation_set.columns)))
+    portfolio_annualized_returns = pd.DataFrame(index=evaluation_set.columns, columns=['portfolio annualized return'], data=np.zeros(len(evaluation_set.columns)))
 
     for elem1 in portfolio_annualized_returns.index:
         for elem2 in final_weights:
-            portfolio_annualized_returns.loc[str(elem1), 'portfolio return'] += elem2[1]*evaluation_set.loc[elem2[0], str(elem1)]
+            portfolio_annualized_returns.loc[str(elem1), 'portfolio annualized return'] += elem2[1]*evaluation_set.loc[elem2[0], str(elem1)]
 
-    portfolio_return = (portfolio_return + 1)**(250/evaluation_window) - 1
+    portfolio_annualized_returns = (portfolio_annualized_returns + 1)**(250/evaluation_window) - 1
 
     return portfolio_annualized_returns
 
