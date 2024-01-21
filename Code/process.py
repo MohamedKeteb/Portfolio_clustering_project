@@ -386,6 +386,10 @@ def training_phase(lookback_window, df_cleaned, number_of_clusters):
 
     ## ÉTAPE 6 : on remonte aux poids de chaque actif dans l'ensemble
     W = final_weights(markowitz_weights=markowitz_weights_res, constituent_weights=constituent_weights_res)
+
+    W = pd.DataFrame(columns=['ticker', 'weight'], data=W)
+
+    W.set_index('ticker', inplace=True)
     
     return W
 
