@@ -100,9 +100,9 @@ def correlation_matrix(lookback_window, df_cleaned):
     ----------------------------------------------------------------
     '''
  
-    df = df_cleaned.iloc[:, :lookback_window+1] ## + 1 because we don't want to take into account the first column
-    df.set_index('ticker', inplace=True)
-    correlation_matrix = df.iloc[:, :lookback_window+1].transpose().corr(method='pearson') ## MODIFIÉ
+    df_cleaned = df_cleaned.iloc[:, :lookback_window+1] ## + 1 because we don't want to take into account the first column
+
+    correlation_matrix = df_cleaned.iloc[:, :lookback_window+1].transpose().corr(method='pearson') ## MODIFIÉ
     return correlation_matrix
 
     ## ==> AVERAGE ON WEIGHTS ?
@@ -143,8 +143,6 @@ def cluster_composition_and_centroid(df_cleaned, correlation_matrix, number_of_c
     ##         the correlation matrix correlation_matrix ==> we store the results in result
 
     result = pd.DataFrame(index=list(correlation_matrix.columns), columns=['Cluster label'], data=apply_SPONGE(correlation_matrix, number_of_clusters))
-
-    df_cleaned.set_index('ticker', inplace=True)
 
     ## STEP 2: compute the composition of each cluster (in terms of stocks)
 
@@ -363,7 +361,8 @@ def training_phase(lookback_window, df_cleaned, number_of_clusters):
     ----------------------------------------------------------------
 
     ----------------------------------------------------------------
-    OUTPUT : returns the overall weights of each cluster
+    OUTPUT : returns the overall weights of each stocks in our 
+             portfolio
     ----------------------------------------------------------------
     '''
 
@@ -391,8 +390,40 @@ def training_phase(lookback_window, df_cleaned, number_of_clusters):
     return W
 
 
+def consolidated_W(W, number_of_repetitions):
 
-def portfolio_annualized_returns(evaluation_window, df_cleaned, training_window, final_weights):
+    '''
+    ----------------------------------------------------------------
+    GENERAL IDEA : consolidate the numpy array of weights by 
+                   repeating the training and portfolio construction
+                   phase a certain number of times 
+                   (number_of_repetitions).
+    ----------------------------------------------------------------
+
+    ----------------------------------------------------------------
+    PARAMS : 
+
+    - W : numpy ndarray, returns the overall weights of each stocks in our 
+          portfolio
+
+    ----------------------------------------------------------------
+
+    ----------------------------------------------------------------
+    OUTPUT : numpy ndarray containing the returns of the overall weights of each cluster
+    ----------------------------------------------------------------
+    '''
+
+    consolidated_W = []
+
+    for i in range(number_of_repetitions):
+        consolidated_W = consolidated_W + W
+
+    consolidated_W = consolidated_W / number_of_repetitions
+
+    return consolidated_W
+
+
+def portfolio_annualized_returns(evaluation_window, df_cleaned, training_window, consolidated_W):
 
     '''
     ----------------------------------------------------------------
@@ -416,7 +447,7 @@ def portfolio_annualized_returns(evaluation_window, df_cleaned, training_window,
     - df_cleaned : cleaned pandas dataframe containing the returns 
                    of the stocks
 
-    - final_weights : numpy ndarray, containing the final weights 
+    - consolidated_W : numpy ndarray, containing the final weights 
                       of each asset, i.e. the overall portfolio 
                       weights
     ----------------------------------------------------------------
@@ -432,7 +463,7 @@ def portfolio_annualized_returns(evaluation_window, df_cleaned, training_window,
     portfolio_annualized_returns = pd.DataFrame(index=evaluation_set.columns, columns=['portfolio annualized return'], data=np.zeros(len(evaluation_set.columns)))
 
     for elem1 in portfolio_annualized_returns.index:
-        for elem2 in final_weights:
+        for elem2 in consolidated_W:
             portfolio_annualized_returns.loc[str(elem1), 'portfolio annualized return'] += elem2[1]*evaluation_set.loc[elem2[0], str(elem1)]
 
     portfolio_annualized_returns = (portfolio_annualized_returns + 1)**(250/evaluation_window) - 1
