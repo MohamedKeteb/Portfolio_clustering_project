@@ -390,7 +390,9 @@ def training_phase(lookback_window, df_cleaned, number_of_clusters):
     
     return W
 
-def portfolio_daily_returns(evaluation_window, df_cleaned, training_window, final_weights):
+
+
+def portfolio_annualized_returns(evaluation_window, df_cleaned, training_window, final_weights):
 
     '''
     ----------------------------------------------------------------
@@ -427,19 +429,23 @@ def portfolio_daily_returns(evaluation_window, df_cleaned, training_window, fina
 
     evaluation_set = df_cleaned.iloc[:, training_window+1:training_window+1+evaluation_window]
 
-    portfolio_daily_returns = pd.DataFrame(index=evaluation_set.columns, columns=['portfolio return'], data=np.zeros(len(evaluation_set.columns)))
+    portfolio_annualized_returns = pd.DataFrame(index=evaluation_set.columns, columns=['portfolio return'], data=np.zeros(len(evaluation_set.columns)))
 
-    for elem1 in portfolio_daily_returns.index:
+    for elem1 in portfolio_annualized_returns.index:
         for elem2 in final_weights:
-            portfolio_daily_returns.loc[str(elem1), 'portfolio return'] += elem2[1]*evaluation_set.loc[elem2[0], str(elem1)]
+            portfolio_annualized_returns.loc[str(elem1), 'portfolio return'] += elem2[1]*evaluation_set.loc[elem2[0], str(elem1)]
 
-    return portfolio_daily_returns
+    portfolio_return = (portfolio_return + 1)**(250/evaluation_window) - 1
 
-def Sharpe_and_PnL(portfolio_daily_returns, risk_free_rate):
+    return portfolio_annualized_returns
+
+
+
+def Sharpe_and_PnL(portfolio_annualized_returns, risk_free_rate):
 
     '''
     ----------------------------------------------------------------
-    GENERAL IDEA : givent the portfolio_daily_returns, compute two 
+    GENERAL IDEA : givent the portfolio_annualized_returns, compute two 
                    indicators of the performance of the portfolio 
                    (namely the sharpe ratio and the PnL)
     ----------------------------------------------------------------
@@ -447,7 +453,7 @@ def Sharpe_and_PnL(portfolio_daily_returns, risk_free_rate):
     ----------------------------------------------------------------
     PARAMS : 
 
-    - portfolio_daily_returns : pandas dataframe, returns the portfolio 
+    - portfolio_annualized_returns : pandas dataframe, returns the portfolio 
                                 return of each cluster in a pandas 
                                 dataframe
                             
@@ -461,13 +467,13 @@ def Sharpe_and_PnL(portfolio_daily_returns, risk_free_rate):
     ----------------------------------------------------------------
     '''
     
-    portfolio_daily_returns = np.array(portfolio_daily_returns)
+    portfolio_annualized_returns = np.array(portfolio_annualized_returns)
 
     # Calcul du rendement moyen du portefeuille
-    Rp = np.mean(portfolio_daily_returns)
+    Rp = np.mean(portfolio_annualized_returns)
 
     # Calcul de l'écart type du portefeuille
-    sigma_p = np.std(portfolio_daily_returns)
+    sigma_p = np.std(portfolio_annualized_returns)
 
     # Taux sans risque (ou rendement moyen du marché)
     Rf = risk_free_rate  # Remplacez par le taux sans risque ou le rendement moyen du marché approprié
@@ -476,9 +482,10 @@ def Sharpe_and_PnL(portfolio_daily_returns, risk_free_rate):
     SR = (Rp - Rf) / sigma_p
 
     # Calcul des PNL
-    PNL = np.cumsum(portfolio_daily_returns)
+    PNL = np.cumsum(portfolio_annualized_returns)
 
     return SR, PNL
+
 
 
 def plot_PnL(SR, PNL):
