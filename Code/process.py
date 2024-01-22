@@ -419,7 +419,7 @@ def final_weights(markowitz_weights, constituent_weights):
     return W
 
 
-def training_phase(lookback_window, df_cleaned, number_of_clusters, clustering_method='SPONGE', sigma, df):
+def training_phase(lookback_window, df_cleaned, number_of_clusters, sigma, df, clustering_method='SPONGE'):
 
     '''
     ----------------------------------------------------------------
