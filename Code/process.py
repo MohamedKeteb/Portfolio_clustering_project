@@ -197,7 +197,7 @@ def cluster_composition_and_centroid(df_cleaned, correlation_matrix, number_of_c
 
             return_centroid = return_centroid + df_cleaned.loc[elem, :][:lookback_window].values
 
-        cluster_composition[i].append(return_centroid) ## the third element contains the centroid of the cluster in question
+        cluster_composition[i].append(return_centroid/len(cluster_composition[i][1])) ## the third element contains the centroid of the cluster in question
 
     return cluster_composition
 
@@ -251,7 +251,7 @@ def constituent_weights(df_cleaned, cluster_composition, sigma, lookback_window)
 
     return constituent_weights
 
-def cluster_return(constituent_weights, df_cleaned, lookback_window):
+def cluster_return(constituent_weights, df_cleaned, df, lookback_window):
 
     '''
     ----------------------------------------------------------------
@@ -283,13 +283,25 @@ def cluster_return(constituent_weights, df_cleaned, lookback_window):
     ----------------------------------------------------------------
     '''
 
+    df.set_index('ticker', inplace=True)
+
+    open = pd.DataFrame(index = df_cleaned.index, columns=df_cleaned.columns)
+    close = pd.DataFrame(index = df_cleaned.index, columns=df_cleaned.columns)
+
+    cluster_open_and_close = pd.DataFrame(index = ['open', 'close'], columns = df_cleaned.columns)
+
     ## len(constituent_weights) =  number of cluster cluster (by construction)
     cluster_return = pd.DataFrame(index=None, columns=[f"cluster {i+1}" for i in range(len(constituent_weights))])
 
     for i in range(len(constituent_weights)):
-        res = 0
+
+        op, cl = 0, 0
+
         for elem in constituent_weights[i][1]:
-            res += elem[1]*df_cleaned.loc[elem[0], :][:lookback_window].values
+            op += elem[1]*open.loc
+            cl += 
+
+            res += elem[1]*df.loc[elem[0], :][:lookback_window].values
         
         cluster_return[f"cluster {i+1}"] = res
 
@@ -475,6 +487,8 @@ def consolidated_W(lookback_window, df_cleaned, number_of_clusters, number_of_re
 
 
     return consolidated_W
+
+
 
 def portfolio_annualized_returns(evaluation_window, df_cleaned, training_window, consolidated_W):
 
