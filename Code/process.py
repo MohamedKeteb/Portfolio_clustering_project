@@ -326,8 +326,8 @@ def cluster_return(constituent_weights, df_cleaned, df, lookback_window):
 
 
     for stock in open.index:
-        open.loc[stock, :] = df.loc[stock, 'open']
-        close.loc[stock, :] = df.loc[stock, 'close']
+        open.loc[stock, :] = df.loc[stock, 'open'][:lookback_window+1]
+        close.loc[stock, :] = df.loc[stock, 'close'][:lookback_window+1]
 
     for returns in cluster_returns.columns:
 
