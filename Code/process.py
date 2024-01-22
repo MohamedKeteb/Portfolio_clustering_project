@@ -466,7 +466,7 @@ def training_phase(lookback_window, df_cleaned, number_of_clusters, sigma, df, c
     cluster_return_res = cluster_return(constituent_weights=constituent_weights_res, df_cleaned=df_cleaned, df=df, lookback_window=lookback_window) 
 
     ## ÉTAPE 5 : on obtient les poids de markowitz de chaque cluster
-    markowitz_weights_res = markowitz_weights(cluster_return=cluster_return_res, lookback_window=lookback_window)
+    markowitz_weights_res = markowitz_weights(cluster_return=cluster_return_res)
 
     ## ÉTAPE 6 : on remonte aux poids de chaque actif dans l'ensemble
     W = final_weights(markowitz_weights=markowitz_weights_res, constituent_weights=constituent_weights_res)
