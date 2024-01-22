@@ -293,7 +293,7 @@ def cluster_return(constituent_weights, df_cleaned, df, lookback_window):
     ## len(constituent_weights) =  number of cluster cluster (by construction)
     cluster_return = pd.DataFrame(index=None, columns=[f"cluster {i+1}" for i in range(len(constituent_weights))])
 
-    for i in range(len(constituent_weights)):
+    '''for i in range(len(constituent_weights)):
 
         op, cl = 0, 0
 
@@ -303,7 +303,7 @@ def cluster_return(constituent_weights, df_cleaned, df, lookback_window):
 
             res += elem[1]*df.loc[elem[0], :][:lookback_window].values
         
-        cluster_return[f"cluster {i+1}"] = res
+        cluster_return[f"cluster {i+1}"] = res'''
 
     return cluster_return
 
