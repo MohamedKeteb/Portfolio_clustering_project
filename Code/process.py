@@ -285,27 +285,27 @@ def cluster_return(constituent_weights, df_cleaned, df, lookback_window):
 
     df.set_index('ticker', inplace=True)
 
-    open = pd.DataFrame(index = df_cleaned.index, columns=df_cleaned.columns)
-    close = pd.DataFrame(index = df_cleaned.index, columns=df_cleaned.columns)
+    open = pd.DataFrame(index = df_cleaned.index, columns=df_cleaned.columns[:lookback_window+1])
+    close = pd.DataFrame(index = df_cleaned.index, columns=df_cleaned.columns[:lookback_window+1])
 
-    cluster_open_and_close = pd.DataFrame(index = ['open', 'close'], columns = df_cleaned.columns)
+    cluster_returns = pd.DataFrame(index = [f'cluster {i+1}' for i in range(len(constituent_weights))], columns = df_cleaned.columns[:lookback_window+1])
 
-    ## len(constituent_weights) =  number of cluster cluster (by construction)
-    cluster_return = pd.DataFrame(index=None, columns=[f"cluster {i+1}" for i in range(len(constituent_weights))])
 
-    '''for i in range(len(constituent_weights)):
+    for stock in open.index:
+        open.loc[stock, :] = df.loc[stock, 'open']
+        close.loc[stock, :] = df.loc[stock, 'close']
 
-        op, cl = 0, 0
+    for returns in cluster_returns.columns:
 
-        for elem in constituent_weights[i][1]:
-            op += elem[1]*open.loc
-            cl += 
+        for elem in constituent_weights:
+            op, cl = 0, 0
+            for stocks in elem[1]:
+                op += open.loc[stocks[0], returns]*stocks[1]
+                cl += close.loc[stocks[0], returns]*stocks[1]
 
-            res += elem[1]*df.loc[elem[0], :][:lookback_window].values
-        
-        cluster_return[f"cluster {i+1}"] = res'''
+            cluster_returns.loc[elem[0], returns] = (cl - op)/op
 
-    return cluster_return
+    return cluster_returns
 
 def markowitz_weights(cluster_return, lookback_window):
 
