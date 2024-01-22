@@ -295,7 +295,7 @@ def cluster_return(constituent_weights, df_cleaned, lookback_window):
 
     return cluster_return
 
-def makowitz_weights(cluster_return, lookback_window):
+def markowitz_weights(cluster_return, lookback_window):
 
     '''
     ----------------------------------------------------------------
@@ -323,7 +323,7 @@ def makowitz_weights(cluster_return, lookback_window):
     cov_matrix = cluster_return.cov()
 
     ## on construit le vecteur d'expected return du cluster (250 jours de trading par an, on passe de rendements journaliers à rendements annualisés)
-    expected_returns = (cluster_return.mean(axis=0) + 1)**(250/lookback_window) - 1 ## on fait ici le choix de prendre le rendement moyen comme objectif
+    expected_returns = (cluster_return.mean(axis=0) + 1)**250 - 1 ## on fait ici le choix de prendre le rendement moyen comme objectif
 
     ef = EfficientFrontier(expected_returns=expected_returns, cov_matrix=cov_matrix)
     ef.max_sharpe()
@@ -415,7 +415,7 @@ def training_phase(lookback_window, df_cleaned, number_of_clusters, clustering_m
     cluster_return_res = cluster_return(constituent_weights=constituent_weights_res, df_cleaned=df_cleaned, lookback_window=lookback_window) 
 
     ## ÉTAPE 5 : on obtient les poids de markowitz de chaque cluster
-    markowitz_weights_res = makowitz_weights(cluster_return=cluster_return_res, lookback_window=lookback_window)
+    markowitz_weights_res = markowitz_weights(cluster_return=cluster_return_res, lookback_window=lookback_window)
 
     ## ÉTAPE 6 : on remonte aux poids de chaque actif dans l'ensemble
     W = final_weights(markowitz_weights=markowitz_weights_res, constituent_weights=constituent_weights_res)
@@ -519,10 +519,9 @@ def portfolio_annualized_returns(evaluation_window, df_cleaned, training_window,
         for stock in list(evaluation_set.index):
             portfolio_annualized_returns.loc[str(elem1), 'portfolio annualized return'] += consolidated_W.loc[stock, 'weight']*evaluation_set.loc[stock, str(elem1)]
 
-    portfolio_annualized_returns = (portfolio_annualized_returns + 1)**(250/evaluation_window) - 1
+    portfolio_annualized_returns = (portfolio_annualized_returns + 1)**250 - 1
 
     return portfolio_annualized_returns
-
 
 
 

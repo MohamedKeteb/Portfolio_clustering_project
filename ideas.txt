@@ -41,3 +41,16 @@ met 10, il y a de tout petits clusters
 
 2. Comment synthétiser les 100 clusterings en un seul pour 
 obtenir quelque chose de plus robuste ?
+
+----------------------------------------------------------------
+----------------------------------------------------------------
+
+- Modify the parameters of the SPONGE clustering function ? (to get 
+a more accurate result)
+
+- Centroid of each cluster --> other way to do it than just averaging
+over returns 
+
+- How to chose sigma ? --> incorporer dans le tableau 
+
+- 
