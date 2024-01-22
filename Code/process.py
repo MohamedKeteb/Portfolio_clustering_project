@@ -341,7 +341,7 @@ def cluster_return(constituent_weights, df_cleaned, df, lookback_window):
 
     return cluster_returns
 
-def markowitz_weights(cluster_return, lookback_window):
+def markowitz_weights(cluster_return):
 
     '''
     ----------------------------------------------------------------
@@ -419,7 +419,7 @@ def final_weights(markowitz_weights, constituent_weights):
     return W
 
 
-def training_phase(lookback_window, df_cleaned, number_of_clusters, clustering_method='SPONGE'):
+def training_phase(lookback_window, df_cleaned, number_of_clusters, clustering_method='SPONGE', sigma, df):
 
     '''
     ----------------------------------------------------------------
@@ -437,6 +437,11 @@ def training_phase(lookback_window, df_cleaned, number_of_clusters, clustering_m
 
     - number_of_clusters : integer, corresponding to the number of 
                            clusters
+
+    - sigma : float, corresponding to the dispersion in the intra-
+              cluster weights
+
+    - df : pandas dataframe containing the raw data 
     ----------------------------------------------------------------
 
     ----------------------------------------------------------------
@@ -455,10 +460,10 @@ def training_phase(lookback_window, df_cleaned, number_of_clusters, clustering_m
     ## poids très proches ... ==> dû au fait qu'on regarde sur un trop petit échantillon (30 jours) ? 
 
     ## ÉTAPE 3 : on obtient les poids constitutifs de chaque actifs au sein d'un même cluster
-    constituent_weights_res = constituent_weights(df_cleaned=df_cleaned, cluster_composition=cluster_composition, sigma=10, lookback_window=lookback_window)
+    constituent_weights_res = constituent_weights(df_cleaned=df_cleaned, cluster_composition=cluster_composition, sigma=sigma, lookback_window=lookback_window)
 
     ## ÉTAPE 4 : on obtient les rendements de chaque cluster vu comme un actif
-    cluster_return_res = cluster_return(constituent_weights=constituent_weights_res, df_cleaned=df_cleaned, lookback_window=lookback_window) 
+    cluster_return_res = cluster_return(constituent_weights=constituent_weights_res, df_cleaned=df_cleaned, df=df, lookback_window=lookback_window) 
 
     ## ÉTAPE 5 : on obtient les poids de markowitz de chaque cluster
     markowitz_weights_res = markowitz_weights(cluster_return=cluster_return_res, lookback_window=lookback_window)
