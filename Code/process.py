@@ -339,7 +339,7 @@ def cluster_return(constituent_weights, df_cleaned, df, lookback_window):
 
             cluster_returns.loc[elem[0], returns] = (cl - op)/op
 
-    return cluster_returns.transpose()
+    return cluster_returns
 
 def markowitz_weights(cluster_return):
 
@@ -366,10 +366,10 @@ def markowitz_weights(cluster_return):
 
     ## on construit la matrice de corrélation associée à ces returns, c'est donc une matrice de corrélation de return de cluster
 
-    cov_matrix = cluster_return.cov()
+    cov_matrix = cluster_return.transpose().cov()
 
     ## on construit le vecteur d'expected return du cluster (250 jours de trading par an, on passe de rendements journaliers à rendements annualisés)
-    expected_returns = (cluster_return.mean(axis=0) + 1)**250 - 1 ## on fait ici le choix de prendre le rendement moyen comme objectif
+    expected_returns = (cluster_return.transpose().mean(axis=0) + 1)**250 - 1 ## on fait ici le choix de prendre le rendement moyen comme objectif
 
     ef = EfficientFrontier(expected_returns=expected_returns, cov_matrix=cov_matrix)
     ef.max_sharpe()
