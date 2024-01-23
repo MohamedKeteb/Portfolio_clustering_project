@@ -348,6 +348,34 @@ def cluster_return(constituent_weights, df_cleaned, df, lookback_window):
 
     return cluster_returns
 
+def cluster_return_2(constituent_weights, df_cleaned, df, lookback_window):
+    """
+    Compute the return of each cluster using constituent weights and stock returns.
+
+    Parameters:
+    - constituent_weights: Numpy array from the constituent_weights function.
+    - df_cleaned: Pandas DataFrame with stock returns.
+    - df: Original DataFrame with stock data.
+    - lookback_window: List of length 2, [start, end], representing the time range.
+
+    Returns:
+    Pandas DataFrame with the return of each cluster over the specified lookback window.
+    """
+
+    open_prices = df.loc[:, 'open'][lookback_window[0]:lookback_window[1]]
+    close_prices = df.loc[:, 'close'][lookback_window[0]:lookback_window[1]]
+
+    cluster_returns = pd.DataFrame(index=[f'cluster {i+1}' for i in range(len(constituent_weights))],
+                                   columns=df_cleaned.columns[lookback_window[0]:lookback_window[1]])
+
+    for returns_date in cluster_returns.columns:
+        for weights, stocks in constituent_weights:
+            open_value = sum(open_prices.loc[stock, returns_date] * weight for stock, weight in stocks)
+            close_value = sum(close_prices.loc[stock, returns_date] * weight for stock, weight in stocks)
+            cluster_returns.loc[weights, returns_date] = (close_value - open_value) / open_value
+
+    return cluster_returns
+
 def markowitz_weights(cluster_return):
 
     '''
