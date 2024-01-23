@@ -485,7 +485,7 @@ def training_phase(lookback_window, df_cleaned, number_of_clusters, sigma, df, c
     return W
 
 
-def consolidated_W(lookback_window, df_cleaned, number_of_clusters, number_of_repetitions, clustering_method='SPONGE'):
+def consolidated_W(number_of_repetitions, lookback_window, df_cleaned, number_of_clusters, sigma, df, clustering_method='SPONGE'):
 
     '''
     ----------------------------------------------------------------
@@ -511,7 +511,7 @@ def consolidated_W(lookback_window, df_cleaned, number_of_clusters, number_of_re
     history = []
 
     for _ in range(number_of_repetitions):
-        W = training_phase(lookback_window=lookback_window, df_cleaned=df_cleaned, number_of_clusters=number_of_clusters, clustering_method=clustering_method)
+        W = training_phase(lookback_window=lookback_window, df_cleaned=df_cleaned, number_of_clusters=number_of_clusters, sigma=sigma, df=df, clustering_method=clustering_method)
         history.append(W)
 
     consolidated_W = pd.DataFrame(index=df_cleaned.index, columns=['weight'])
