@@ -324,8 +324,6 @@ def cluster_return(constituent_weights, df_cleaned, df, lookback_window):
     ----------------------------------------------------------------
     '''
 
-    df.set_index('ticker', inplace=True)
-
     open = pd.DataFrame(index = df_cleaned.index, columns=df_cleaned.columns[:lookback_window+1])
     close = pd.DataFrame(index = df_cleaned.index, columns=df_cleaned.columns[:lookback_window+1])
 
