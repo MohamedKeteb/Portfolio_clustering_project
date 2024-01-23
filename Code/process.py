@@ -152,16 +152,17 @@ def correlation_matrix(lookback_window, df_cleaned):
     ----------------------------------------------------------------
     PARAMS : 
     
-    - lookback_window : integer
-    
+    - lookback_window : list of length 2, [start, end] corresponding 
+                        to the range of the lookback_window
+
     - df_cleaned : pandas dataframe containing the returns of the stocks
 
     ----------------------------------------------------------------
     '''
  
-    df_cleaned = df_cleaned.iloc[:, :lookback_window] 
+    df_cleaned = df_cleaned.iloc[:, lookback_window[0]:lookback_window[1]] 
 
-    correlation_matrix = df_cleaned.iloc[:, :lookback_window].transpose().corr(method='pearson') ## MODIFIÉ
+    correlation_matrix = df_cleaned.iloc[:, lookback_window[0]:lookback_window[1]].transpose().corr(method='pearson') ## MODIFIÉ
     return correlation_matrix
 
     ## ==> AVERAGE ON WEIGHTS ?
@@ -194,10 +195,11 @@ def cluster_composition_and_centroid(df_cleaned, correlation_matrix, number_of_c
     - number_of_clusters : integer, corresponding to the number of 
                            clusters
 
-    - lookback_window : integer, corresponding to the number of lookback 
-                        days (in terms of historcal returns)
+    - lookback_window : list of length 2, [start, end] corresponding 
+                        to the range of the lookback_window
     ----------------------------------------------------------------
     '''
+
     ## STEP 1: run the SPONGE clustering algorithm with a number of clusters fixed to be number_of_clusters and using 
     ##         the correlation matrix correlation_matrix ==> we store the results in result
 
@@ -225,11 +227,11 @@ def cluster_composition_and_centroid(df_cleaned, correlation_matrix, number_of_c
 
     for i in range(len(cluster_composition)):
 
-        return_centroid = np.zeros(lookback_window) ## we prepare the return_centroid array to stock the centroid
+        return_centroid = np.zeros(lookback_window[1]-lookback_window[0]) ## we prepare the return_centroid array to stock the centroid
 
         for elem in cluster_composition[i][1]:
 
-            return_centroid = return_centroid + df_cleaned.loc[elem, :][:lookback_window].values
+            return_centroid = return_centroid + df_cleaned.loc[elem, :][lookback_window[0]:lookback_window[1]].values
 
         cluster_composition[i].append(return_centroid/len(cluster_composition[i][1])) ## the third element contains the centroid of the cluster in question
 
@@ -257,8 +259,8 @@ def constituent_weights(df_cleaned, cluster_composition, sigma, lookback_window)
 
     - sigma : parameter of dispersion
 
-    - lookback_window : integer, corresponding to the number of lookback 
-                        days (in terms of historcal returns)
+    - lookback_window : list of length 2, [start, end] corresponding 
+                        to the range of the lookback_window
     ----------------------------------------------------------------
 
     ----------------------------------------------------------------
@@ -276,7 +278,7 @@ def constituent_weights(df_cleaned, cluster_composition, sigma, lookback_window)
 
         for elem in cluster_composition[i][1]:
 
-            elem_returns = df_cleaned.loc[elem, :][:lookback_window].values
+            elem_returns = df_cleaned.loc[elem, :][lookback_window[0]:lookback_window[1]].values
 
             distance_to_centroid = np.linalg.norm(cluster_composition[i][2] - elem_returns)**2
             
@@ -314,8 +316,8 @@ def cluster_return(constituent_weights, df_cleaned, df, lookback_window):
     - constituent_weights : numpy array as returned by the 
                             constituent_weights function 
 
-    - lookback_window : integer, corresponding to the number of lookback 
-                        days (in terms of historcal returns)
+    - lookback_window : list of length 2, [start, end] corresponding 
+                        to the range of the lookback_window
     ----------------------------------------------------------------
 
     ----------------------------------------------------------------
@@ -324,15 +326,15 @@ def cluster_return(constituent_weights, df_cleaned, df, lookback_window):
     ----------------------------------------------------------------
     '''
 
-    open = pd.DataFrame(index = df_cleaned.index, columns=df_cleaned.columns[:lookback_window+1])
-    close = pd.DataFrame(index = df_cleaned.index, columns=df_cleaned.columns[:lookback_window+1])
+    open = pd.DataFrame(index = df_cleaned.index, columns=df_cleaned.columns[lookback_window[0]:lookback_window[1]])
+    close = pd.DataFrame(index = df_cleaned.index, columns=df_cleaned.columns[lookback_window[0]:lookback_window[1]])
 
-    cluster_returns = pd.DataFrame(index = [f'cluster {i+1}' for i in range(len(constituent_weights))], columns = df_cleaned.columns[:lookback_window+1])
+    cluster_returns = pd.DataFrame(index = [f'cluster {i+1}' for i in range(len(constituent_weights))], columns = df_cleaned.columns[lookback_window[0]:lookback_window[1]])
 
 
     for stock in open.index:
-        open.loc[stock, :] = df.loc[stock, 'open'][:lookback_window+1]
-        close.loc[stock, :] = df.loc[stock, 'close'][:lookback_window+1]
+        open.loc[stock, :] = df.loc[stock, 'open'][lookback_window[0]:lookback_window[1]]
+        close.loc[stock, :] = df.loc[stock, 'close'][lookback_window[0]:lookback_window[1]]
 
     for returns in cluster_returns.columns:
 
@@ -360,8 +362,8 @@ def markowitz_weights(cluster_return):
     - cluster_return : numpy array as returned by the 
                        cluster_return function 
 
-    - lookback_window : integer, corresponding to the number of lookback 
-                        days (in terms of historcal returns)
+    - lookback_window : list of length 2, [start, end] corresponding 
+                        to the range of the lookback_window
     ----------------------------------------------------------------
 
     ----------------------------------------------------------------
@@ -434,8 +436,8 @@ def training_phase(lookback_window, df_cleaned, number_of_clusters, sigma, df, c
     ----------------------------------------------------------------
     PARAMS : 
 
-    - lookback_window : integer, corresponding to the number of 
-                        lookback days (in terms of historcal returns)
+    - lookback_window : list of length 2, [start, end] corresponding 
+                        to the range of the lookback_window
 
     - df_cleaned : cleaned pandas dataframe containing the returns 
                    of the stocks
@@ -534,14 +536,14 @@ def consolidated_W(number_of_repetitions, lookback_window, df_cleaned, number_of
 
 
 
-def portfolio_annualized_returns(evaluation_window, df_cleaned, training_window, consolidated_W):
+def portfolio_annualized_returns(evaluation_window, df_cleaned, lookback_window, consolidated_W):
 
     '''
     ----------------------------------------------------------------
     GENERAL IDEA : given the overall weights of each asset in the 
                    portfolio, compute the portfolio return over an 
                    evaluation window that does not overlap with the 
-                   training_window. 
+                   lookback_window. 
     ----------------------------------------------------------------
 
     ----------------------------------------------------------------
@@ -551,9 +553,8 @@ def portfolio_annualized_returns(evaluation_window, df_cleaned, training_window,
                           future days (in terms of historcal returns) 
                           on which we evaluate the portfolio
 
-    - training_window : integer, corresponding to the number of 
-                        lookback days (in terms of historcal returns) 
-                        on which we train and construct the portfolio
+    - lookback_window : list of length 2, [start, end] corresponding 
+                        to the range of the lookback_window
 
     - df_cleaned : cleaned pandas dataframe containing the returns 
                    of the stocks
@@ -569,7 +570,7 @@ def portfolio_annualized_returns(evaluation_window, df_cleaned, training_window,
     ----------------------------------------------------------------
     '''
 
-    evaluation_set = df_cleaned.iloc[:, training_window+1:training_window+1+evaluation_window]
+    evaluation_set = df_cleaned.iloc[:, lookback_window[1]:lookback_window[1]+evaluation_window]
 
     portfolio_annualized_returns = pd.DataFrame(index=evaluation_set.columns, columns=['portfolio annualized return'], data=np.zeros(len(evaluation_set.columns)))
 
