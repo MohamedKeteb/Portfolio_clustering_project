@@ -159,9 +159,9 @@ def correlation_matrix(lookback_window, df_cleaned):
     ----------------------------------------------------------------
     '''
  
-    df_cleaned = df_cleaned.iloc[:, :lookback_window+1] ## + 1 because we don't want to take into account the first column
+    df_cleaned = df_cleaned.iloc[:, :lookback_window] 
 
-    correlation_matrix = df_cleaned.iloc[:, :lookback_window+1].transpose().corr(method='pearson') ## MODIFIÉ
+    correlation_matrix = df_cleaned.iloc[:, :lookback_window].transpose().corr(method='pearson') ## MODIFIÉ
     return correlation_matrix
 
     ## ==> AVERAGE ON WEIGHTS ?
