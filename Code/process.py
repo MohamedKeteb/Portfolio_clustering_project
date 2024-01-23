@@ -269,21 +269,26 @@ def constituent_weights(df_cleaned, cluster_composition, sigma, lookback_window)
 
     constituent_weights = []
 
-    for i in range(len(cluster_composition)):
+    for i in range(len(cluster_composition)): ## we range across all clusters 
 
         weights = []
+        total_cluster_weight = 0 ## we store the total weights within a cluster to normalize weights in the end
 
         for elem in cluster_composition[i][1]:
 
             elem_returns = df_cleaned.loc[elem, :][:lookback_window].values
 
             distance_to_centroid = np.linalg.norm(cluster_composition[i][2] - elem_returns)**2
-
+            total_cluster_weight += distance_to_centroid
             weights.append([elem, np.exp(-distance_to_centroid/(2*(sigma**2)))])
-        
+
+        for j in range(len(weights)):
+            weights[j][1] = weights[j][1]/total_cluster_weight
+                
         constituent_weights.append([cluster_composition[i][0], weights])
 
     return constituent_weights
+
 
 def cluster_return(constituent_weights, df_cleaned, df, lookback_window):
 
