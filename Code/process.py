@@ -366,7 +366,7 @@ def markowitz_weights(cluster_return):
 
     ## on construit la matrice de corrélation associée à ces returns, c'est donc une matrice de corrélation de return de cluster
 
-    cov_matrix = cluster_return.cov()
+    cov_matrix = cluster_return.transpose().cov()
 
     ## on construit le vecteur d'expected return du cluster (250 jours de trading par an, on passe de rendements journaliers à rendements annualisés)
     expected_returns = (cluster_return.mean(axis=0) + 1)**250 - 1 ## on fait ici le choix de prendre le rendement moyen comme objectif
