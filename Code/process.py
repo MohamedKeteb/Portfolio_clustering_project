@@ -348,34 +348,6 @@ def cluster_return(constituent_weights, df_cleaned, df, lookback_window):
 
     return cluster_returns
 
-def cluster_return_2(constituent_weights, df_cleaned, df, lookback_window):
-    """
-    Compute the return of each cluster using constituent weights and stock returns.
-
-    Parameters:
-    - constituent_weights: Numpy array from the constituent_weights function.
-    - df_cleaned: Pandas DataFrame with stock returns.
-    - df: Original DataFrame with stock data.
-    - lookback_window: List of length 2, [start, end], representing the time range.
-
-    Returns:
-    Pandas DataFrame with the return of each cluster over the specified lookback window.
-    """
-
-    open_prices = df.loc[:, 'open'][lookback_window[0]:lookback_window[1]]
-    close_prices = df.loc[:, 'close'][lookback_window[0]:lookback_window[1]]
-
-    cluster_returns = pd.DataFrame(index=[f'cluster {i+1}' for i in range(len(constituent_weights))],
-                                   columns=df_cleaned.columns[lookback_window[0]:lookback_window[1]])
-
-    for returns_date in cluster_returns.columns:
-        for weights, stocks in constituent_weights:
-            open_value = sum(open_prices.loc[stock, returns_date] * weight for stock, weight in stocks)
-            close_value = sum(close_prices.loc[stock, returns_date] * weight for stock, weight in stocks)
-            cluster_returns.loc[weights, returns_date] = (close_value - open_value) / open_value
-
-    return cluster_returns
-
 
 def markowitz_weights(cluster_return):
 
@@ -565,7 +537,7 @@ def consolidated_W(number_of_repetitions, lookback_window, df_cleaned, number_of
 
 
 
-def portfolio_annualized_returns(evaluation_window, df_cleaned, lookback_window, consolidated_W):
+def portfolio_returns(evaluation_window, df_cleaned, lookback_window, consolidated_W):
 
     '''
     ----------------------------------------------------------------
@@ -601,23 +573,21 @@ def portfolio_annualized_returns(evaluation_window, df_cleaned, lookback_window,
 
     evaluation_set = df_cleaned.iloc[:, lookback_window[1]:lookback_window[1]+evaluation_window]
 
-    portfolio_annualized_returns = pd.DataFrame(index=evaluation_set.columns, columns=['portfolio annualized return'], data=np.zeros(len(evaluation_set.columns)))
+    portfolio_returns = pd.DataFrame(index=evaluation_set.columns, columns=['portfolio return'], data=np.zeros(len(evaluation_set.columns)))
 
-    for elem1 in portfolio_annualized_returns.index:
+    for elem1 in portfolio_returns.index:
         for stock in list(evaluation_set.index):
-            portfolio_annualized_returns.loc[str(elem1), 'portfolio annualized return'] += consolidated_W.loc[stock, 'weight']*evaluation_set.loc[stock, str(elem1)]
+            portfolio_returns.loc[str(elem1), 'portfolio return'] += consolidated_W.loc[stock, 'weight']*evaluation_set.loc[stock, str(elem1)]
 
-    portfolio_annualized_returns = (portfolio_annualized_returns + 1)**250 - 1
-
-    return portfolio_annualized_returns
+    return portfolio_returns
 
 
 
-def Sharpe_and_PnL(portfolio_annualized_returns, risk_free_rate):
+def Sharpe_and_PnL(portfolio_returns, risk_free_rate):
 
     '''
     ----------------------------------------------------------------
-    GENERAL IDEA : givent the portfolio_annualized_returns, compute two 
+    GENERAL IDEA : givent the portfolio_returns, compute two 
                    indicators of the performance of the portfolio 
                    (namely the sharpe ratio and the PnL)
     ----------------------------------------------------------------
@@ -625,7 +595,7 @@ def Sharpe_and_PnL(portfolio_annualized_returns, risk_free_rate):
     ----------------------------------------------------------------
     PARAMS : 
 
-    - portfolio_annualized_returns : pandas dataframe, returns the portfolio 
+    - portfolio_returns : pandas dataframe, returns the portfolio 
                                 return of each cluster in a pandas 
                                 dataframe
                             
@@ -639,13 +609,13 @@ def Sharpe_and_PnL(portfolio_annualized_returns, risk_free_rate):
     ----------------------------------------------------------------
     '''
     
-    portfolio_annualized_returns = np.array(portfolio_annualized_returns)
+    portfolio_returns = np.array(portfolio_returns)
 
     # Calcul du rendement moyen du portefeuille
-    Rp = np.mean(portfolio_annualized_returns)
+    Rp=(1+np.mean(portfolio_returns))**250-1
 
     # Calcul de l'écart type du portefeuille
-    sigma_p = np.std(portfolio_annualized_returns)
+    sigma_p = np.std(portfolio_returns)
 
     # Taux sans risque (ou rendement moyen du marché)
     Rf = risk_free_rate  # Remplacez par le taux sans risque ou le rendement moyen du marché approprié
@@ -654,7 +624,7 @@ def Sharpe_and_PnL(portfolio_annualized_returns, risk_free_rate):
     SR = (Rp - Rf) / sigma_p
 
     # Calcul des PNL
-    PNL = np.cumsum(portfolio_annualized_returns)
+    PNL = np.cumprod(1 + portfolio_returns)-1
 
     return SR, PNL
 
