@@ -376,6 +376,7 @@ def cluster_return_2(constituent_weights, df_cleaned, df, lookback_window):
 
     return cluster_returns
 
+
 def markowitz_weights(cluster_return):
 
     '''
