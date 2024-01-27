@@ -160,7 +160,6 @@ def correlation_matrix(lookback_window, df_cleaned):
     ----------------------------------------------------------------
     '''
  
-    df_cleaned = df_cleaned.iloc[:, lookback_window[0]:lookback_window[1]] 
 
     correlation_matrix = df_cleaned.iloc[:, lookback_window[0]:lookback_window[1]].transpose().corr(method='pearson') ## MODIFIÉ
     return correlation_matrix
