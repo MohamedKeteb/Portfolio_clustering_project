@@ -165,7 +165,6 @@ def correlation_matrix(lookback_window, df_cleaned):
     correlation_matrix = df_cleaned.iloc[:, lookback_window[0]:lookback_window[1]].transpose().corr(method='pearson') ## MODIFIÉ
     return correlation_matrix
 
-    ## ==> AVERAGE ON WEIGHTS ?
 
 ## we compute the return_centroid of each cluster to attribute intra-cluster weights according to the distance between stocks within the cluster and this 
 ## centroid
@@ -326,15 +325,16 @@ def cluster_return(constituent_weights, df_cleaned, df, lookback_window):
     ----------------------------------------------------------------
     '''
 
+    ## we first get the open and close values for each stock 
     open = pd.DataFrame(index = df_cleaned.index, columns=df_cleaned.columns[lookback_window[0]:lookback_window[1]])
     close = pd.DataFrame(index = df_cleaned.index, columns=df_cleaned.columns[lookback_window[0]:lookback_window[1]])
-
-    cluster_returns = pd.DataFrame(index = [f'cluster {i+1}' for i in range(len(constituent_weights))], columns = df_cleaned.columns[lookback_window[0]:lookback_window[1]])
-
 
     for stock in open.index:
         open.loc[stock, :] = df.loc[stock, 'open'][lookback_window[0]:lookback_window[1]]
         close.loc[stock, :] = df.loc[stock, 'close'][lookback_window[0]:lookback_window[1]]
+
+    ## using open and close, we compute the returns of each stocks (weighted-average using constituents weights)
+    cluster_returns = pd.DataFrame(index = [f'cluster {i+1}' for i in range(len(constituent_weights))], columns = df_cleaned.columns[lookback_window[0]:lookback_window[1]])
 
     for returns in cluster_returns.columns:
 
@@ -377,7 +377,7 @@ def markowitz_weights(cluster_return):
     cov_matrix = cluster_return.transpose().cov()
 
     ## on construit le vecteur d'expected return du cluster (250 jours de trading par an, on passe de rendements journaliers à rendements annualisés)
-    expected_returns = (cluster_return.transpose().mean(axis=0) + 1)**250 - 1 ## on fait ici le choix de prendre le rendement moyen comme objectif
+    expected_returns = (cluster_return.mean(axis=1) + 1)**250 - 1 ## on fait ici le choix de prendre le rendement moyen comme objectif
 
     ef = EfficientFrontier(expected_returns=expected_returns, cov_matrix=cov_matrix)
     ef.max_sharpe()
@@ -499,8 +499,23 @@ def consolidated_W(number_of_repetitions, lookback_window, df_cleaned, number_of
     ----------------------------------------------------------------
     PARAMS : 
 
-    - W : numpy ndarray, returns the overall weights of each stocks in our 
-          portfolio
+    - number_of_repetitions : number of time we repeat the training
+                              phase and the consequent averaging 
+                              method
+
+    - lookback_window : list of length 2, [start, end] corresponding 
+                        to the range of the lookback_window
+
+    - df_cleaned : cleaned pandas dataframe containing the returns 
+                   of the stocks
+
+    - number_of_clusters : integer, corresponding to the number of 
+                           clusters
+
+    - sigma : float, corresponding to the dispersion in the intra-
+              cluster weights
+
+    - df : pandas dataframe containing the raw data
 
     ----------------------------------------------------------------
 
@@ -518,7 +533,6 @@ def consolidated_W(number_of_repetitions, lookback_window, df_cleaned, number_of
     consolidated_W = pd.DataFrame(index=df_cleaned.index, columns=['weight'])
 
     stock_name = list(df_cleaned.index)
-
 
     for i in range(len(stock_name)):
 
