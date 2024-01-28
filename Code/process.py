@@ -69,10 +69,7 @@ def apply_SPONGE(correlation_matrix, k):
 
     A_pos, A_neg = signed_adjency(correlation_matrix)
 
-    A_pos_sparse = sparse.csc_matrix(A_pos.values)
-    A_neg_sparse = sparse.csc_matrix(A_neg.values)
-
-    data = (A_pos_sparse, A_neg_sparse)
+    data = (sparse.csc_matrix(A_pos.values), sparse.csc_matrix(A_neg.values))
 
     cluster = Cluster(data)
 
