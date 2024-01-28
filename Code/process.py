@@ -373,7 +373,7 @@ def markowitz_weights(cluster_return):
     cov_matrix = cluster_return.transpose().cov()
 
     ## on construit le vecteur d'expected return du cluster (250 jours de trading par an, on passe de rendements journaliers à rendements annualisés)
-    expected_returns = (cluster_return.iloc[:, -1] + 1)**250 - 1 ## on fait ici le choix de prendre le rendement moyen comme objectif
+    expected_returns = 2*(1+ cluster_return.mean(axis=1))**252 - 1 ## on fait ici le choix de prendre le rendement moyen comme objectif
 
     ef = EfficientFrontier(expected_returns=expected_returns, cov_matrix=cov_matrix)
     ef.max_sharpe()
