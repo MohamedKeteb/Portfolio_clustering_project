@@ -7,7 +7,7 @@ import plotly.graph_objects as go
 
 ## path Nail : '/Users/khelifanail/Documents/GitHub/Portfolio_clustering_project'
 ## path Jerome : 'C:/Users/33640/OneDrive/Documents/GitHub/Portfolio_clustering_project'
-sys.path.append(r'/Users/khelifanail/Documents/GitHub/Portfolio_clustering_project')  # Ajoute le chemin parent
+sys.path.append(r'C:/Users/33640/OneDrive/Documents/GitHub/Portfolio_clustering_project')  # Ajoute le chemin parent
 
 from signet.cluster import Cluster 
 from scipy import sparse
