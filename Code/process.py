@@ -345,7 +345,64 @@ def cluster_return(constituent_weights, df_cleaned, df, lookback_window):
     return cluster_returns
 
 
-def markowitz_weights(cluster_return):
+def noised_array(y, eta):
+
+    '''
+    ----------------------------------------------------------------
+    GENERAL IDEA : given an array y and a target correlation eta, 
+                   compute the array with the noise  
+    ----------------------------------------------------------------
+
+    ----------------------------------------------------------------
+    PARAMS : 
+
+    - y : numpy ndarray that we want to perturb
+
+    - eta : target correlation that we want to create between y and 
+            its perturbated version
+
+    ----------------------------------------------------------------
+
+    ----------------------------------------------------------------
+    OUTPUT : noised version of y that satisfies the targeted level 
+             of correlation
+    ----------------------------------------------------------------
+    '''
+
+    # We compute with a small noise 
+    epsilon_std_dev = 0.1
+
+    # Calculer la corrélation initiale
+    correlation = 0
+
+    x = y.copy()
+
+    z = y.to_numpy()
+    z = np.array([item for sublist in z for item in sublist])
+
+    
+    # Boucle pour ajuster l'écart-type du bruit jusqu'à ce que la corrélation atteigne eta
+    while correlation < eta:
+        # Generate a vector of Gaussian noise
+        noise = np.random.normal(0, epsilon_std_dev, len(y))
+
+        for i in range(len(y)):
+            x.iloc[i, 0] = y.iloc[i, 0] + noise[i]
+
+        w = x.to_numpy()
+        w = np.array([item for sublist in w for item in sublist])
+        # Calculate the new correlation
+        correlation = np.corrcoef(w, z)[0, 1]
+
+        # Adjust the standard deviation of the noise
+        epsilon_std_dev += 0.01  
+
+    return x
+
+
+
+
+def markowitz_weights(cluster_return, constituent_weights, df_cleaned, df, lookback_window, eta):
 
     '''
     ----------------------------------------------------------------
@@ -359,8 +416,17 @@ def markowitz_weights(cluster_return):
     - cluster_return : numpy array as returned by the 
                        cluster_return function 
 
+    - df_cleaned : pandas dataframe containing the returns of the 
+                   stocks
+
+    - constituent_weights : numpy array as returned by the 
+                            constituent_weights function 
+
     - lookback_window : list of length 2, [start, end] corresponding 
                         to the range of the lookback_window
+
+    - eta : target correlation that we want to create between y and 
+            its perturbated version
     ----------------------------------------------------------------
 
     ----------------------------------------------------------------
@@ -373,8 +439,11 @@ def markowitz_weights(cluster_return):
     cov_matrix = cluster_return.transpose().cov()
 
     ## on construit le vecteur d'expected return du cluster (252 jours de trading par an, on passe de rendements journaliers à rendements annualisés)
-    expected_returns = (1+ cluster_return.mean(axis=1))**252 - 1 ## on fait ici le choix de prendre le rendement moyen comme objectif
-
+    
+    cluster_target_return = cluster_return(constituent_weights=constituent_weights, df_cleaned=df_cleaned, df=df, lookback_window=[lookback_window[1], lookback_window[1]+1])
+    
+    expected_returns = noised_array(y=cluster_target_return, eta=eta)
+    
     ef = EfficientFrontier(expected_returns=expected_returns, cov_matrix=cov_matrix)
     ef.max_sharpe()
 
@@ -423,7 +492,7 @@ def final_weights(markowitz_weights, constituent_weights):
     return W
 
 
-def training_phase(lookback_window, df_cleaned, number_of_clusters, sigma, df, clustering_method='SPONGE'):
+def training_phase(lookback_window, df_cleaned, number_of_clusters, sigma, df, eta, clustering_method='SPONGE'):
 
     '''
     ----------------------------------------------------------------
@@ -446,6 +515,9 @@ def training_phase(lookback_window, df_cleaned, number_of_clusters, sigma, df, c
               cluster weights
 
     - df : pandas dataframe containing the raw data 
+
+    - eta : target correlation that we want to create between y and 
+            its perturbated version
     ----------------------------------------------------------------
 
     ----------------------------------------------------------------
@@ -470,7 +542,7 @@ def training_phase(lookback_window, df_cleaned, number_of_clusters, sigma, df, c
     cluster_return_res = cluster_return(constituent_weights=constituent_weights_res, df_cleaned=df_cleaned, df=df, lookback_window=lookback_window) 
 
     ## ÉTAPE 5 : on obtient les poids de markowitz de chaque cluster
-    markowitz_weights_res = markowitz_weights(cluster_return=cluster_return_res)
+    markowitz_weights_res = markowitz_weights(cluster_return=cluster_return_res, constituent_weights=constituent_weights_res, df_cleaned=df_cleaned, df=df, lookback_window=lookback_window, eta=eta)
 
     ## ÉTAPE 6 : on remonte aux poids de chaque actif dans l'ensemble
     W = final_weights(markowitz_weights=markowitz_weights_res, constituent_weights=constituent_weights_res)
@@ -591,97 +663,3 @@ def portfolio_returns(evaluation_window, df_cleaned, lookback_window, consolidat
 
     return portfolio_returns
 
-
-
-def Sharpe_and_PnL(portfolio_returns, risk_free_rate):
-
-    '''
-    ----------------------------------------------------------------
-    GENERAL IDEA : givent the portfolio_returns, compute two 
-                   indicators of the performance of the portfolio 
-                   (namely the sharpe ratio and the PnL)
-    ----------------------------------------------------------------
-
-    ----------------------------------------------------------------
-    PARAMS : 
-
-    - portfolio_returns : pandas dataframe, returns the portfolio 
-                                return of each cluster in a pandas 
-                                dataframe
-                            
-    - risk_free_rate : float, risk free rate of the market 
-                       corresponding to the assets in our portfolio 
-    ----------------------------------------------------------------
-
-    ----------------------------------------------------------------
-    OUTPUT : returns two floats, corresponding to the PnL and the 
-             sharpe ratio of the portfolio
-    ----------------------------------------------------------------
-    '''
-    
-    portfolio_returns = np.array(portfolio_returns)
-
-    # Calcul du rendement moyen du portefeuille
-    Rp=(1+np.mean(portfolio_returns))**250-1
-
-    # Calcul de l'écart type du portefeuille
-    sigma_p = np.std(portfolio_returns)
-
-    # Taux sans risque (ou rendement moyen du marché)
-    Rf = risk_free_rate  # Remplacez par le taux sans risque ou le rendement moyen du marché approprié
-
-    # Calcul du Sharpe ratio
-    SR = (Rp - Rf) / sigma_p
-
-    # Calcul des PNL
-    PNL = np.cumprod(1 + portfolio_returns)-1
-
-    return SR, PNL
-
-
-
-def plot_PnL(SR, PNL):
-
-    # Création du graphique
-    fig = go.Figure()
-
-    # Ajout de la trace pour les PNL
-    fig.add_trace(go.Scatter(x=np.arange(31, 61), y=PNL, mode='lines', name='PNL'))
-
-    # Ajout d'une ligne pour le Sharpe ratio
-    fig.add_shape(
-        type='line',
-        x0=31, x1=60, y0=0, y1=0,
-        line=dict(color='red', width=2),
-        opacity=0.7,
-        name='Sharpe Ratio'
-    )
-
-    # Ajout d'une annotation pour le Sharpe ratio
-    fig.add_annotation(
-        x=45,
-        y=PNL[-1],
-        text=f'Sharpe Ratio: {SR:.4f}',
-        showarrow=True,
-        arrowhead=2,
-        arrowsize=1,
-        arrowwidth=2,
-        arrowcolor='red',
-        font=dict(size=10),
-        bordercolor='red',
-        borderwidth=2,
-        bgcolor='white',
-        opacity=0.8
-    )
-
-    # Mise en forme du graphique
-    fig.update_layout(
-        title='Évolution des PNL et Sharpe Ratio',
-        xaxis_title='Période',
-        yaxis_title='PNL Cumulatif',
-        legend=dict(x=0, y=1),
-        template='plotly_white'
-    )
-
-    # Affichage du graphique
-    fig.show()
