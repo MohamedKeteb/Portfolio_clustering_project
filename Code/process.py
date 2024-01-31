@@ -662,8 +662,8 @@ def portfolio_returns(evaluation_window, df_cleaned, lookback_window, consolidat
     close = pd.DataFrame(index = df_cleaned.index, columns=df_cleaned.columns[lookback_window[1]:lookback_window[1] + evaluation_window])
 
     for stock in open.index:
-        open.loc[stock, :] = df.loc[stock, 'open'][lookback_window[0]:lookback_window[1]]
-        close.loc[stock, :] = df.loc[stock, 'close'][lookback_window[0]:lookback_window[1]]
+        open.loc[stock, :] = df.loc[stock, 'open'][lookback_window[1]:lookback_window[1] + evaluation_window]
+        close.loc[stock, :] = df.loc[stock, 'close'][lookback_window[1]:lookback_window[1] + evaluation_window]
 
     
     portfolio_returns = pd.DataFrame(index=open.columns, columns=['portfolio return'], data=np.zeros(len(open.columns)))
