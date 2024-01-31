@@ -3,6 +3,7 @@ import pandas as pd
 import ast
 import sys
 import plotly.graph_objects as go
+import matplotlib.pyplot as plt 
 
 
 ## path Nail : '/Users/khelifanail/Documents/GitHub/Portfolio_clustering_project'
@@ -663,3 +664,50 @@ def portfolio_returns(evaluation_window, df_cleaned, lookback_window, consolidat
 
     return portfolio_returns
 
+def plot_cum_return(overall_return):
+    # Tracé du PnL cumulatif
+    plt.figure(figsize=(10, 6))
+    plt.plot(overall_return.cumsum(), label='Cumulative PnL')
+    plt.title('Cumulative Profit and Loss (PnL) of the Portfolio')
+    plt.xlabel('Time')
+    plt.ylabel('Cumulative PnL')
+    plt.legend()
+    plt.grid(True)
+
+    plt.xticks(rotation=90)
+    plt.xticks(fontsize=6)
+    plt.grid(True, linestyle='--', linewidth=0.5, alpha=0.7)
+
+    plt.show()
+
+def bar_plot_PnL(PnL):
+
+    '''
+    ----------------------------------------------------------------
+    GENERAL IDEA : Plot daily PnL using a barplot  
+    ----------------------------------------------------------------
+
+    ----------------------------------------------------------------
+    PARAMS : 
+
+    - PnL : 
+    ----------------------------------------------------------------
+
+    ----------------------------------------------------------------
+    OUTPUT : returns the portfolio return of each cluster in a 
+             pandas dataframe
+    ----------------------------------------------------------------
+    '''
+
+    plt.figure(figsize=(10, 6))
+    plt.bar(range(len(PnL)), PnL, color='blue', alpha=0.7)
+
+    # Customize the plot
+    plt.xlabel('Time Period')
+    plt.ylabel('Portfolio Return')
+    plt.title('Portfolio Returns Over Time')
+    plt.xticks(range(len(PnL)), ['daily_{}'.format(i) for i in range(len(PnL))], rotation=45, ha='right')
+
+    # Show the plot
+    plt.tight_layout()
+    plt.show()
