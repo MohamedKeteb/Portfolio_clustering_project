@@ -443,7 +443,7 @@ def markowitz_weights(cluster_return_res, constituent_weights, df_cleaned, df, l
     
     cluster_target_return = cluster_return(constituent_weights=constituent_weights, df_cleaned=df_cleaned, df=df, lookback_window=[lookback_window[1], lookback_window[1]+1])
     
-    expected_returns = noised_array(y=cluster_target_return, eta=eta).transpose().to_numpy()
+    expected_returns = noised_array(y=cluster_target_return, eta=eta)
     
     ef = EfficientFrontier(expected_returns=expected_returns, cov_matrix=cov_matrix)
     ef.max_sharpe()
