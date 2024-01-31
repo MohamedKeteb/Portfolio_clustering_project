@@ -346,6 +346,7 @@ def cluster_return(constituent_weights, df_cleaned, df, lookback_window):
     return cluster_returns
 
 
+
 def noised_array(y, eta):
 
     '''
@@ -620,7 +621,7 @@ def consolidated_W(number_of_repetitions, lookback_window, df_cleaned, number_of
 
 
 
-def portfolio_returns(evaluation_window, df_cleaned, lookback_window, consolidated_W):
+def portfolio_returns(evaluation_window, df_cleaned, lookback_window, consolidated_W, df):
 
     '''
     ----------------------------------------------------------------
@@ -646,6 +647,8 @@ def portfolio_returns(evaluation_window, df_cleaned, lookback_window, consolidat
     - consolidated_W : numpy ndarray, containing the final weights 
                       of each asset, i.e. the overall portfolio 
                       weights
+
+    - df : pandas dataframe containing the raw data
     ----------------------------------------------------------------
 
     ----------------------------------------------------------------
@@ -654,13 +657,25 @@ def portfolio_returns(evaluation_window, df_cleaned, lookback_window, consolidat
     ----------------------------------------------------------------
     '''
 
-    evaluation_set = df_cleaned.iloc[:, lookback_window[1]:lookback_window[1]+evaluation_window]
+    ## we first get the open and close values for each stock 
+    open = pd.DataFrame(index = df_cleaned.index, columns=df_cleaned.columns[lookback_window[1]:lookback_window[1] + evaluation_window])
+    close = pd.DataFrame(index = df_cleaned.index, columns=df_cleaned.columns[lookback_window[1]:lookback_window[1] + evaluation_window])
 
-    portfolio_returns = pd.DataFrame(index=evaluation_set.columns, columns=['portfolio return'], data=np.zeros(len(evaluation_set.columns)))
+    for stock in open.index:
+        open.loc[stock, :] = df.loc[stock, 'open'][lookback_window[0]:lookback_window[1]]
+        close.loc[stock, :] = df.loc[stock, 'close'][lookback_window[0]:lookback_window[1]]
 
-    for elem1 in portfolio_returns.index:
-        for stock in list(evaluation_set.index):
-            portfolio_returns.loc[str(elem1), 'portfolio return'] += consolidated_W.loc[stock, 'weight']*evaluation_set.loc[stock, str(elem1)]
+    
+    portfolio_returns = pd.DataFrame(index=open.columns, columns=['portfolio return'], data=np.zeros(len(open.columns)))
+
+    for returns in portfolio_returns.index:
+
+        for stock in consolidated_W.index:
+            op, cl = 0, 0
+            op += open.loc[stock, returns]*consolidated_W.loc[stock, 'weight']
+            cl += close.loc[stock, returns]*consolidated_W.loc[stock, 'weight']
+
+            portfolio_returns.loc[stock, returns] = (cl - op)/op
 
     return portfolio_returns
 
