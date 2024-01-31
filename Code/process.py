@@ -403,7 +403,7 @@ def noised_array(y, eta):
 
 
 
-def markowitz_weights(cluster_return, constituent_weights, df_cleaned, df, lookback_window, eta):
+def markowitz_weights(cluster_return_res, constituent_weights, df_cleaned, df, lookback_window, eta):
 
     '''
     ----------------------------------------------------------------
@@ -437,7 +437,7 @@ def markowitz_weights(cluster_return, constituent_weights, df_cleaned, df, lookb
 
     ## on construit la matrice de corrélation associée à ces returns, c'est donc une matrice de corrélation de return de cluster
 
-    cov_matrix = cluster_return.transpose().cov()
+    cov_matrix = cluster_return_res.transpose().cov()
 
     ## on construit le vecteur d'expected return du cluster (252 jours de trading par an, on passe de rendements journaliers à rendements annualisés)
     
