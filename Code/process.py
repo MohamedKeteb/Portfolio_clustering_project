@@ -371,7 +371,7 @@ def noised_array(y, eta):
     '''
 
     # We compute with a small noise 
-    epsilon_std_dev = 0.1
+    epsilon_std_dev = 1
 
     # Calculer la corrélation initiale
     correlation = 0
