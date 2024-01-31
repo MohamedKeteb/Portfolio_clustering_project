@@ -396,7 +396,7 @@ def noised_array(y, eta):
         correlation = np.corrcoef(w, z)[0, 1]
 
         # Adjust the standard deviation of the noise
-        epsilon_std_dev += 0.01  
+        epsilon_std_dev += 0.001  
 
     return x
 
