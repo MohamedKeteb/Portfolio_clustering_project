@@ -664,6 +664,7 @@ def portfolio_returns(evaluation_window, df_cleaned, lookback_window, consolidat
 
     return portfolio_returns
 
+
 def plot_cum_return(overall_return):
     # Tracé du PnL cumulatif
     plt.figure(figsize=(10, 6))
@@ -679,6 +680,7 @@ def plot_cum_return(overall_return):
     plt.grid(True, linestyle='--', linewidth=0.5, alpha=0.7)
 
     plt.show()
+
 
 def bar_plot_PnL(PnL):
 
