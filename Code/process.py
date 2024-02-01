@@ -669,13 +669,13 @@ def portfolio_returns(evaluation_window, df_cleaned, lookback_window, consolidat
     portfolio_returns = pd.DataFrame(index=open.columns, columns=['portfolio return'], data=np.zeros(len(open.columns)))
 
     for returns in portfolio_returns.index:
+        op, cl = 0, 0
 
-        for stock in consolidated_W.index:
-            op, cl = 0, 0
-            op += open.loc[stock, returns]*consolidated_W.loc[stock, 'weight']
-            cl += close.loc[stock, returns]*consolidated_W.loc[stock, 'weight']
+        for stocks in consolidated_W.index:
+            op += open[returns][stocks] * consolidated_W.loc[stocks, 'weight']
+            cl += close[returns][stocks] * consolidated_W.loc[stocks, 'weight']
 
-            portfolio_returns.loc[stock, returns] = (cl - op)/op
+        portfolio_returns.loc[returns, 'portfolio return'] = (cl - op) / op
 
     return portfolio_returns
 
