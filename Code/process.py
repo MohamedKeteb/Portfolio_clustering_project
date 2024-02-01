@@ -680,10 +680,10 @@ def portfolio_returns(evaluation_window, df_cleaned, lookback_window, consolidat
     return portfolio_returns
 
 
-def plot_cum_return(overall_return):
+def plot_cum_return(PnL):
     # Tracé du PnL cumulatif
     plt.figure(figsize=(10, 6))
-    plt.plot(overall_return.cumsum(), label='Cumulative PnL')
+    plt.plot(PnL.cumsum(), label='Cumulative PnL')
     plt.title('Cumulative Profit and Loss (PnL) of the Portfolio')
     plt.xlabel('Time')
     plt.ylabel('Cumulative PnL')
