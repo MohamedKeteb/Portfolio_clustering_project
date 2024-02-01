@@ -372,10 +372,10 @@ def noised_array(y, eta):
     '''
 
     # We compute with a small noise 
-    epsilon_std_dev = 1
+    epsilon_std_dev = 0.001
 
     # Calculer la corrélation initiale
-    correlation = 0
+    correlation = 1
 
     x = y.copy()
 
@@ -384,7 +384,7 @@ def noised_array(y, eta):
 
     
     # Boucle pour ajuster l'écart-type du bruit jusqu'à ce que la corrélation atteigne eta
-    while correlation < eta:
+    while correlation > eta:
         # Generate a vector of Gaussian noise
         noise = np.random.normal(0, epsilon_std_dev, len(y))
 
@@ -397,7 +397,7 @@ def noised_array(y, eta):
         correlation = np.corrcoef(w, z)[0, 1]
 
         # Adjust the standard deviation of the noise
-        epsilon_std_dev += 0.001  
+        epsilon_std_dev += 0.0005 
 
     return x
 
@@ -446,8 +446,8 @@ def markowitz_weights(cluster_return_res, constituent_weights, df_cleaned, df, l
     
     expected_returns = noised_array(y=cluster_target_return, eta=eta).iloc[:, 0].values.squeeze()
     
-    ef = EfficientFrontier(expected_returns=expected_returns, cov_matrix=cov_matrix)
-    ef.max_sharpe()
+    ef = EfficientFrontier(expected_returns=expected_returns, cov_matrix=cov_matrix, weight_bounds=(0, 1))
+    ef.efficient_return(target_return=expected_returns.mean())
 
     markowitz_weights = ef.clean_weights()
 
