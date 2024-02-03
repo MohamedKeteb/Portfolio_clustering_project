@@ -528,33 +528,45 @@ def training_phase(lookback_window, df_cleaned, number_of_clusters, sigma, df, e
     ----------------------------------------------------------------
     '''
 
-    ## ÉTAPE 1 : on obtient la matrice de corrélation des actifs sur la lookback_window
-    correlation_matrix_res = correlation_matrix(lookback_window=lookback_window, df_cleaned=df_cleaned)
+    while True:
 
-    ## ÉTAPE 2 : on obtient la composition des clusters et les centroïdes de ceux-ci
-    # PROBLÈME DES ARRONDIS
-    cluster_composition = cluster_composition_and_centroid(df_cleaned=df_cleaned, correlation_matrix=correlation_matrix_res, number_of_clusters=number_of_clusters, lookback_window=lookback_window, clustering_method=clustering_method)
+        try:
+            
+            ## ÉTAPE 1 : on obtient la matrice de corrélation des actifs sur la lookback_window
+            correlation_matrix_res = correlation_matrix(lookback_window=lookback_window, df_cleaned=df_cleaned)
 
-    ## poids très proches ... ==> dû au fait qu'on regarde sur un trop petit échantillon (30 jours) ? 
+            ## ÉTAPE 2 : on obtient la composition des clusters et les centroïdes de ceux-ci
+            cluster_composition = cluster_composition_and_centroid(df_cleaned=df_cleaned, correlation_matrix=correlation_matrix_res, number_of_clusters=number_of_clusters, lookback_window=lookback_window, clustering_method=clustering_method)
 
-    ## ÉTAPE 3 : on obtient les poids constitutifs de chaque actifs au sein d'un même cluster
-    constituent_weights_res = constituent_weights(df_cleaned=df_cleaned, cluster_composition=cluster_composition, sigma=sigma, lookback_window=lookback_window)
+            ## poids très proches ... ==> dû au fait qu'on regarde sur un trop petit échantillon (30 jours) ? 
 
-    ## ÉTAPE 4 : on obtient les rendements de chaque cluster vu comme un actif
-    cluster_return_result = cluster_return(constituent_weights=constituent_weights_res, df_cleaned=df_cleaned, df=df, lookback_window=lookback_window) 
+            ## ÉTAPE 3 : on obtient les poids constitutifs de chaque actifs au sein d'un même cluster
+            constituent_weights_res = constituent_weights(df_cleaned=df_cleaned, cluster_composition=cluster_composition, sigma=sigma, lookback_window=lookback_window)
 
-    ## ÉTAPE 5 : on obtient les poids de markowitz de chaque cluster
-    markowitz_weights_res = markowitz_weights(cluster_return_res=cluster_return_result, constituent_weights=constituent_weights_res, df_cleaned=df_cleaned, df=df, lookback_window=lookback_window, eta=eta)
+            ## ÉTAPE 4 : on obtient les rendements de chaque cluster vu comme un actif
+            cluster_return_result = cluster_return(constituent_weights=constituent_weights_res, df_cleaned=df_cleaned, df=df, lookback_window=lookback_window) 
 
-    ## ÉTAPE 6 : on remonte aux poids de chaque actif dans l'ensemble
-    W = final_weights(markowitz_weights=markowitz_weights_res, constituent_weights=constituent_weights_res)
 
-    W = pd.DataFrame(columns=['ticker', 'weight'], data=W)
+            ## On teste si la matrice de covariance est bien symmétrique/hermitienne
+            cov_matrix = cluster_return_result.transpose().cov()
 
-    W.set_index('ticker', inplace=True)
-    
-    return W
+            cluster_target_return = cluster_return(constituent_weights=constituent_weights_res, df_cleaned=df_cleaned, df=df, lookback_window=[lookback_window[1], lookback_window[1]+1])
+            
+            expected_returns = noised_array(y=cluster_target_return, eta=eta).iloc[:, 0].values.squeeze()
 
+            # Vérification de la symétrie/hermitianité de la matrice de covariance
+            if np.allclose(cov_matrix, cov_matrix.T) and np.allclose(expected_returns, expected_returns.conj()):
+                ## ÉTAPE 5 : on obtient les poids de markowitz de chaque cluster
+                markowitz_weights_res = markowitz_weights(cluster_return_res=cluster_return_result, constituent_weights=constituent_weights_res, df_cleaned=df_cleaned, df=df, lookback_window=lookback_window, eta=eta)
+
+                ## ÉTAPE 6 : on remonte aux poids de chaque actif dans l'ensemble
+                W = final_weights(markowitz_weights=markowitz_weights_res, constituent_weights=constituent_weights_res)
+
+                W = pd.DataFrame(columns=['ticker', 'weight'], data=W)
+
+                W.set_index('ticker', inplace=True)
+
+                return W
 
 def consolidated_W(number_of_repetitions, lookback_window, df_cleaned, number_of_clusters, sigma, df, eta, clustering_method='SPONGE'):
 
