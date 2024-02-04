@@ -567,7 +567,9 @@ def training_phase(lookback_window, df_cleaned, number_of_clusters, sigma, df, e
                 W.set_index('ticker', inplace=True)
 
                 return W
-
+        
+        except Exception as e:
+            
 def consolidated_W(number_of_repetitions, lookback_window, df_cleaned, number_of_clusters, sigma, df, eta, clustering_method='SPONGE'):
 
     '''
