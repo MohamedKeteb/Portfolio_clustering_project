@@ -553,8 +553,8 @@ def training_phase(lookback_window, df_cleaned, number_of_clusters, sigma, df, e
             
             expected_returns = noised_array(y=cluster_target_return, eta=eta).iloc[:, 0].values.squeeze()
 
-            print(cov_matrix)
-            print(expected_returns)
+            print(type(cov_matrix))
+            print(type(expected_returns))
             # Vérification de la symétrie/hermitianité de la matrice de covariance
             if np.allclose(cov_matrix, cov_matrix.T) and np.allclose(expected_returns, expected_returns.conj()):
                 ## ÉTAPE 5 : on obtient les poids de markowitz de chaque cluster
