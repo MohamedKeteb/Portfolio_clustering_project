@@ -527,10 +527,9 @@ def training_phase(lookback_window, df_cleaned, number_of_clusters, sigma, df, e
              portfolio
     ----------------------------------------------------------------
     '''
+    test = True
 
-    while True:
-
-        try:
+    while test:
             
             ## ÉTAPE 1 : on obtient la matrice de corrélation des actifs sur la lookback_window
             correlation_matrix_res = correlation_matrix(lookback_window=lookback_window, df_cleaned=df_cleaned)
@@ -566,9 +565,12 @@ def training_phase(lookback_window, df_cleaned, number_of_clusters, sigma, df, e
 
                 W.set_index('ticker', inplace=True)
 
+                test = False
+
                 return W
-        
-        except Exception as e:
+
+            else: 
+                test = True
             
 def consolidated_W(number_of_repetitions, lookback_window, df_cleaned, number_of_clusters, sigma, df, eta, clustering_method='SPONGE'):
 
