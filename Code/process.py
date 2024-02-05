@@ -10,34 +10,9 @@ import matplotlib.pyplot as plt
 ## path Jerome : 'C:/Users/33640/OneDrive/Documents/GitHub/Portfolio_clustering_project'
 sys.path.append(r'/Users/khelifanail/Documents/GitHub/Portfolio_clustering_project')  # Ajoute le chemin parent
 
-from Signet.cluster import Cluster 
+from signet.cluster import Cluster 
 from scipy import sparse
 from pypfopt.efficient_frontier import EfficientFrontier
-
-
-
-# Function to safely convert a string into a list
-def safe_literal_eval(s):
-    try:
-        # Tries to convert the string into a list
-        return ast.literal_eval(s)
-    except (ValueError, SyntaxError):
-        # If an error occurs, returns a default value, e.g. an empty list
-        return []
-
-
-def check_nan_inf(df):
-    # Vérification des valeurs NaN
-    if df.isna().any().any():
-        print("There are NaN values in the dataframe")
-    else:
-        print("There are no NaN values in the dataframe")
-
-
-def remove_rows_with_nan(df):
-    return df.dropna()
-
-
 
 def signed_adjency(mat):
     '''
@@ -138,6 +113,8 @@ def apply_SPONGE_sym(correlation_matrix, k):
 
     return cluster.SPONGE_sym(k)
 
+
+
 def correlation_matrix(lookback_window, df_cleaned):
 
 
@@ -160,6 +137,9 @@ def correlation_matrix(lookback_window, df_cleaned):
  
 
     correlation_matrix = df_cleaned.iloc[:, lookback_window[0]:lookback_window[1]].transpose().corr(method='pearson') ## MODIFIÉ
+
+    correlation_matrix = correlation_matrix.fillna(0) ## in case there are NaN values, we replace them with 0 
+
     return correlation_matrix
 
 
@@ -290,7 +270,7 @@ def constituent_weights(df_cleaned, cluster_composition, sigma, lookback_window)
     return constituent_weights
 
 
-def cluster_return(constituent_weights, df_cleaned, df, lookback_window):
+def cluster_return(constituent_weights, df_cleaned, lookback_window):
 
     '''
     ----------------------------------------------------------------
@@ -322,26 +302,20 @@ def cluster_return(constituent_weights, df_cleaned, df, lookback_window):
     ----------------------------------------------------------------
     '''
 
-    ## we first get the open and close values for each stock 
-    open = pd.DataFrame(index = df_cleaned.index, columns=df_cleaned.columns[lookback_window[0]:lookback_window[1]])
-    close = pd.DataFrame(index = df_cleaned.index, columns=df_cleaned.columns[lookback_window[0]:lookback_window[1]])
-
-    for stock in open.index:
-        open.loc[stock, :] = df.loc[stock, 'open'][lookback_window[0]:lookback_window[1]]
-        close.loc[stock, :] = df.loc[stock, 'close'][lookback_window[0]:lookback_window[1]]
-
     ## using open and close, we compute the returns of each stocks (weighted-average using constituents weights)
-    cluster_returns = pd.DataFrame(index = [f'cluster {i+1}' for i in range(len(constituent_weights))], columns = df_cleaned.columns[lookback_window[0]:lookback_window[1]])
+    cluster_returns = pd.DataFrame(index = [f'cluster {i}' for i in range(1, len(constituent_weights) + 1)], columns = df_cleaned.columns[lookback_window[0]:lookback_window[1]])
 
-    for returns in cluster_returns.columns:
+    for returns in cluster_returns.columns: ## we range across all returns
 
-        for elem in constituent_weights:
-            op, cl = 0, 0
-            for stocks in elem[1]:
-                op += open.loc[stocks[0], returns]*stocks[1]
-                cl += close.loc[stocks[0], returns]*stocks[1]
+        for elem in constituent_weights: ## we get the composition + weights of each cluster
+            
+            return_cluster = 0 ## counter 
 
-            cluster_returns.loc[elem[0], returns] = (cl - op)/op
+            for stock in elem[1]: ## we range across all the stocks that compose the current cluster 
+
+                return_cluster += stock[1]*df_cleaned.loc[stock[0], returns] ## we add the weighted contribution of the stock to its cluster in terms of return
+
+            cluster_returns.loc[elem[0], returns]
 
     return cluster_returns
 
@@ -404,7 +378,7 @@ def noised_array(y, eta):
 
 
 
-def markowitz_weights(cluster_return_res, constituent_weights, df_cleaned, df, lookback_window, eta):
+def markowitz_weights(cluster_return_res, constituent_weights, df_cleaned, lookback_window, evaluation_window, eta):
 
     '''
     ----------------------------------------------------------------
@@ -427,6 +401,10 @@ def markowitz_weights(cluster_return_res, constituent_weights, df_cleaned, df, l
     - lookback_window : list of length 2, [start, end] corresponding 
                         to the range of the lookback_window
 
+    - evaluation_window : integer, corresponding to the number of 
+                          days that we look bakc at to make our 
+                          prevision
+
     - eta : target correlation that we want to create between y and 
             its perturbated version
     ----------------------------------------------------------------
@@ -440,9 +418,11 @@ def markowitz_weights(cluster_return_res, constituent_weights, df_cleaned, df, l
 
     cov_matrix = cluster_return_res.transpose().cov()
 
+    cov_matrix.fillna(0.)
+
     ## on construit le vecteur d'expected return du cluster (252 jours de trading par an, on passe de rendements journaliers à rendements annualisés)
     
-    cluster_target_return = cluster_return(constituent_weights=constituent_weights, df_cleaned=df_cleaned, df=df, lookback_window=[lookback_window[1], lookback_window[1]+1])
+    cluster_target_return = cluster_return(constituent_weights=constituent_weights, df_cleaned=df_cleaned, lookback_window=[lookback_window[1], lookback_window[1]+evaluation_window])
     
     expected_returns = noised_array(y=cluster_target_return, eta=eta).iloc[:, 0].values.squeeze()
     
