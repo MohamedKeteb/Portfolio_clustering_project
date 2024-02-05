@@ -28,7 +28,7 @@
 <br />
 <div align="center">
   <a href="https://github.com/MohamedKeteb/Portfolio_clustering_project/">
-    <img src="images/logo.png" alt="Logo" width="80" height="80">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/e/ec/LOGO-ENSAE.png" alt="Logo" width="80" height="80">
   </a>
 
   <h3 align="center">Portfolio Construction and Realized Covariance Forecasting with Clustering</h3>
@@ -36,7 +36,6 @@
   <p align="center">
     Jérome Allier - Mohamed Keteb - Naïl Khelifa
     <br />
-    <a href="https://github.com/othneildrew/Best-README-Template"><strong>Explore the docs »</strong></a>
     <br />
     <br />
   </p>
