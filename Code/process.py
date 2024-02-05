@@ -315,7 +315,7 @@ def cluster_return(constituent_weights, df_cleaned, lookback_window):
 
                 return_cluster += stock[1]*df_cleaned.loc[stock[0], returns] ## we add the weighted contribution of the stock to its cluster in terms of return
 
-            cluster_returns.loc[elem[0], returns]
+            cluster_returns.loc[elem[0], returns] = return_cluster
 
     return cluster_returns
 
