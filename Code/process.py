@@ -422,7 +422,7 @@ def markowitz_weights(cluster_return_res, constituent_weights, df_cleaned, lookb
 
     ## on construit le vecteur d'expected return du cluster (252 jours de trading par an, on passe de rendements journaliers à rendements annualisés)
     
-    cluster_target_return = cluster_return(constituent_weights=constituent_weights, df_cleaned=df_cleaned, lookback_window=[lookback_window[1], lookback_window[1]+evaluation_window])
+    cluster_target_return = cluster_return(constituent_weights=constituent_weights, df_cleaned=df_cleaned, lookback_window=[lookback_window[1], lookback_window[1]+evaluation_window]).mean(axis=1)
     
     expected_returns = noised_array(y=cluster_target_return, eta=eta).iloc[:, 0].values.squeeze()
     
@@ -474,7 +474,7 @@ def final_weights(markowitz_weights, constituent_weights):
     return W
 
 
-def training_phase(lookback_window, df_cleaned, number_of_clusters, sigma, df, eta, clustering_method='SPONGE'):
+def training_phase(lookback_window, df_cleaned, number_of_clusters, sigma, evaluation_window, eta, clustering_method='SPONGE'):
 
     '''
     ----------------------------------------------------------------
@@ -507,55 +507,37 @@ def training_phase(lookback_window, df_cleaned, number_of_clusters, sigma, df, e
              portfolio
     ----------------------------------------------------------------
     '''
-    test = True
 
-    while test:
-            
-            ## ÉTAPE 1 : on obtient la matrice de corrélation des actifs sur la lookback_window
-            correlation_matrix_res = correlation_matrix(lookback_window=lookback_window, df_cleaned=df_cleaned)
+    ## ÉTAPE 1 : on obtient la matrice de corrélation des actifs sur la lookback_window
+    correlation_matrix_res = correlation_matrix(lookback_window=lookback_window, df_cleaned=df_cleaned)
 
-            ## ÉTAPE 2 : on obtient la composition des clusters et les centroïdes de ceux-ci
-            cluster_composition = cluster_composition_and_centroid(df_cleaned=df_cleaned, correlation_matrix=correlation_matrix_res, number_of_clusters=number_of_clusters, lookback_window=lookback_window, clustering_method=clustering_method)
+    ## ÉTAPE 2 : on obtient la composition des clusters et les centroïdes de ceux-ci
+    cluster_composition = cluster_composition_and_centroid(df_cleaned=df_cleaned, correlation_matrix=correlation_matrix_res, number_of_clusters=number_of_clusters, lookback_window=lookback_window, clustering_method=clustering_method)
 
-            ## poids très proches ... ==> dû au fait qu'on regarde sur un trop petit échantillon (30 jours) ? 
+    ## poids très proches ... ==> dû au fait qu'on regarde sur un trop petit échantillon (30 jours) ? 
 
-            ## ÉTAPE 3 : on obtient les poids constitutifs de chaque actifs au sein d'un même cluster
-            constituent_weights_res = constituent_weights(df_cleaned=df_cleaned, cluster_composition=cluster_composition, sigma=sigma, lookback_window=lookback_window)
+    ## ÉTAPE 3 : on obtient les poids constitutifs de chaque actifs au sein d'un même cluster
+    constituent_weights_res = constituent_weights(df_cleaned=df_cleaned, cluster_composition=cluster_composition, sigma=sigma, lookback_window=lookback_window)
 
-            ## ÉTAPE 4 : on obtient les rendements de chaque cluster vu comme un actif
-            cluster_return_result = cluster_return(constituent_weights=constituent_weights_res, df_cleaned=df_cleaned, df=df, lookback_window=lookback_window) 
+    ## ÉTAPE 4 : on obtient les rendements de chaque cluster vu comme un actif
+    cluster_return_result = cluster_return(constituent_weights=constituent_weights_res, df_cleaned=df_cleaned, lookback_window=lookback_window) 
+
+    ## ÉTAPE 5 : on obtient les poids de markowitz de chaque cluster
+    markowitz_weights_res = markowitz_weights(cluster_return_res=cluster_return_result, constituent_weights=constituent_weights_res, df_cleaned=df_cleaned, lookback_window=lookback_window, evaluation_window=evaluation_window, eta=eta)
+
+    ## ÉTAPE 6 : on remonte aux poids de chaque actif dans l'ensemble
+    W = final_weights(markowitz_weights=markowitz_weights_res, constituent_weights=constituent_weights_res)
+
+    W = pd.DataFrame(columns=['ticker', 'weight'], data=W)
+
+    W.set_index('ticker', inplace=True)
+
+    return W
 
 
-            ## On teste si la matrice de covariance est bien symmétrique/hermitienne
-            cov_matrix = cluster_return_result.transpose().cov()
-
-            cluster_target_return = cluster_return(constituent_weights=constituent_weights_res, df_cleaned=df_cleaned, df=df, lookback_window=[lookback_window[1], lookback_window[1]+1])
-            
-            expected_returns = noised_array(y=cluster_target_return, eta=eta).iloc[:, 0].values.squeeze()
-
-            print(type(cov_matrix))
-            print(type(expected_returns))
-            # Vérification de la symétrie/hermitianité de la matrice de covariance
-            if np.allclose(cov_matrix, cov_matrix.T) and np.allclose(expected_returns, expected_returns.conj()):
-                ## ÉTAPE 5 : on obtient les poids de markowitz de chaque cluster
-                markowitz_weights_res = markowitz_weights(cluster_return_res=cluster_return_result, constituent_weights=constituent_weights_res, df_cleaned=df_cleaned, df=df, lookback_window=lookback_window, eta=eta)
-
-                ## ÉTAPE 6 : on remonte aux poids de chaque actif dans l'ensemble
-                W = final_weights(markowitz_weights=markowitz_weights_res, constituent_weights=constituent_weights_res)
-
-                W = pd.DataFrame(columns=['ticker', 'weight'], data=W)
-
-                W.set_index('ticker', inplace=True)
-
-                test = False
-
-                return W
-
-            else: 
-                test = True
 
             
-def consolidated_W(number_of_repetitions, lookback_window, df_cleaned, number_of_clusters, sigma, df, eta, clustering_method='SPONGE'):
+def consolidated_W(number_of_repetitions, lookback_window, df_cleaned, number_of_clusters, sigma, evaluation_window, eta, clustering_method='SPONGE'):
 
     '''
     ----------------------------------------------------------------
@@ -596,7 +578,7 @@ def consolidated_W(number_of_repetitions, lookback_window, df_cleaned, number_of
     history = []
 
     for _ in range(number_of_repetitions):
-        W = training_phase(lookback_window=lookback_window, df_cleaned=df_cleaned, number_of_clusters=number_of_clusters, sigma=sigma, df=df, eta=eta, clustering_method=clustering_method)
+        W = training_phase(lookback_window=lookback_window, df_cleaned=df_cleaned, number_of_clusters=number_of_clusters, sigma=sigma, evaluation_window=evaluation_window, eta=eta, clustering_method=clustering_method)
         history.append(W)
 
     consolidated_W = pd.DataFrame(index=df_cleaned.index, columns=['weight'])
@@ -620,7 +602,7 @@ def consolidated_W(number_of_repetitions, lookback_window, df_cleaned, number_of
 
 
 
-def portfolio_returns(evaluation_window, df_cleaned, lookback_window, consolidated_W, df):
+def portfolio_returns(evaluation_window, df_cleaned, lookback_window, consolidated_W):
 
     '''
     ----------------------------------------------------------------
@@ -656,23 +638,14 @@ def portfolio_returns(evaluation_window, df_cleaned, lookback_window, consolidat
     ----------------------------------------------------------------
     '''
 
-    ## we first get the open and close values for each stock 
-    open = pd.DataFrame(index = df_cleaned.index, columns=df_cleaned.columns[lookback_window[1]:lookback_window[1] + evaluation_window])
-    close = pd.DataFrame(index = df_cleaned.index, columns=df_cleaned.columns[lookback_window[1]:lookback_window[1] + evaluation_window])
-
-    for stock in open.index:
-        open.loc[stock, :] = df.loc[stock, 'open'][lookback_window[1]:lookback_window[1] + evaluation_window]
-        close.loc[stock, :] = df.loc[stock, 'close'][lookback_window[1]:lookback_window[1] + evaluation_window]
-
-    
     portfolio_returns = pd.DataFrame(index=open.columns, columns=['portfolio return'], data=np.zeros(len(open.columns)))
 
     for returns in portfolio_returns.index:
         op, cl = 0, 0
 
         for stocks in consolidated_W.index:
-            op += open[returns][stocks] * consolidated_W.loc[stocks, 'weight']
-            cl += close[returns][stocks] * consolidated_W.loc[stocks, 'weight']
+            # op += open[returns][stocks] * consolidated_W.loc[stocks, 'weight']
+            # cl += close[returns][stocks] * consolidated_W.loc[stocks, 'weight']
 
         portfolio_returns.loc[returns, 'portfolio return'] = (cl - op) / op
 
