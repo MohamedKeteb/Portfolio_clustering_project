@@ -18,10 +18,7 @@
 *** for contributors-url, forks-url, etc. This is an optional, concise syntax you may use.
 *** https://www.markdownguide.org/basic-syntax/#reference-style-links
 -->
-[![Contributors][contributors-shield]][contributors-url]
-[![Forks][forks-shield]][forks-url]
-[![Stargazers][stars-shield]][stars-url]
-[![Issues][issues-shield]][issues-url]
+[![Python][Python.js]][Python-url]
 [![MIT License][license-shield]][license-url]
 [![LinkedIn][linkedin-shield]][linkedin-url]
 
@@ -30,7 +27,7 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-  <a href="https://github.com/othneildrew/Best-README-Template">
+  <a href="https://github.com/MohamedKeteb/Portfolio_clustering_project/">
     <img src="images/logo.png" alt="Logo" width="80" height="80">
   </a>
 
@@ -42,11 +39,6 @@
     <a href="https://github.com/othneildrew/Best-README-Template"><strong>Explore the docs »</strong></a>
     <br />
     <br />
-    <a href="https://github.com/othneildrew/Best-README-Template">View Demo</a>
-    ·
-    <a href="https://github.com/othneildrew/Best-README-Template/issues">Report Bug</a>
-    ·
-    <a href="https://github.com/othneildrew/Best-README-Template/issues">Request Feature</a>
   </p>
 </div>
 
@@ -119,8 +111,8 @@ This project is built on two major external library:
  ```sh
   pip install git+https://github.com/alan-turing-institute/SigNet.git
   ```
-* [PyPortfolioOpt](): library that implements portfolio optimization methods.
 
+* [PyPortfolioOpt](): library that implements portfolio optimization methods.
   ```sh
   pip install PyPortfolioOpt
   ```
@@ -208,27 +200,17 @@ Distributed under the MIT License. See `LICENSE.txt` for more information.
   
 - Mohamed Keteb - mohamed.keteb@ensae.fr
 
-Project Link: [](https://github.com/MohamedKeteb/Portfolio_clustering_project/blob/main/readme.md)
+[Project Link](https://github.com/MohamedKeteb/Portfolio_clustering_project/)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
 
 <!-- ACKNOWLEDGMENTS -->
-## Acknowledgments
+## Future Enhancements
 
-Use this space to list resources you find helpful and would like to give credit to. I've included a few of my favorites to kick things off!
+Stay tuned as we continue to refine our methodologies and possibly expand our horizons to other financial markets or clustering techniques.
 
-* [Choose an Open Source License](https://choosealicense.com)
-* [GitHub Emoji Cheat Sheet](https://www.webpagefx.com/tools/emoji-cheat-sheet)
-* [Malven's Flexbox Cheatsheet](https://flexbox.malven.co/)
-* [Malven's Grid Cheatsheet](https://grid.malven.co/)
-* [Img Shields](https://shields.io)
-* [GitHub Pages](https://pages.github.com)
-* [Font Awesome](https://fontawesome.com)
-* [React Icons](https://react-icons.github.io/react-icons/search)
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
 <!-- MARKDOWN LINKS & IMAGES -->
