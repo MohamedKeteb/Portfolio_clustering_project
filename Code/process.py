@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 ## path Jerome : 'C:/Users/33640/OneDrive/Documents/GitHub/Portfolio_clustering_project'
 sys.path.append(r'/Users/khelifanail/Documents/GitHub/Portfolio_clustering_project')  # Ajoute le chemin parent
 
-from signet.cluster import Cluster 
+from Signet.cluster import Cluster 
 from scipy import sparse
 from pypfopt.efficient_frontier import EfficientFrontier
 
@@ -573,6 +573,7 @@ def training_phase(lookback_window, df_cleaned, number_of_clusters, sigma, df, e
 
             else: 
                 test = True
+
             
 def consolidated_W(number_of_repetitions, lookback_window, df_cleaned, number_of_clusters, sigma, df, eta, clustering_method='SPONGE'):
 
@@ -698,6 +699,7 @@ def portfolio_returns(evaluation_window, df_cleaned, lookback_window, consolidat
     return portfolio_returns
 
 
+
 def plot_cum_return(PnL):
     # Tracé du PnL cumulatif
     plt.figure(figsize=(10, 6))
@@ -713,6 +715,7 @@ def plot_cum_return(PnL):
     plt.grid(True, linestyle='--', linewidth=0.5, alpha=0.7)
 
     plt.show()
+
 
 
 def bar_plot_PnL(PnL):
