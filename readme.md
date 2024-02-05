@@ -202,11 +202,13 @@ Distributed under the MIT License. See `LICENSE.txt` for more information.
 <!-- CONTACT -->
 ## Contact
 
-Naïl Khelifa - nail.khelifa@ensae.fr
-Jérôme Allier - jerome.allier@ensae.fr
-Mohamed Keteb - mohamed.keteb@ensae.fr
+- Naïl Khelifa - nail.khelifa@ensae.fr
+  
+- Jérôme Allier - jerome.allier@ensae.fr
+  
+- Mohamed Keteb - mohamed.keteb@ensae.fr
 
-Project Link: [https://github.com/your_username/repo_name](https://github.com/your_username/repo_name)
+Project Link: [](https://github.com/MohamedKeteb/Portfolio_clustering_project/blob/main/readme.md)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -227,7 +229,6 @@ Use this space to list resources you find helpful and would like to give credit 
 * [React Icons](https://react-icons.github.io/react-icons/search)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
-
 
 
 <!-- MARKDOWN LINKS & IMAGES -->
