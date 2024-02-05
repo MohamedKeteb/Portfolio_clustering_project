@@ -350,25 +350,18 @@ def noised_array(y, eta):
 
     # Calculer la corrélation initiale
     correlation = 1
-
-    x = y.copy()
-
-    z = y.to_numpy()
-    z = np.array([item for sublist in z for item in sublist])
-
     
+    x = y.copy()
     # Boucle pour ajuster l'écart-type du bruit jusqu'à ce que la corrélation atteigne eta
+
     while correlation > eta:
+
         # Generate a vector of Gaussian noise
         noise = np.random.normal(0, epsilon_std_dev, len(y))
 
-        for i in range(len(y)):
-            x.iloc[i, 0] = y.iloc[i, 0] + noise[i]
+        x = noise + y
 
-        w = x.to_numpy()
-        w = np.array([item for sublist in w for item in sublist])
-        # Calculate the new correlation
-        correlation = np.corrcoef(w, z)[0, 1]
+        correlation = x.corr(y.squeeze())
 
         # Adjust the standard deviation of the noise
         epsilon_std_dev += 0.0005 
@@ -640,14 +633,14 @@ def portfolio_returns(evaluation_window, df_cleaned, lookback_window, consolidat
 
     portfolio_returns = pd.DataFrame(index=open.columns, columns=['portfolio return'], data=np.zeros(len(open.columns)))
 
-    for returns in portfolio_returns.index:
+    '''for returns in portfolio_returns.index:
         op, cl = 0, 0
 
         for stocks in consolidated_W.index:
-            # op += open[returns][stocks] * consolidated_W.loc[stocks, 'weight']
-            # cl += close[returns][stocks] * consolidated_W.loc[stocks, 'weight']
+            op += open[returns][stocks] * consolidated_W.loc[stocks, 'weight']
+            cl += close[returns][stocks] * consolidated_W.loc[stocks, 'weight']
 
-        portfolio_returns.loc[returns, 'portfolio return'] = (cl - op) / op
+        portfolio_returns.loc[returns, 'portfolio return'] = (cl - op) / op'''
 
     return portfolio_returns
 
