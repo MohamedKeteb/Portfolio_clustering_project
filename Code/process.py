@@ -146,7 +146,7 @@ def correlation_matrix(lookback_window, df_cleaned):
 ## we compute the return_centroid of each cluster to attribute intra-cluster weights according to the distance between stocks within the cluster and this 
 ## centroid
 
-def cluster_composition_and_centroid(df_cleaned, correlation_matrix, number_of_clusters, lookback_window, clustering_method='SPONGE'):
+def cluster_composition_and_centroid(df_cleaned, correlation_matrix, number_of_clusters, lookback_window, clustering_method):
 
     '''
     ----------------------------------------------------------------
@@ -364,7 +364,7 @@ def noised_array(y, eta):
         correlation = x.corr(y.squeeze())
 
         # Adjust the standard deviation of the noise
-        epsilon_std_dev += 0.0005 
+        epsilon_std_dev += 0.001
 
     return x
 
