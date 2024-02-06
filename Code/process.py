@@ -647,7 +647,7 @@ def portfolio_returns(evaluation_window, df_cleaned, lookback_window, consolidat
     return portfolio_returns
 
 
-def sliding_window(df_cleaned, lookback_window_0, number_of_clusters, sigma, clustering_method, number_of_repetition, evaluation_window, eta):
+def sliding_window(df_cleaned, lookback_window_0, number_of_clusters, sigma, clustering_method, number_of_repetition, number_of_window, evaluation_window, eta):
     PnL = []
 
     overall_return = pd.DataFrame()
@@ -655,7 +655,7 @@ def sliding_window(df_cleaned, lookback_window_0, number_of_clusters, sigma, clu
     portfolio_value=[1] #we start with a value of 1, the list contain : the porfolio value at the start of each evaluation period
 
     lookback_window = lookback_window_0
-    for i in range(1, number_of_repetition + 1):
+    for i in range(1, number_of_window + 1):
 
         consolidated_W_res = consolidated_W(number_of_repetitions=number_of_repetition, lookback_window=lookback_window, df_cleaned=df_cleaned, number_of_clusters=number_of_clusters, sigma=sigma, evaluation_window=evaluation_window, eta=eta, clustering_method=clustering_method)
 
