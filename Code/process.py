@@ -658,9 +658,9 @@ def sliding_window(df_cleaned, lookback_window_0, number_of_clusters, sigma, clu
 
         lookback_window = lookback_window_0
 
-        consolidated_W = consolidated_W(number_of_repetitions=number_of_repetition, lookback_window=lookback_window, df_cleaned=df_cleaned, number_of_clusters=number_of_clusters, sigma=sigma, evaluation_window=evaluation_window, eta=eta, clustering_method=clustering_method)
+        consolidated_W_res = consolidated_W(number_of_repetitions=number_of_repetition, lookback_window=lookback_window, df_cleaned=df_cleaned, number_of_clusters=number_of_clusters, sigma=sigma, evaluation_window=evaluation_window, eta=eta, clustering_method=clustering_method)
 
-        portfolio_return = portfolio_returns(evaluation_window=evaluation_window, df_cleaned=df_cleaned, lookback_window=lookback_window, consolidated_W=consolidated_W)
+        portfolio_return = portfolio_returns(evaluation_window=evaluation_window, df_cleaned=df_cleaned, lookback_window=lookback_window, consolidated_W=consolidated_W_res)
 
         overall_return = pd.concat([overall_return, portfolio_return])
 
