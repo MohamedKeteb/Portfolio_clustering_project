@@ -647,22 +647,48 @@ def portfolio_returns(evaluation_window, df_cleaned, lookback_window, consolidat
     return portfolio_returns
 
 
+def sliding_window(df_cleaned, lookback_window_0, number_of_clusters, sigma, clustering_method, number_of_repetition, evaluation_window, eta):
 
-def plot_cum_return(PnL):
-    # Tracé du PnL cumulatif
-    plt.figure(figsize=(10, 6))
-    plt.plot(PnL.cumsum(), label='Cumulative PnL')
-    plt.title('Cumulative Profit and Loss (PnL) of the Portfolio')
-    plt.xlabel('Time')
-    plt.ylabel('Cumulative PnL')
-    plt.legend()
-    plt.grid(True)
+    for i in range(1, number_of_repetition + 1):
 
-    plt.xticks(rotation=90)
-    plt.xticks(fontsize=6)
-    plt.grid(True, linestyle='--', linewidth=0.5, alpha=0.7)
+        PnL = []
 
-    plt.show()
+        overall_return = pd.DataFrame()
+
+        portfolio_value=[1] #we start with a value of 1, the list contain : the porfolio value at the start of each evaluation period
+        
+        lookback_window = lookback_window_0
+
+        consolidated_W = consolidated_W(number_of_repetitions=number_of_repetition, lookback_window=lookback_window, df_cleaned=df_cleaned, number_of_clusters=number_of_clusters, sigma=sigma, evaluation_window=evaluation_window, eta=eta, clustering_method=clustering_method)
+
+        portfolio_return = portfolio_returns(evaluation_window=evaluation_window, df_cleaned=df_cleaned, lookback_window=lookback_window, consolidated_W=consolidated_W)
+
+        overall_return = pd.concat([overall_return, portfolio_return])
+
+        lookback_window = [lookback_window_0[0] + evaluation_window*i, lookback_window_0[1] + evaluation_window*i]
+
+        PnL = np.concatenate((PnL, np.reshape(np.cumprod(1 + portfolio_return)*portfolio_value[-1] - portfolio_value[-1], (evaluation_window,))))## car on réinvestit immédiatement après
+        
+        portfolio_value.append(portfolio_value[-1]+PnL[-1])
+
+        print(portfolio_value[-1])
+        
+        print(f'step {i}')
+
+    n = len(PnL)//evaluation_window
+
+    for j in range(1, n):
+
+        for i in range(1, evaluation_window+1):
+            
+            PnL[j*evaluation_window + i - 1] = PnL[j*evaluation_window + i - 1] + PnL[j*evaluation_window - 1]
+
+    sharpe_ratio = overall_return.mean() / overall_return.std()
+
+    print(f'sharpe ratio = {sharpe_ratio}')
+
+    return overall_return, PnL, portfolio_value, sharpe_ratio
+
 
 
 
