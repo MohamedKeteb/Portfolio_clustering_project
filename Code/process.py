@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 ## path Nail : '/Users/khelifanail/Documents/GitHub/Portfolio_clustering_project'
 ## path Jerome : 'C:/Users/33640/OneDrive/Documents/GitHub/Portfolio_clustering_project'
-sys.path.append(r'/Users/khelifanail/Documents/GitHub/Portfolio_clustering_project')  # Ajoute le chemin parent
+sys.path.append(r'C:/Users/33640/OneDrive/Documents/GitHub/Portfolio_clustering_project')  # Ajoute le chemin parent
 
 from signet.cluster import Cluster 
 from scipy import sparse
@@ -408,10 +408,11 @@ def markowitz_weights(cluster_return_res, constituent_weights, df_cleaned, lookb
     '''
 
     ## on construit la matrice de corrélation associée à ces returns, c'est donc une matrice de corrélation de return de cluster
+    cluster_return_res.fillna(0, inplace=True)
 
     cov_matrix = cluster_return_res.transpose().cov()
 
-    cov_matrix.fillna(0.)
+    
 
     ## on construit le vecteur d'expected return du cluster (252 jours de trading par an, on passe de rendements journaliers à rendements annualisés)
     
