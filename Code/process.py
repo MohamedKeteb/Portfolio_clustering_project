@@ -681,7 +681,7 @@ def sliding_window(df_cleaned, lookback_window_0, number_of_clusters, sigma, clu
             
             PnL[j*evaluation_window + i - 1] = PnL[j*evaluation_window + i - 1] + PnL[j*evaluation_window - 1]
     
-    sharpe_ratio =(portfolio_value-1)/ overall_return*np.sqrt(252)
+    sharpe_ratio =(portfolio_value[-1]-1)/ overall_return*np.sqrt(252)
 
     print(f'sharpe ratio = {sharpe_ratio}')
 
