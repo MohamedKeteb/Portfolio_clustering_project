@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 ## path Nail : '/Users/khelifanail/Documents/GitHub/Portfolio_clustering_project'
 ## path Jerome : 'C:/Users/33640/OneDrive/Documents/GitHub/Portfolio_clustering_project'
-sys.path.append(r'C:/Users/33640/OneDrive/Documents/GitHub/Portfolio_clustering_project')  # Ajoute le chemin parent
+sys.path.append(r'/Users/khelifanail/Documents/GitHub/Portfolio_clustering_project')  # Ajoute le chemin parent
 
 from signet.cluster import Cluster 
 from scipy import sparse
@@ -650,7 +650,13 @@ def portfolio_returns(evaluation_window, df_cleaned, lookback_window, consolidat
 def sliding_window(df_cleaned, lookback_window_0, number_of_clusters, sigma, clustering_method, number_of_repetition, number_of_window, evaluation_window, eta):
     PnL = []
 
+<<<<<<< Updated upstream
     overall_return = pd.DataFrame()
+=======
+    for i in range(1, number_of_repetition + 1):
+        
+        PnL = []
+>>>>>>> Stashed changes
 
     portfolio_value=[1] #we start with a value of 1, the list contain : the porfolio value at the start of each evaluation period
 
