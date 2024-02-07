@@ -650,6 +650,7 @@ def portfolio_returns(evaluation_window, df_cleaned, lookback_window, consolidat
 def sliding_window(df_cleaned, lookback_window_0, number_of_clusters, sigma, clustering_method, number_of_repetition, number_of_window, evaluation_window, eta):
     
     PnL = []
+    daily_PnL = []
     overall_return = pd.DataFrame()
     portfolio_value=[1] #we start with a value of 1, the list contain : the porfolio value at the start of each evaluation period
     lookback_window = lookback_window_0
@@ -665,7 +666,8 @@ def sliding_window(df_cleaned, lookback_window_0, number_of_clusters, sigma, clu
         lookback_window = [lookback_window_0[0] + evaluation_window*i, lookback_window_0[1] + evaluation_window*i]
 
         PnL = np.concatenate((PnL, np.reshape(np.cumprod(1 + portfolio_return)*portfolio_value[-1] - portfolio_value[-1], (evaluation_window,))))## car on réinvestit immédiatement après
-        
+        daily_PnL = np.concatenate((daily_PnL, np.reshape(np.cumprod(1 + portfolio_return)*portfolio_value[-1] - portfolio_value[-1], (evaluation_window,))))## car on réinvestit immédiatement après
+
         portfolio_value.append(portfolio_value[-1]+PnL[-1])
 
         print(portfolio_value[-1])
@@ -680,11 +682,11 @@ def sliding_window(df_cleaned, lookback_window_0, number_of_clusters, sigma, clu
             
             PnL[j*evaluation_window + i - 1] = PnL[j*evaluation_window + i - 1] + PnL[j*evaluation_window - 1]
     
-    sharpe_ratio =(portfolio_value[-1] - 1)/ overall_return*np.sqrt(252)
-
+    sharpe_ratio = (portfolio_value[-1] - 1) / (overall_return*np.sqrt(252)) 
+    
     print(f'sharpe ratio = {sharpe_ratio}')
 
-    return overall_return, PnL, portfolio_value, sharpe_ratio
+    return overall_return, PnL, portfolio_value, sharpe_ratio, daily_PnL
 
 
 def bar_plot_PnL(PnL):
