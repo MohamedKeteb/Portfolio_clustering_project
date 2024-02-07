@@ -4,6 +4,9 @@ import ast
 import sys
 import plotly.graph_objects as go
 import matplotlib.pyplot as plt 
+import seaborn as sns
+import matplotlib.pyplot as plt
+import numpy as np
 
 
 ## path Nail : '/Users/khelifanail/Documents/GitHub/Portfolio_clustering_project'
@@ -689,7 +692,30 @@ def sliding_window(df_cleaned, lookback_window_0, number_of_clusters, sigma, clu
     return overall_return, PnL, portfolio_value, sharpe_ratio, daily_PnL
 
 
-def bar_plot_PnL(PnL):
+def plot_cumulative_PnL(PnL):
+    
+    # Création de l'axe des abscisses (nombre de jours)
+    days = np.arange(1, len(PnL) + 1)
+
+    # Configuration de seaborn pour un style agréable
+    sns.set(style="whitegrid")
+
+    # Tracer la PnL cumulative avec seaborn
+    plt.figure(figsize=(10, 6))
+    sns.lineplot(x=days, y=PnL, label='Cumulative PnL', color='blue')
+
+    # Ajouter des titres et des légendes
+    plt.title('Cumulative PnL of Portfolio')
+    plt.xlabel('Days')
+    plt.ylabel('Cumulative PnL')
+
+    # Personnaliser l'axe des ordonnées avec un pas de 0.01
+    plt.yticks(np.arange(0, max(PnL) + 0.01, 0.01))
+
+    # Afficher le graphique
+    plt.show()
+
+def bar_plot_daily_PnL(daily_PnL):
 
     '''
     ----------------------------------------------------------------
@@ -699,7 +725,7 @@ def bar_plot_PnL(PnL):
     ----------------------------------------------------------------
     PARAMS : 
 
-    - PnL : 
+    - daily_PnL : 
     ----------------------------------------------------------------
 
     ----------------------------------------------------------------
@@ -708,15 +734,24 @@ def bar_plot_PnL(PnL):
     ----------------------------------------------------------------
     '''
 
-    plt.figure(figsize=(10, 6))
-    plt.bar(range(len(PnL)), PnL, color='blue', alpha=0.7)
+    # Création de l'axe des abscisses (nombre de jours)
+    days = np.arange(1, len(daily_PnL) + 1)
 
-    # Customize the plot
-    plt.xlabel('Time Period')
-    plt.ylabel('Portfolio Return')
-    plt.title('Portfolio Returns Over Time')
-    plt.xticks(range(len(PnL)), ['daily_{}'.format(i) for i in range(len(PnL))], rotation=45, ha='right')
+    # Configuration de seaborn pour un style agréable
+    sns.set(style="whitegrid")
 
-    # Show the plot
-    plt.tight_layout()
+    # Tracer l'évolution quotidienne de la PnL sous forme de diagramme à barres avec seaborn
+    plt.figure(figsize=(12, 6))
+    ax = sns.barplot(x=days, y=daily_PnL, color='blue', width=0.8)  # Ajustez la largeur ici
+
+    # Rotation des étiquettes de l'axe des abscisses de 45 degrés avec un ajustement
+    ax.set_xticks(np.arange(0,251,10))
+    ax.set_xticklabels(ax.get_xticks(), rotation=90, ha='right', rotation_mode='anchor')
+
+    # Ajouter des titres et des légendes
+    plt.title('Daily PnL Evolution')
+    plt.xlabel('Days')
+    plt.ylabel('Daily PnL')
+
+    # Afficher le graphique
     plt.show()
