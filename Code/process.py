@@ -683,11 +683,49 @@ def sliding_window(df_cleaned, lookback_window_0, number_of_clusters, sigma, clu
             
             PnL[j*evaluation_window + i - 1] = PnL[j*evaluation_window + i - 1] + PnL[j*evaluation_window - 1]
     
-    sharpe_ratio = (portfolio_value[-1] - 1) / (overall_return*np.sqrt(252)) 
-    
-    print(f'sharpe ratio = {sharpe_ratio}')
+    ### CALCUL DU SHARPE RATIO ###
+
+    # Assurez-vous que les données de portefeuille ne contiennent pas de valeurs manquantes
+    portfolio_value = portfolio_value.dropna()
+
+    # Calcul du rendement global du portefeuille
+    overall_return = (portfolio_value.iloc[-1] / portfolio_value.iloc[0]) - 1
+
+    # Calcul du Sharpe ratio
+    sharpe_ratio = overall_return / (portfolio_value.pct_change().std() * np.sqrt(252))
 
     return overall_return, PnL, portfolio_value, sharpe_ratio, daily_PnL
+
+def save_to_csv(year, clustering_method):
+
+    
+
+    df_daily = pd.DataFrame(daily_PnL, columns=['Daily PnL'])
+
+    df_daily.to_csv(f'daily_{year}_{clustering_method}.csv', index=False)
+
+    df_PnL = pd.DataFrame(PnL, columns=['PnL'])
+
+    df_PnL.to_csv(f'PnL_{year}_{clustering_method}.csv', index=False)
+
+    df_overall_return = pd.DataFrame(overall_return.values, columns=['Return'])
+
+    df_overall_return.to_csv(f'Overall_return_{year}_{clustering_method}.csv', index=False)
+
+
+def get_sp500_PnL(start_date, end_date):
+
+    # Specify the ticker symbol for S&P 500
+    ticker_symbol = "^GSPC"
+
+    # Fetch historical data
+    sp500_data = yf.download(ticker_symbol, start=start_date, end=end_date)
+    sp500_data['Daily PnL'] = (sp500_data['Close'] - sp500_data['Open']) / sp500_data['Open'][0] ## /100 because we initially invest 1 dollar in our portfolio?
+    sp500_PnL = sp500_data['Daily PnL'].transpose() ## we remove the -2 values to have matching values
+
+    return sp500_PnL
+
+
 
 
 def plot_cumulative_PnL(PnL):
