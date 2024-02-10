@@ -227,3 +227,5 @@ class PyFolioCC:
         correlation_matrix = correlation_matrix.fillna(0) ## in case there are NaN values, we replace them with 0 
 
         return correlation_matrix
+    
+    

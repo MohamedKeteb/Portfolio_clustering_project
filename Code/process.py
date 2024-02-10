@@ -685,19 +685,12 @@ def sliding_window(df_cleaned, lookback_window_0, number_of_clusters, sigma, clu
     
     ### CALCUL DU SHARPE RATIO ###
 
-    # Assurez-vous que les données de portefeuille ne contiennent pas de valeurs manquantes
-    portfolio_value = pd.DataFrame(portfolio_value)
-    portfolio_value = portfolio_value.dropna()
-
-    # Calcul du rendement global du portefeuille
-    overall_return = (portfolio_value.iloc[-1] / portfolio_value.iloc[0]) - 1
-
     # Calcul du Sharpe ratio
     sharpe_ratio = overall_return / (portfolio_value.pct_change().std() * np.sqrt(252))
 
     ## saving the files as soon as they are created
 
-    return overall_return, PnL, portfolio_value, sharpe_ratio, daily_PnL
+    return overall_return, PnL, portfolio_value, daily_PnL
 
 
 def save_to_csv(year, clustering_method, daily_PnL, PnL, overall_return):
