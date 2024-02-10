@@ -686,6 +686,7 @@ def sliding_window(df_cleaned, lookback_window_0, number_of_clusters, sigma, clu
     ### CALCUL DU SHARPE RATIO ###
 
     # Assurez-vous que les données de portefeuille ne contiennent pas de valeurs manquantes
+    portfolio_value = pd.DataFrame(portfolio_value)
     portfolio_value = portfolio_value.dropna()
 
     # Calcul du rendement global du portefeuille
@@ -694,11 +695,13 @@ def sliding_window(df_cleaned, lookback_window_0, number_of_clusters, sigma, clu
     # Calcul du Sharpe ratio
     sharpe_ratio = overall_return / (portfolio_value.pct_change().std() * np.sqrt(252))
 
+    ## saving the files as soon as they are created
+
     return overall_return, PnL, portfolio_value, sharpe_ratio, daily_PnL
 
-def save_to_csv(year, clustering_method):
 
-    
+def save_to_csv(year, clustering_method, daily_PnL, PnL, overall_return):
+
 
     df_daily = pd.DataFrame(daily_PnL, columns=['Daily PnL'])
 
@@ -724,8 +727,6 @@ def get_sp500_PnL(start_date, end_date):
     sp500_PnL = sp500_data['Daily PnL'].transpose() ## we remove the -2 values to have matching values
 
     return sp500_PnL
-
-
 
 
 def plot_cumulative_PnL(PnL):
