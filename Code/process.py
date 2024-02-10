@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
-
+import yfinance as yf
 
 ## path Nail : '/Users/khelifanail/Documents/GitHub/Portfolio_clustering_project'
 ## path Jerome : 'C:/Users/33640/OneDrive/Documents/GitHub/Portfolio_clustering_project'
@@ -702,6 +702,28 @@ def sliding_window(df_cleaned, lookback_window_0, number_of_clusters, sigma, clu
 
 def save_to_csv(year, clustering_method, daily_PnL, PnL, overall_return):
 
+    '''
+    ----------------------------------------------------------------
+    GENERAL IDEA : save the outputs of sliding_window() to csv file. 
+    ----------------------------------------------------------------
+
+    ----------------------------------------------------------------
+    PARAMS : 
+
+    - year : string, corresponding to the year of trading we consider
+
+    - clustering_method : string, corresponding to the name of the 
+                          clustering method we use ('SPONGE', 
+                          'Signed Laplacian').
+
+    - daily_PnL, PnL, overall_return : outputs of sliding_window()
+    ----------------------------------------------------------------
+
+    ----------------------------------------------------------------
+    OUTPUT : None
+    ----------------------------------------------------------------
+    '''
+
 
     df_daily = pd.DataFrame(daily_PnL, columns=['Daily PnL'])
 
@@ -717,6 +739,27 @@ def save_to_csv(year, clustering_method, daily_PnL, PnL, overall_return):
 
 
 def get_sp500_PnL(start_date, end_date):
+
+    '''
+    ----------------------------------------------------------------
+    GENERAL IDEA : get the S&P500 index daily PnL between the star
+                   and end dates 
+    ----------------------------------------------------------------
+
+    ----------------------------------------------------------------
+    PARAMS : 
+
+    - start_date, end_date : strings, corresponding to start and end
+                             dates. The format is the datetime format
+                             "YYYY-MM-DD"
+
+    ----------------------------------------------------------------
+
+    ----------------------------------------------------------------
+    OUTPUT : pandas.DataFrame containing the S&P500 index daily 
+             between the star and end dates
+    ----------------------------------------------------------------
+    '''
 
     # Specify the ticker symbol for S&P 500
     ticker_symbol = "^GSPC"
