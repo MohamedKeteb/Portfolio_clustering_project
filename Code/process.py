@@ -683,13 +683,6 @@ def sliding_window(df_cleaned, lookback_window_0, number_of_clusters, sigma, clu
             
             PnL[j*evaluation_window + i - 1] = PnL[j*evaluation_window + i - 1] + PnL[j*evaluation_window - 1]
     
-    ### CALCUL DU SHARPE RATIO ###
-
-    # Calcul du Sharpe ratio
-    sharpe_ratio = overall_return / (portfolio_value.pct_change().std() * np.sqrt(252))
-
-    ## saving the files as soon as they are created
-
     return overall_return, PnL, portfolio_value, daily_PnL
 
 
