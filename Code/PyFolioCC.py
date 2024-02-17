@@ -58,13 +58,15 @@ class PyFolioCC:
 
 
 
-    def __init__(self, historical_data, lookback_window, evaluation_window, number_of_clusters, clustering_method='SPONGE'):
+    def __init__(self, historical_data, lookback_window, evaluation_window, number_of_clusters, sigma, clustering_method='SPONGE'):
         self.historical_data = historical_data
         self.lookback_window = lookback_window
         self.evaluation_window = evaluation_window
         self.number_of_clusters = number_of_clusters
         self.clustering_method = clustering_method
         self.correlation_matrix = self.corr_matrix()
+        self.sigma = sigma
+        self.cluster_returns = self.cluster_returns(self.sigma)
 
 
     '''
@@ -229,3 +231,129 @@ class PyFolioCC:
         return correlation_matrix
     
     
+    def cluster_returns(self, sigma):
+
+        '''
+        ----------------------------------------------------------------
+        GENERAL IDEA : 
+        1. Get the composition of each cluster (so as to compute the return 
+        of each cluster seen as a new asset)
+        2. Get the centroid of each cluster (so as to compute intra-cluster
+        weights that will be used to compute the overall return of each 
+        cluster (with the idea that each stock has a different contribution
+        to the overall cluster))
+        ----------------------------------------------------------------
+
+        ----------------------------------------------------------------
+        PARAMS : 
+        
+        - df_cleaned : pandas dataframe containing the returns of the 
+                    stocks
+
+        - correlation_matrix : pandas dataframe as given by the previous  
+                            correlation_matrix function
+
+        - number_of_clusters : integer, corresponding to the number of 
+                            clusters
+
+        - lookback_window : list of length 2, [start, end] corresponding 
+                            to the range of the lookback_window
+        ----------------------------------------------------------------
+        '''
+        ## cluster composition and centroids
+
+        result = dict(zip(list(self.correlation_matrix.columns), self.apply_SPONGE())) ## composition
+
+        df_cleaned = self.historical_data.copy()
+
+        df_cleaned['Cluster'] = df_cleaned.index.map(result)
+        centroid_returns = df_cleaned.groupby('Cluster').mean() ## centroids 
+
+        df_cleaned = df_cleaned.transpose() ## contains the historical returns and a lign that indicates the cluster to which each stock belongs
+        centroid_returns = centroid_returns.transpose()
+
+        ## constituent_weights ##
+
+        '''
+        ----------------------------------------------------------------
+        GENERAL IDEA : compute the constituent weights (i.e.
+        the intra-cluster weights of each stock)
+        ----------------------------------------------------------------
+
+        ----------------------------------------------------------------
+        PARAMS : 
+        
+        - df_cleaned : pandas dataframe containing the returns of the 
+                    stocks
+
+        - cluster_composition : numpy array as returned by the 
+                                cluster_composition_and_centroid 
+                                function
+
+        - sigma : parameter of dispersion
+
+        - lookback_window : list of length 2, [start, end] corresponding 
+                            to the range of the lookback_window
+        ----------------------------------------------------------------
+
+        ----------------------------------------------------------------
+        OUTPUT : numpy array containing the weights of each stock 
+        ----------------------------------------------------------------
+        '''
+
+        constituent_weights = pd.DataFrame(index=['Weight'], columns=df_cleaned.columns)
+        total_weight = pd.DataFrame(index=['Total weight'], columns=[i for i in range(self.number_of_clusters)], data=np.zeros((1, self.number_of_clusters)))
+
+        ## we first compute the difference between the cluster centroid return and the cluster ticker return
+        for ticker in df_cleaned.columns:
+            df_cleaned[ticker][:-1] = df_cleaned[ticker][:-1] - centroid_returns[int(df_cleaned[ticker]['Cluster'])]
+
+        ## we use this difference to compute the distance between each asset and its cluster centroid return 
+        for ticker in df_cleaned.columns:
+            constituent_weights[ticker] = np.exp(sigma*((np.linalg.norm(df_cleaned[ticker][:-1]))**2)/2)
+            total_weight[int(df_cleaned[ticker]['Cluster'])]['Total weight'] += np.exp(sigma*((np.linalg.norm(df_cleaned[ticker][:-1]))**2)/2)
+
+        ## we normalize the weights
+        for ticker in df_cleaned.columns:
+            constituent_weights[ticker] = constituent_weights[ticker]['Weight']/total_weight[int(df_cleaned[ticker]['Cluster'])]['Total weight']
+
+        ## check whether the weights equal to 0 within each cluster: 
+        # constituent_weights[[ticker for ticker in df_cleaned.columns if df_cleaned[ticker]['Cluster']  == 1.0]].sum(axis=1)
+        
+        '''
+        ----------------------------------------------------------------
+        GENERAL IDEA : compute the return of each cluster.
+                    The steps are : 
+                    1. find the assets composing each cluster
+                    2. compute the consituent_weights weighted-average 
+                    return of all those stocks, which is by definition 
+                    the return of the cluster
+                    
+        ----------------------------------------------------------------
+
+        ----------------------------------------------------------------
+        PARAMS : 
+        
+        - df_cleaned : pandas dataframe containing the returns of the 
+                    stocks
+
+        - constituent_weights : numpy array as returned by the 
+                                constituent_weights function 
+
+        - lookback_window : list of length 2, [start, end] corresponding 
+                            to the range of the lookback_window
+        ----------------------------------------------------------------
+
+        ----------------------------------------------------------------
+        OUTPUT : create a single column pandas dataframe containing the 
+                return of each cluster over the lookback_window days
+        ----------------------------------------------------------------
+        '''
+        cluster_returns = pd.DataFrame(index=df_cleaned.index[:-1], columns=np.arange(self.number_of_clusters), data=np.zeros((df_cleaned.shape[0] - 1, self.number_of_clusters))) ## -1 and [:-1] because we don't want to take into account the last line 
+        ## that contains the label of the cluster for each stock
+
+        for ticker in df_cleaned.columns:
+            cluster_returns[int(df_cleaned[ticker]['Cluster'])] = cluster_returns[int(df_cleaned[ticker]['Cluster'])] + constituent_weights[ticker]['Weight'] * df_cleaned[ticker][:-1]
+
+        return cluster_returns
+            

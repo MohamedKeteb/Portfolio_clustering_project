@@ -365,7 +365,7 @@ def noised_array(y, eta):
         correlation = x.corr(y.squeeze())
 
         # Adjust the standard deviation of the noise
-        epsilon_std_dev += 0.001
+        epsilon_std_dev += 0.0005
 
     return x
 
