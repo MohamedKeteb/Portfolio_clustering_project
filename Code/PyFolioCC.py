@@ -106,7 +106,7 @@ class PyFolioCC:
         '''
 
         ## We respect the format imposed by signet. To do this, we need to change the type of the A_pos and A_neg matrices, which cannot remain dataframes
-        A_pos, A_neg = self.correlation_matrix.applymap(lambda x: x if x >= 0 else 0), self.corlation_matrix.applymap(lambda x: abs(x) if x < 0 else 0)
+        A_pos, A_neg = self.correlation_matrix.applymap(lambda x: x if x >= 0 else 0), self.correlation_matrix.applymap(lambda x: abs(x) if x < 0 else 0)
 
         data = (sparse.csc_matrix(A_pos.values), sparse.csc_matrix(A_neg.values))
 
