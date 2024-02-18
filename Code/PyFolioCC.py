@@ -231,7 +231,7 @@ class PyFolioCC:
         return correlation_matrix
     
     
-    def cluster_returns(self, sigma):
+    def cluster_returns(self):
 
         '''
         ----------------------------------------------------------------
