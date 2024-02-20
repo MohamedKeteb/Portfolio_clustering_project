@@ -14,7 +14,9 @@ from signet.cluster import Cluster
 from scipy import sparse
 from pypfopt.efficient_frontier import EfficientFrontier
 
+import warnings
 
+warnings.filterwarnings('ignore')
 
 
 class PyFolioCC:
@@ -66,7 +68,7 @@ class PyFolioCC:
         self.clustering_method = clustering_method
         self.correlation_matrix = self.corr_matrix()
         self.sigma = sigma
-        self.cluster_returns = self.cluster_return()
+        self.cluster_returns = self.cluster_return()[0]
 
 
     '''
