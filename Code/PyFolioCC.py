@@ -66,7 +66,7 @@ class PyFolioCC:
         self.clustering_method = clustering_method
         self.correlation_matrix = self.corr_matrix()
         self.sigma = sigma
-        self.cluster_returns = self.cluster_returns(self.sigma)
+        self.cluster_returns = self.cluster_return(self.sigma)
 
 
     '''
@@ -231,7 +231,7 @@ class PyFolioCC:
         return correlation_matrix
     
     
-    def cluster_returns(self):
+    def cluster_return(self):
 
         '''
         ----------------------------------------------------------------
@@ -310,8 +310,8 @@ class PyFolioCC:
 
         ## we use this difference to compute the distance between each asset and its cluster centroid return 
         for ticker in df_cleaned.columns:
-            constituent_weights[ticker] = np.exp(sigma*((np.linalg.norm(df_cleaned[ticker][:-1]))**2)/2)
-            total_weight[int(df_cleaned[ticker]['Cluster'])]['Total weight'] += np.exp(sigma*((np.linalg.norm(df_cleaned[ticker][:-1]))**2)/2)
+            constituent_weights[ticker] = np.exp(self.sigma*((np.linalg.norm(df_cleaned[ticker][:-1]))**2)/2)
+            total_weight[int(df_cleaned[ticker]['Cluster'])]['Total weight'] += np.exp(self.sigma*((np.linalg.norm(df_cleaned[ticker][:-1]))**2)/2)
 
         ## we normalize the weights
         for ticker in df_cleaned.columns:
@@ -349,11 +349,11 @@ class PyFolioCC:
                 return of each cluster over the lookback_window days
         ----------------------------------------------------------------
         '''
-        cluster_returns = pd.DataFrame(index=df_cleaned.index[:-1], columns=np.arange(self.number_of_clusters), data=np.zeros((df_cleaned.shape[0] - 1, self.number_of_clusters))) ## -1 and [:-1] because we don't want to take into account the last line 
+        cluster_return = pd.DataFrame(index=df_cleaned.index[:-1], columns=np.arange(self.number_of_clusters), data=np.zeros((df_cleaned.shape[0] - 1, self.number_of_clusters))) ## -1 and [:-1] because we don't want to take into account the last line 
         ## that contains the label of the cluster for each stock
 
         for ticker in df_cleaned.columns:
-            cluster_returns[int(df_cleaned[ticker]['Cluster'])] = cluster_returns[int(df_cleaned[ticker]['Cluster'])] + constituent_weights[ticker]['Weight'] * df_cleaned[ticker][:-1]
+            cluster_return[int(df_cleaned[ticker]['Cluster'])] = cluster_return[int(df_cleaned[ticker]['Cluster'])] + constituent_weights[ticker]['Weight'] * df_cleaned[ticker][:-1]
 
-        return cluster_returns
+        return cluster_return
             
