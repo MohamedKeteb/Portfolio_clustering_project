@@ -66,7 +66,7 @@ class PyFolioCC:
         self.clustering_method = clustering_method
         self.correlation_matrix = self.corr_matrix()
         self.sigma = sigma
-        self.cluster_returns = self.cluster_return(self.sigma)
+        self.cluster_returns = self.cluster_return()
 
 
     '''
@@ -231,7 +231,7 @@ class PyFolioCC:
         return correlation_matrix
     
     
-    def cluster_return(self):
+    def cluster_return(self, sigma):
 
         '''
         ----------------------------------------------------------------
