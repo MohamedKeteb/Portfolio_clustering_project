@@ -137,7 +137,7 @@ def correlation_matrix(lookback_window, df_cleaned):
     '''
  
 
-    correlation_matrix = df_cleaned.iloc[:, lookback_window[0]:lookback_window[1]].transpose().corr(method='pearson') ## MODIFIÉ
+    correlation_matrix = df_cleaned.iloc[lookback_window[0]:lookback_window[1], :].corr(method='pearson') ## MODIFIÉ
 
     correlation_matrix = correlation_matrix.fillna(0) ## in case there are NaN values, we replace them with 0 
 
@@ -202,7 +202,7 @@ def cluster_composition_and_centroid(df_cleaned, correlation_matrix, number_of_c
             return_centroid = np.zeros(lookback_window[1] - lookback_window[0])
 
             for elem in tickers:
-                return_centroid = return_centroid + df_cleaned.loc[elem, :][lookback_window[0]:lookback_window[1]].values
+                return_centroid = return_centroid + df_cleaned.loc[:, elem][lookback_window[0]:lookback_window[1]].values
 
             centroid = return_centroid / len(tickers)
 
@@ -249,9 +249,15 @@ def constituent_weights(df_cleaned, cluster_composition, sigma, lookback_window)
         total_cluster_weight = 0
 
         for elem in cluster_composition[cluster]['tickers']:
-            elem_returns = df_cleaned.loc[elem, :][lookback_window[0]:lookback_window[1]].values
-            distance_to_centroid = np.linalg.norm(cluster_composition[cluster]['centroid'] - elem_returns)**2
+
+            elem_returns = df_cleaned.loc[:, elem][lookback_window[0]:lookback_window[1]].values
+
+            ## we compute the distance of the stock to the centroid of the cluster
+            distance_to_centroid = np.linalg.norm(cluster_composition[cluster]['centroid'] - elem_returns)**2 
+
+            ## we compute the norm exp(-|x|^2/2*sigma^2)
             total_cluster_weight += np.exp(-distance_to_centroid / (2 * (sigma**2)))
+
             weights.append(np.exp(-distance_to_centroid / (2 * (sigma**2))))
 
         normalized_weights = [w / total_cluster_weight for w in weights]
@@ -293,13 +299,13 @@ def cluster_return(constituent_weights, df_cleaned, lookback_window):
     ----------------------------------------------------------------
     '''
 
-    cluster_returns = pd.DataFrame(index = df_cleaned.columns[lookback_window[0]:lookback_window[1]], columns= [f'cluster {i}' for i in range(1, len(constituent_weights) + 1)], data = np.zeros((len(df_cleaned.columns[lookback_window[0]:lookback_window[1]]), len(constituent_weights))))
+    cluster_returns = pd.DataFrame(index = df_cleaned.index[lookback_window[0]:lookback_window[1]], columns= [f'cluster {i}' for i in range(1, len(constituent_weights) + 1)], data = np.zeros((len(df_cleaned.index[lookback_window[0]:lookback_window[1]]), len(constituent_weights))))
 
     for cluster in constituent_weights.keys():
 
         for ticker, weight in constituent_weights[cluster].items(): 
             ## we transpose df_cleaned to have columns for each ticker
-            cluster_returns[cluster] = cluster_returns[cluster] + df_cleaned.transpose()[ticker][lookback_window[0]:lookback_window[1]]*weight
+            cluster_returns[cluster] = cluster_returns[cluster] + df_cleaned[ticker][lookback_window[0]:lookback_window[1]]*weight
 
     return cluster_returns
 
@@ -439,15 +445,13 @@ def final_weights(markowitz_weights, constituent_weights):
 
     ### On cherche désormais à calculer le poids de chaque actif dans le portefeuille total
 
-    W = []
+    W = {}
 
-    for i in range(len(constituent_weights)):
+    for cluster in constituent_weights.keys(): ## we range across all clusters
 
-        m_weights = markowitz_weights[constituent_weights[i][0]]
+        for tickers, weight in constituent_weights[cluster].items(): ## we range across all tickers in each cluster
 
-        for elem in constituent_weights[i][1]:
-
-            W.append([elem[0], elem[1] * m_weights])
+            W[tickers] = weight*markowitz_weights[cluster]
 
     return W
 
@@ -559,9 +563,9 @@ def consolidated_W(number_of_repetitions, lookback_window, df_cleaned, number_of
         W = training_phase(lookback_window=lookback_window, df_cleaned=df_cleaned, number_of_clusters=number_of_clusters, sigma=sigma, evaluation_window=evaluation_window, eta=eta, clustering_method=clustering_method)
         history.append(W)
 
-    consolidated_W = pd.DataFrame(index=df_cleaned.index, columns=['weight'])
+    consolidated_W = pd.DataFrame(index=df_cleaned.columns, columns=['weight'])
 
-    stock_name = list(df_cleaned.index)
+    stock_name = list(df_cleaned.columns)
 
     for i in range(len(stock_name)):
 
