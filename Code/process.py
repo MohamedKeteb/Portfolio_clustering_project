@@ -241,7 +241,7 @@ def constituent_weights(df_cleaned, cluster_composition, sigma, lookback_window)
     ----------------------------------------------------------------
     '''
 
-    constituent_weights_dict = {}
+    constituent_weights = {}
 
     for cluster in cluster_composition.keys():
         weights = []
@@ -254,9 +254,9 @@ def constituent_weights(df_cleaned, cluster_composition, sigma, lookback_window)
             weights.append(np.exp(-distance_to_centroid / (2 * (sigma**2))))
 
         normalized_weights = [w / total_cluster_weight for w in weights]
-        constituent_weights_dict[cluster] = dict(zip(cluster_composition[cluster]['tickers'], normalized_weights))
+        constituent_weights[cluster] = dict(zip(cluster_composition[cluster]['tickers'], normalized_weights))
 
-    return constituent_weights_dict
+    return constituent_weights
 
 
 
@@ -297,15 +297,15 @@ def cluster_return(constituent_weights, df_cleaned, lookback_window):
 
     for returns in cluster_returns.columns: ## we range across all returns
 
-        for elem in constituent_weights: ## we get the composition + weights of each cluster
+        for cluster in constituent_weights.keys(): ## we get the composition + weights of each cluster
             
             return_cluster = 0 ## counter 
 
-            for stock in elem[1]: ## we range across all the stocks that compose the current cluster 
+            for ticker, weight in constituent_weights[cluster].items(): ## we range across all the stocks that compose the current cluster 
 
-                return_cluster += stock[1]*df_cleaned.loc[stock[0], returns] ## we add the weighted contribution of the stock to its cluster in terms of return
+                return_cluster += weight*df_cleaned.loc[ticker, returns] ## we add the weighted contribution of the stock to its cluster in terms of return
 
-            cluster_returns.loc[elem[0], returns] = return_cluster
+            cluster_returns.loc[cluster, returns] = return_cluster
 
     return cluster_returns
 
