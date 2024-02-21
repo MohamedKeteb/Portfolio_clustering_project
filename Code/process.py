@@ -293,7 +293,7 @@ def cluster_return(constituent_weights, df_cleaned, lookback_window):
     ----------------------------------------------------------------
     '''
 
-    cluster_returns = pd.DataFrame(index = df_cleaned.columns[lookback_window[0]:lookback_window[1]], columns= [f'cluster {i}' for i in range(1, len(constituent_weights) + 1)], data = np.zeros((len(df_cleaned.columns[lookback_window[0]:lookback_window[1]]), len(constituent_weights) + 1)))
+    cluster_returns = pd.DataFrame(index = df_cleaned.columns[lookback_window[0]:lookback_window[1]], columns= [f'cluster {i}' for i in range(1, len(constituent_weights) + 1)], data = np.zeros((len(df_cleaned.columns[lookback_window[0]:lookback_window[1]]), len(constituent_weights))))
 
     for cluster in constituent_weights.keys():
 
