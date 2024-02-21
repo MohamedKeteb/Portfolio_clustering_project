@@ -192,25 +192,20 @@ def cluster_composition_and_centroid(df_cleaned, correlation_matrix, number_of_c
 
     ## STEP 2: compute the composition of each cluster (in terms of stocks)
 
-    cluster_composition = []
+    cluster_composition = {}
 
-    for i in range(1, number_of_clusters+1):
+    for i in range(1, number_of_clusters + 1):
+        if i in result['Cluster label'].values:
+            tickers = list(result[result['Cluster label'] == i].index)
 
-        if i in result['Cluster label'].values: ## we check that the i-th cluster is not empty
+            return_centroid = np.zeros(lookback_window[1] - lookback_window[0])
 
-            cluster_composition.append([f'cluster {i}', list(result[result['Cluster label'] == i].index)])
+            for elem in tickers:
+                return_centroid = return_centroid + df_cleaned.loc[elem, :][lookback_window[0]:lookback_window[1]].values
 
-    ## STEP 3: compute the centroid of each cluster 
+            centroid = return_centroid / len(tickers)
 
-    for i in range(len(cluster_composition)):
-
-        return_centroid = np.zeros(lookback_window[1]-lookback_window[0]) ## we prepare the return_centroid array to stock the centroid
-
-        for elem in cluster_composition[i][1]:
-
-            return_centroid = return_centroid + df_cleaned.loc[elem, :][lookback_window[0]:lookback_window[1]].values
-
-        cluster_composition[i].append(return_centroid/len(cluster_composition[i][1])) ## the third element contains the centroid of the cluster in question
+            cluster_composition[f'cluster {i}'] = {'tickers': tickers, 'centroid': centroid}
 
     return cluster_composition
 
