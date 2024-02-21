@@ -328,7 +328,7 @@ def noised_array(y, eta):
              of correlation
     ----------------------------------------------------------------
     '''
-
+    
     # We compute with a small noise 
     epsilon_std_dev = 0.001
 
@@ -393,7 +393,7 @@ def markowitz_weights(cluster_return_res, constituent_weights, df_cleaned, lookb
 
     ## on construit la matrice de corrélation associée à ces returns, c'est donc une matrice de corrélation de return de cluster
 
-    cov_matrix = cluster_return_res.transpose().cov()
+    cov_matrix = cluster_return_res.cov()
 
     cov_matrix.fillna(0.)
 
