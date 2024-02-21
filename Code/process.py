@@ -557,31 +557,24 @@ def consolidated_W(number_of_repetitions, lookback_window, df_cleaned, number_of
     ----------------------------------------------------------------
     '''
 
-    history = []
+    # Initialize an empty DataFrame to store the results
+    consolidated_W = pd.DataFrame()
 
+    # Run the training function n times and concatenate the results
     for _ in range(number_of_repetitions):
-        W = training_phase(lookback_window=lookback_window, df_cleaned=df_cleaned, number_of_clusters=number_of_clusters, sigma=sigma, evaluation_window=evaluation_window, eta=eta, clustering_method=clustering_method)
-        history.append(W)
+        # Assuming training() returns a DataFrame with 'weights' as the column name
+        weights_df = training_phase(lookback_window=lookback_window, df_cleaned=df_cleaned, number_of_clusters=number_of_clusters, sigma=sigma, evaluation_window=evaluation_window, eta=eta, clustering_method=clustering_method)
 
-    consolidated_W = pd.DataFrame(index=df_cleaned.columns, columns=['weight'])
+        # Concatenate the results into columns
+        consolidated_W = pd.concat([consolidated_W, weights_df], axis=1)
 
-    stock_name = list(df_cleaned.columns)
+    # Calculate the average along axis 1
+    average_weights = consolidated_W.mean(axis=1)
 
-    for i in range(len(stock_name)):
-
-        consolidated_W.loc[stock_name[i], 'weight'] = 0
-
-        for j in range(number_of_repetitions):
-
-            if stock_name[i] in history[j].index:
-
-                consolidated_W.loc[stock_name[i], 'weight'] += history[j].loc[stock_name[i], 'weight']
-        
-        consolidated_W.loc[stock_name[i], 'weight'] /= number_of_repetitions
-
+    # Create a DataFrame with the average weights
+    consolidated_W = pd.DataFrame({'weights': average_weights})
 
     return consolidated_W
-
 
 
 def portfolio_returns(evaluation_window, df_cleaned, lookback_window, consolidated_W):
@@ -620,9 +613,9 @@ def portfolio_returns(evaluation_window, df_cleaned, lookback_window, consolidat
     ----------------------------------------------------------------
     '''
 
-    portfolio_returns = pd.DataFrame(index=df_cleaned.iloc[:, lookback_window[1]:lookback_window[1]+evaluation_window].columns, columns=['portfolio return'], data=np.zeros(len(df_cleaned.iloc[:, lookback_window[1]:lookback_window[1]+evaluation_window].columns)))
+    portfolio_returns = pd.DataFrame(index=df_cleaned.iloc[lookback_window[1]:lookback_window[1]+evaluation_window, :].index, columns=['portfolio return'], data=np.zeros(len(df_cleaned.iloc[lookback_window[1]:lookback_window[1]+evaluation_window, :].index)))
 
-    for returns in portfolio_returns.index:
+    for tickers in portfolio_returns.index:
 
         total_return = 0 
 
