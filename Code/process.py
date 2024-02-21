@@ -619,7 +619,8 @@ def portfolio_returns(evaluation_window, df_cleaned, lookback_window, consolidat
 
     for ticker in consolidated_W.index: 
 
-        portfolio_returns['return'] = portfolio_returns['return'] + df_cleaned.loc[ticker][lookback_window[1]:lookback_window[1]+evaluation_window]*consolidated_W[ticker]
+    ##  each time we add :            the present value of the return + the weighted "contribution" of the stock 'ticker' times is weight in the portfolio
+        portfolio_returns['return'] = portfolio_returns['return'] + df_cleaned.loc[ticker][lookback_window[1]:lookback_window[1]+evaluation_window]*consolidated_W[ticker]['weights']
 
     return portfolio_returns
 
