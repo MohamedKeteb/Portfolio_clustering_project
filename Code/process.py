@@ -180,14 +180,15 @@ def cluster_composition_and_centroid(df_cleaned, correlation_matrix, number_of_c
     ## STEP 1: run the SPONGE clustering algorithm with a number of clusters fixed to be number_of_clusters and using 
     ##         the correlation matrix correlation_matrix ==> we store the results in result
 
+    ### 1 + pd.DataFrame(...) because we want the number of clusters to range between 1 un number_of_clusters
     if clustering_method == 'SPONGE':
-        result = pd.DataFrame(index=list(correlation_matrix.columns), columns=['Cluster label'], data=apply_SPONGE(correlation_matrix, number_of_clusters))
+        result = 1 + pd.DataFrame(index=list(correlation_matrix.columns), columns=['Cluster label'], data=apply_SPONGE(correlation_matrix, number_of_clusters))
 
     if clustering_method == 'signed_laplacian':
-        result = pd.DataFrame(index=list(correlation_matrix.columns), columns=['Cluster label'], data=apply_signed_laplacian(correlation_matrix, number_of_clusters))
+        result = 1 + pd.DataFrame(index=list(correlation_matrix.columns), columns=['Cluster label'], data=apply_signed_laplacian(correlation_matrix, number_of_clusters))
 
     if clustering_method == 'SPONGE_sym':
-        result = pd.DataFrame(index=list(correlation_matrix.columns), columns=['Cluster label'], data=apply_SPONGE_sym(correlation_matrix, number_of_clusters))
+        result = 1 + pd.DataFrame(index=list(correlation_matrix.columns), columns=['Cluster label'], data=apply_SPONGE_sym(correlation_matrix, number_of_clusters))
 
 
     ## STEP 2: compute the composition of each cluster (in terms of stocks)
@@ -292,20 +293,13 @@ def cluster_return(constituent_weights, df_cleaned, lookback_window):
     ----------------------------------------------------------------
     '''
 
-    ## using open and close, we compute the returns of each stocks (weighted-average using constituents weights)
-    cluster_returns = pd.DataFrame(index = [f'cluster {i}' for i in range(1, len(constituent_weights) + 1)], columns = df_cleaned.columns[lookback_window[0]:lookback_window[1]])
+    cluster_returns = pd.DataFrame(index = df_cleaned.columns[lookback_window[0]:lookback_window[1]], columns= [f'cluster {i}' for i in range(1, len(constituent_weights) + 1)], data = np.zeros((len(df_cleaned.columns[lookback_window[0]:lookback_window[1]]), len(constituent_weights) + 1)))
 
-    for returns in cluster_returns.columns: ## we range across all returns
+    for cluster in constituent_weights.keys():
 
-        for cluster in constituent_weights.keys(): ## we get the composition + weights of each cluster
-            
-            return_cluster = 0 ## counter 
-
-            for ticker, weight in constituent_weights[cluster].items(): ## we range across all the stocks that compose the current cluster 
-
-                return_cluster += weight*df_cleaned.loc[ticker, returns] ## we add the weighted contribution of the stock to its cluster in terms of return
-
-            cluster_returns.loc[cluster, returns] = return_cluster
+        for ticker, weight in constituent_weights[cluster].items(): 
+            ## we transpose df_cleaned to have columns for each ticker
+            cluster_returns[cluster] = cluster_returns[cluster] + df_cleaned.transpose()[ticker][lookback_window[0]:lookback_window[1]]*weight
 
     return cluster_returns
 
