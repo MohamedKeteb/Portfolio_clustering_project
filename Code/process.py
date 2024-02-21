@@ -572,7 +572,7 @@ def consolidated_W(number_of_repetitions, lookback_window, df_cleaned, number_of
     average_weights = consolidated_W.mean(axis=1)
 
     # Create a DataFrame with the average weights
-    consolidated_W = pd.DataFrame({'weights': average_weights})
+    consolidated_W = pd.DataFrame({'weight': average_weights})
 
     consolidated_W = consolidated_W.transpose()
 
@@ -617,10 +617,10 @@ def portfolio_returns(evaluation_window, df_cleaned, lookback_window, consolidat
 
     portfolio_returns = pd.DataFrame(index=df_cleaned.iloc[lookback_window[1]:lookback_window[1]+evaluation_window, :].index, columns=['return'], data=np.zeros(len(df_cleaned.iloc[lookback_window[1]:lookback_window[1]+evaluation_window, :].index)))
 
-    for ticker in consolidated_W.index: 
+    for ticker in consolidated_W.columns: 
 
     ##  each time we add :            the present value of the return + the weighted "contribution" of the stock 'ticker' times is weight in the portfolio
-        portfolio_returns['return'] = portfolio_returns['return'] + df_cleaned.loc[ticker][lookback_window[1]:lookback_window[1]+evaluation_window]*consolidated_W[ticker]['weights']
+        portfolio_returns['return'] = portfolio_returns['return'] + df_cleaned.loc[ticker][lookback_window[1]:lookback_window[1]+evaluation_window]*consolidated_W[ticker]['weight']
 
     return portfolio_returns
 
