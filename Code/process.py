@@ -194,7 +194,7 @@ def cluster_composition_and_centroid(df_cleaned, correlation_matrix, number_of_c
 
     cluster_composition = []
 
-    for i in range(1, number_of_clusters):
+    for i in range(1, number_of_clusters+1):
 
         if i in result['Cluster label'].values: ## we check that the i-th cluster is not empty
 
