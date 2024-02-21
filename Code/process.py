@@ -574,6 +574,8 @@ def consolidated_W(number_of_repetitions, lookback_window, df_cleaned, number_of
     # Create a DataFrame with the average weights
     consolidated_W = pd.DataFrame({'weights': average_weights})
 
+    consolidated_W = consolidated_W.transpose()
+
     return consolidated_W
 
 
@@ -613,17 +615,11 @@ def portfolio_returns(evaluation_window, df_cleaned, lookback_window, consolidat
     ----------------------------------------------------------------
     '''
 
-    portfolio_returns = pd.DataFrame(index=df_cleaned.iloc[lookback_window[1]:lookback_window[1]+evaluation_window, :].index, columns=['portfolio return'], data=np.zeros(len(df_cleaned.iloc[lookback_window[1]:lookback_window[1]+evaluation_window, :].index)))
+    portfolio_returns = pd.DataFrame(index=df_cleaned.iloc[lookback_window[1]:lookback_window[1]+evaluation_window, :].index, columns=['return'], data=np.zeros(len(df_cleaned.iloc[lookback_window[1]:lookback_window[1]+evaluation_window, :].index)))
 
-    for tickers in portfolio_returns.index:
+    for ticker in consolidated_W.index: 
 
-        total_return = 0 
-
-        for stock in consolidated_W.index:
-            
-            total_return += consolidated_W.loc[stock, 'weight'] * df_cleaned.loc[stock, returns]
-
-        portfolio_returns.loc[returns, 'portfolio return'] = total_return
+        portfolio_returns['return'] = portfolio_returns['return'] + df_cleaned.loc[ticker][lookback_window[1]:lookback_window[1]+evaluation_window]*consolidated_W[ticker]
 
     return portfolio_returns
 
