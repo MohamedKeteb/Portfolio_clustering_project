@@ -414,14 +414,14 @@ class PyFolio:
         ----------------------------------------------------------------
         '''
 
-        cluster_returns = pd.DataFrame(index = self.historical_data.index[lookback_window[0]:lookback_window[1]], columns= [f'cluster {i}' for i in range(1, len(self.constituent_weights_res) + 1)], data = np.zeros((len(self.historical_data.index[lookback_window[0]:lookback_window[1]]), len(self.constituent_weights_res))))
+        cluster_returns = pd.DataFrame(index = self.historical_data.index[self.lookback_window[0]:self.lookback_window[1]], columns= [f'cluster {i}' for i in range(1, len(self.constituent_weights_res) + 1)], data = np.zeros((len(self.historical_data.index[self.lookback_window[0]:self.lookback_window[1]]), len(self.constituent_weights_res))))
 
         for cluster in self.constituent_weights_res.keys():
 
             for ticker, weight in self.constituent_weights_res[cluster].items(): 
 
                 ## we transpose df_cleaned to have columns for each ticker
-                cluster_returns[cluster] = cluster_returns[cluster] + self.historical_data[ticker][lookback_window[0]:lookback_window[1]]*weight
+                cluster_returns[cluster] = cluster_returns[cluster] + self.historical_data[ticker][self.lookback_window[0]:self.lookback_window[1]]*weight
 
         return cluster_returns
 
