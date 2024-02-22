@@ -565,7 +565,7 @@ class PyFolio:
 
             for tickers, weight in self.constituent_weights_res[cluster].items(): ## we range across all tickers in each cluster
 
-                W[tickers] = weight*self.markowitz_weights[cluster]
+                W[tickers] = weight*self.markowitz_weights_res[cluster]
 
         W = pd.DataFrame(list(W.items()), columns=['ticker', 'weights'])
     
