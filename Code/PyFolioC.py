@@ -296,13 +296,13 @@ class PyFolio:
 
         ### 1 + pd.DataFrame(...) because we want the number of clusters to range between 1 un number_of_clusters
         if self.clustering_method == 'SPONGE':
-            result = 1 + pd.DataFrame(index=list(self.correlation_matrix.columns), columns=['Cluster label'], data=self.apply_SPONGE(self.correlation_matrix, self.number_of_clusters))
+            result = 1 + pd.DataFrame(index=list(self.correlation_matrix.columns), columns=['Cluster label'], data=self.apply_SPONGE())
 
         if self.clustering_method == 'signed_laplacian':
-            result = 1 + pd.DataFrame(index=list(self.correlation_matrix.columns), columns=['Cluster label'], data=self.apply_signed_laplacian(self.correlation_matrix, self.number_of_clusters))
+            result = 1 + pd.DataFrame(index=list(self.correlation_matrix.columns), columns=['Cluster label'], data=self.apply_signed_laplacian())
 
         if self.clustering_method == 'SPONGE_sym':
-            result = 1 + pd.DataFrame(index=list(self.correlation_matrix.columns), columns=['Cluster label'], data=self.apply_SPONGE_sym(self.correlation_matrix, self.number_of_clusters))
+            result = 1 + pd.DataFrame(index=list(self.correlation_matrix.columns), columns=['Cluster label'], data=self.apply_SPONGE_sym())
 
 
         ## STEP 2: compute the composition of each cluster (in terms of stocks)
