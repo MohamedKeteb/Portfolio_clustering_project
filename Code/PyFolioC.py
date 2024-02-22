@@ -456,7 +456,7 @@ class PyFolio:
         # Calculer la corrélation initiale
 
         correlation = 1
-        y = self.cluster_return(self, lookback_window=[self.lookback_window[1], self.lookback_window[1]+self.evaluation_window]).mean()
+        y = self.cluster_return(lookback_window=[self.lookback_window[1], self.lookback_window[1]+self.evaluation_window]).mean()
         x = y.copy()
 
         # Boucle pour ajuster l'écart-type du bruit jusqu'à ce que la corrélation atteigne eta
