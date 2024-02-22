@@ -79,9 +79,9 @@ class PyFolio:
         self.correlation_matrix = self.corr_matrix()
         self.sigma = sigma
         self.eta = eta
-        self.cluster_returns = self.cluster_return(lookback_window)
         self.cluster_composition = self.cluster_composition_and_centroid()
         self.constituent_weights_res = self.constituent_weights()
+        self.cluster_returns = self.cluster_return(lookback_window)
         self.markowitz_weights_res = self.markowitz_weights()
         self.final_weights = self.final_W()
 
