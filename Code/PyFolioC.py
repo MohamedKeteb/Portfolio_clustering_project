@@ -31,7 +31,7 @@ except ImportError:
 # ----------------------------------------------------------------
 
 
-class PyFolioC:
+class PyFolio:
 
 
 
@@ -573,3 +573,168 @@ class PyFolioC:
         W.set_index('ticker', inplace=True)
 
         return W
+    
+ 
+class PyFolioC(PyFolio):
+
+    def __init__(self, number_of_repetitions, historical_data, lookback_window, evaluation_window, number_of_clusters, sigma, eta, clustering_method='SPONGE'):
+        
+        super().__init__(historical_data=historical_data, 
+                         lookback_window=lookback_window, 
+                         evaluation_window=evaluation_window, 
+                         number_of_clusters=number_of_clusters, 
+                         sigma=sigma, 
+                         eta=eta, 
+                         clustering_method=clustering_method)
+        
+        self.number_of_repetitions = number_of_repetitions
+        self.consolidated_weight = self.consolidated_W()
+        self.portfolio_return = self.portfolio_returns()
+
+    def consolidated_W(self):
+
+        '''
+        ----------------------------------------------------------------
+        GENERAL IDEA : consolidate the numpy array of weights by 
+                    repeating the training and portfolio construction
+                    phase a certain number of times 
+                    (number_of_repetitions).
+        ----------------------------------------------------------------
+
+        ----------------------------------------------------------------
+        PARAMS : 
+
+        - number_of_repetitions : number of time we repeat the training
+                                phase and the consequent averaging 
+                                method
+
+        - lookback_window : list of length 2, [start, end] corresponding 
+                            to the range of the lookback_window
+
+        - df_cleaned : cleaned pandas dataframe containing the returns 
+                    of the stocks
+
+        - number_of_clusters : integer, corresponding to the number of 
+                            clusters
+
+        - sigma : float, corresponding to the dispersion in the intra-
+                cluster weights
+
+        - df : pandas dataframe containing the raw data
+
+        ----------------------------------------------------------------
+
+        ----------------------------------------------------------------
+        OUTPUT : numpy ndarray containing the returns of the overall weights of each cluster
+        ----------------------------------------------------------------
+        '''
+
+        # Initialize an empty DataFrame to store the results
+        consolidated_W = pd.DataFrame()
+
+        # Run the training function n times and concatenate the results
+        for _ in range(self.number_of_repetitions):
+
+            # Assuming training() returns a DataFrame with 'weights' as the column name
+            portfolio = PyFolio(historical_data=self.historical_data, lookback_window=self.lookback_window, evaluation_window=self.evaluation_window, number_of_clusters=self.number_of_clusters, sigma=self.sigma, eta=self.eta, clustering_method=self.clustering_method)
+
+            weights_df = portfolio.final_weights
+
+            # Concatenate the results into columns
+            consolidated_W = pd.concat([consolidated_W, weights_df], axis=1)
+
+        # Calculate the average along axis 1
+        average_weights = consolidated_W.mean(axis=1)
+
+        # Create a DataFrame with the average weights
+        consolidated_W = pd.DataFrame({'weight': average_weights})
+
+        consolidated_W = consolidated_W.transpose()
+
+        return consolidated_W
+
+
+    def portfolio_returns(self):
+
+        '''
+        ----------------------------------------------------------------
+        GENERAL IDEA : given the overall weights of each asset in the 
+                    portfolio, compute the portfolio return over an 
+                    evaluation window that does not overlap with the 
+                    lookback_window. 
+        ----------------------------------------------------------------
+
+        ----------------------------------------------------------------
+        PARAMS : 
+
+        - evaluation_window : integer, corresponding to the number of 
+                            future days (in terms of historcal returns) 
+                            on which we evaluate the portfolio
+
+        - lookback_window : list of length 2, [start, end] corresponding 
+                            to the range of the lookback_window
+
+        - df_cleaned : cleaned pandas dataframe containing the returns 
+                    of the stocks
+
+        - consolidated_W : numpy ndarray, containing the final weights 
+                        of each asset, i.e. the overall portfolio 
+                        weights
+
+        - df : pandas dataframe containing the raw data
+        ----------------------------------------------------------------
+
+        ----------------------------------------------------------------
+        OUTPUT : returns the portfolio return of each cluster in a 
+                pandas dataframe
+        ----------------------------------------------------------------
+        '''
+
+        portfolio_returns = pd.DataFrame(index=self.historical_data.iloc[self.lookback_window[1]:self.lookback_window[1]+self.evaluation_window, :].index, columns=['return'], data=np.zeros(len(self.historical_data.iloc[self.lookback_window[1]:self.lookback_window[1]+self.evaluation_window, :].index)))
+
+        for ticker in self.consolidated_weight.columns: 
+
+        ##  each time we add :            the present value of the return + the weighted "contribution" of the stock 'ticker' times is weight in the portfolio
+            portfolio_returns['return'] = portfolio_returns['return'] + self.historical_data.loc[ticker][self.lookback_window[1]:self.lookback_window[1]+self.evaluation_window]*self.consolidated_weight[ticker]['weight']
+
+        return portfolio_returns
+    
+
+    def sliding_window(self, number_of_window):
+    
+        PnL = []
+        daily_PnL = []
+        overall_return = pd.DataFrame()
+        portfolio_value=[1] #we start with a value of 1, the list contain : the porfolio value at the start of each evaluation period
+        lookback_window = self.lookback_window
+
+        for i in range(1, number_of_window + 1):
+
+            consolidated_W_res = self.consolidated_weight(number_of_repetitions=self.number_of_repetition, lookback_window=lookback_window, df_cleaned=self.historical_data, number_of_clusters=self.number_of_clusters, sigma=self.sigma, evaluation_window=self.evaluation_window, eta=self.eta, clustering_method=self.clustering_method)
+
+            portfolio_return = self.portfolio_returns(evaluation_window=self.evaluation_window, df_cleaned=self.historical_data, lookback_window=lookback_window, consolidated_W=consolidated_W_res)
+
+            overall_return = pd.concat([overall_return, portfolio_return])
+
+            lookback_window = [self.lookback_window[0] + self.evaluation_window*i, self.lookback_window_0[1] + self.evaluation_window*i]
+
+            PnL = np.concatenate((PnL, np.reshape(np.cumprod(1 + portfolio_return)*portfolio_value[-1] - portfolio_value[-1], (self.evaluation_window,))))## car on réinvestit immédiatement après
+            daily_PnL = np.concatenate((daily_PnL, np.reshape(np.cumprod(1 + portfolio_return)*portfolio_value[-1] - portfolio_value[-1], (self.evaluation_window,))))## car on réinvestit immédiatement après
+
+            portfolio_value.append(portfolio_value[-1]+PnL[-1])
+
+            print(portfolio_value[-1])
+            
+            print(f'step {i}')
+
+        n = len(PnL)//self.evaluation_window
+
+        for j in range(1, n):
+
+            for i in range(1, self.evaluation_window+1):
+                
+                PnL[j*self.evaluation_window + i - 1] = PnL[j*self.evaluation_window + i - 1] + PnL[j*self.evaluation_window - 1]
+        
+        return overall_return, PnL, portfolio_value, daily_PnL
+    
+    
