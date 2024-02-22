@@ -1,25 +1,37 @@
 import numpy as np
 import pandas as pd
 import sys
-import matplotlib.pyplot as plt 
-import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
-
-## path Nail : '/Users/khelifanail/Documents/GitHub/Portfolio_clustering_project'
-## path Jerome : 'C:/Users/33640/OneDrive/Documents/GitHub/Portfolio_clustering_project'
-sys.path.append(r'/Users/khelifanail/Documents/GitHub/Portfolio_clustering_project')  # Ajoute le chemin parent
-
-from signet.cluster import Cluster 
 from scipy import sparse
 from pypfopt.efficient_frontier import EfficientFrontier
-
 import warnings
 
 warnings.filterwarnings('ignore')
 
+# ----------------------------------------------------------------
 
-class PyFolioCC:
+try:
+
+    from signet.cluster import Cluster
+
+except ImportError:
+
+    print("Signet package not found. Installing...")
+
+    try:
+        import subprocess
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "git+https://github.com/alan-turing-institute/SigNet.git"])
+        from signet.cluster import Cluster
+
+    except Exception as e:
+        print(f"Error installing Signet package: {e}")
+        sys.exit(1)
+
+# ----------------------------------------------------------------
+
+
+class PyFolioC:
 
 
 
@@ -58,9 +70,7 @@ class PyFolioCC:
     =================================================================================================================================
     '''
 
-
-
-    def __init__(self, historical_data, lookback_window, evaluation_window, number_of_clusters, sigma, clustering_method='SPONGE'):
+    def __init__(self, historical_data, lookback_window, evaluation_window, number_of_clusters, sigma, eta, clustering_method='SPONGE'):
         self.historical_data = historical_data
         self.lookback_window = lookback_window
         self.evaluation_window = evaluation_window
@@ -68,8 +78,13 @@ class PyFolioCC:
         self.clustering_method = clustering_method
         self.correlation_matrix = self.corr_matrix()
         self.sigma = sigma
+        self.eta = eta
         self.cluster_returns = self.cluster_return()
-
+        self.cluster_composition = self.cluster_composition_and_centroid()
+        self.constituent_weights_res = self.constituent_weights()
+        self.cluster_returns = self.cluster_return(self.lookback_window)
+        self.markowitz_weights_res = self.markowitz_weights()
+        self.final_weights = self.final_W()
 
     '''
     ###################################################### CLUSTERING METHODS ######################################################
@@ -81,6 +96,7 @@ class PyFolioCC:
     '''
 
     def apply_SPONGE(self): 
+
         '''
         ----------------------------------------------------------------
         IDEA: Given a correlation matrix obtained from a database and 
@@ -106,19 +122,21 @@ class PyFolioCC:
                 to clusters.
         ----------------------------------------------------------------
         '''
+        
+        ## On respecte le format imposé par signet. Pour cela il faut changer le type des matrices A_pos et A_neg, qui ne peuvent pas rester des dataframes 
 
-        ## We respect the format imposed by signet. To do this, we need to change the type of the A_pos and A_neg matrices, which cannot remain dataframes
         A_pos, A_neg = self.correlation_matrix.applymap(lambda x: x if x >= 0 else 0), self.correlation_matrix.applymap(lambda x: abs(x) if x < 0 else 0)
 
         data = (sparse.csc_matrix(A_pos.values), sparse.csc_matrix(A_neg.values))
 
         cluster = Cluster(data)
 
-        ## We apply the SPONGE method: clusters the graph using the Signed Positive Over Negative Generalised Eigenproblem (SPONGE) clustering.
+        ## On applique la méthode SPONGE : clusters the graph using the Signed Positive Over Negative Generalised Eigenproblem (SPONGE) clustering.
+
         return cluster.SPONGE(self.number_of_clusters)
-    
 
     def apply_signed_laplacian(self): 
+
         '''
         ----------------------------------------------------------------
         IDEA: Given a correlation matrix obtained from a database and 
@@ -144,8 +162,9 @@ class PyFolioCC:
                 to clusters.
         ----------------------------------------------------------------
         '''
+        
+        ## On respecte le format imposé par signet. Pour cela il faut changer le type des matrices A_pos et A_neg, qui ne peuvent pas rester des dataframes 
 
-        ## We respect the format imposed by signet. To do this, we need to change the type of the A_pos and A_neg matrices, which cannot remain dataframes
         A_pos, A_neg = self.correlation_matrix.applymap(lambda x: x if x >= 0 else 0), self.correlation_matrix.applymap(lambda x: abs(x) if x < 0 else 0)
 
         A_pos_sparse = sparse.csc_matrix(A_pos.values)
@@ -155,28 +174,29 @@ class PyFolioCC:
 
         cluster = Cluster(data)
 
-        ## We apply the signed Laplacian method: clusters the graph using spectral clustering with the signed Laplacian.
+        ## On applique la méthode SPONGE : clusters the graph using the Signed Positive Over Negative Generalised Eigenproblem (SPONGE) clustering.
+
         return cluster.spectral_cluster_laplacian(self.number_of_clusters)
 
-
     def apply_SPONGE_sym(self): 
+
         '''
         ----------------------------------------------------------------
         IDEA: Given a correlation matrix obtained from a database and 
-              Pearson similarity, return a vector associating each asset 
-              with the cluster number it belongs to after applying 
-              symmetric SPONGE (using the signet package).
+                Pearson similarity, return a vector associating each asset 
+                with the cluster number it belongs to after applying 
+                symmetric SPONGE (using the signet package).
         ----------------------------------------------------------------
 
         ----------------------------------------------------------------
         PARAMS: 
 
         - self.correlation_matrix: a square dataframe of size 
-                                   (number_of_stocks, number_of_stocks)
+                                    (number_of_stocks, number_of_stocks)
 
         - self.number_of_clusters: the number of clusters to identify. 
-                                   If a list is given, the output is a 
-                                   corresponding list
+                                    If a list is given, the output is a 
+                                    corresponding list
 
         ----------------------------------------------------------------
 
@@ -185,8 +205,9 @@ class PyFolioCC:
                 to clusters.
         ----------------------------------------------------------------
         '''
+        
+        ## On respecte le format imposé par signet. Pour cela il faut changer le type des matrices A_pos et A_neg, qui ne peuvent pas rester des dataframes 
 
-        ## We respect the format imposed by signet. To do this, we need to change the type of the A_pos and A_neg matrices, which cannot remain dataframes
         A_pos, A_neg = self.correlation_matrix.applymap(lambda x: x if x >= 0 else 0), self.correlation_matrix.applymap(lambda x: abs(x) if x < 0 else 0)
 
         A_pos_sparse = sparse.csc_matrix(A_pos.values)
@@ -196,21 +217,31 @@ class PyFolioCC:
 
         cluster = Cluster(data)
 
-        ## We apply the symmetric SPONGE method: clusters the graph using the Signed Positive Over Negative Generalised Eigenproblem (SPONGE) clustering with symmetry.
-        return cluster.SPONGE_sym(self.k)
+        ## On applique la méthode SPONGE : clusters the graph using the Signed Positive Over Negative Generalised Eigenproblem (SPONGE) clustering.
+
+        return cluster.SPONGE_sym(self.number_of_clusters)
 
 
+    '''
+    ###################################################### ATTRIBUTES CONSTRUCTION ######################################################
 
+
+    In the following section, we provide the code of the routines that are used to construct the main attributes of a portfolio. In the next 
+    section, we combine all these routines into a single one named .training_phase()
+
+    '''
 
     def corr_matrix(self):
+
+
         '''
         ----------------------------------------------------------------
-        GENERAL IDEA: compute the correlation matrix of different stock 
+        GENERAL IDEA : compute the correlation matrix of different stock 
                     returns  over a given lookback_window
         ----------------------------------------------------------------
 
         ----------------------------------------------------------------
-        PARAMS: 
+        PARAMS : 
         
         - lookback_window : list of length 2, [start, end] corresponding 
                             to the range of the lookback_window
@@ -218,22 +249,20 @@ class PyFolioCC:
         - df_cleaned : pandas dataframe containing the returns of the stocks
 
         ----------------------------------------------------------------
-
-        ----------------------------------------------------------------
-        OUTPUT: correlation_matrix of size 
-                (number_of_assets, number_of_assets)
-        ----------------------------------------------------------------
         '''
     
 
-        correlation_matrix = self.historical_data.iloc[:, self.lookback_window[0]:self.lookback_window[1]].transpose().corr(method='pearson') ## MODIFIÉ
+        correlation_matrix = self.historical_data.iloc[self.lookback_window[0]:self.lookback_window[1], :].corr(method='pearson') ## MODIFIÉ
 
         correlation_matrix = correlation_matrix.fillna(0) ## in case there are NaN values, we replace them with 0 
 
         return correlation_matrix
-    
-    
-    def cluster_return(self):
+
+
+    ## we compute the return_centroid of each cluster to attribute intra-cluster weights according to the distance between stocks within the cluster and this 
+    ## centroid
+
+    def cluster_composition_and_centroid(self):
 
         '''
         ----------------------------------------------------------------
@@ -262,20 +291,44 @@ class PyFolioCC:
                             to the range of the lookback_window
         ----------------------------------------------------------------
         '''
-        ## cluster composition and centroids
 
-        result = dict(zip(list(self.correlation_matrix.columns), self.apply_SPONGE())) ## composition
+        ## STEP 1: run the SPONGE clustering algorithm with a number of clusters fixed to be number_of_clusters and using 
+        ##         the correlation matrix correlation_matrix ==> we store the results in result
 
-        df_cleaned = self.historical_data.copy()
+        ### 1 + pd.DataFrame(...) because we want the number of clusters to range between 1 un number_of_clusters
+        if self.clustering_method == 'SPONGE':
+            result = 1 + pd.DataFrame(index=list(self.correlation_matrix.columns), columns=['Cluster label'], data=self.apply_SPONGE(self.correlation_matrix, self.number_of_clusters))
 
-        df_cleaned['Cluster'] = df_cleaned.index.map(result)
-        centroid_returns = df_cleaned.groupby('Cluster').mean() ## centroids 
+        if self.clustering_method == 'signed_laplacian':
+            result = 1 + pd.DataFrame(index=list(self.correlation_matrix.columns), columns=['Cluster label'], data=self.apply_signed_laplacian(self.correlation_matrix, self.number_of_clusters))
 
-        df_cleaned = df_cleaned.transpose() ## contains the historical returns and a lign that indicates the cluster to which each stock belongs
-        centroid_returns = centroid_returns.transpose()
+        if self.clustering_method == 'SPONGE_sym':
+            result = 1 + pd.DataFrame(index=list(self.correlation_matrix.columns), columns=['Cluster label'], data=self.apply_SPONGE_sym(self.correlation_matrix, self.number_of_clusters))
 
-        ## constituent_weights ##
 
+        ## STEP 2: compute the composition of each cluster (in terms of stocks)
+
+        cluster_composition = {}
+
+        for i in range(1, self.number_of_clusters + 1):
+            if i in result['Cluster label'].values:
+                tickers = list(result[result['Cluster label'] == i].index)
+
+                return_centroid = np.zeros(self.lookback_window[1] - self.lookback_window[0])
+
+                for elem in tickers:
+                    return_centroid = return_centroid + self.historical_data.loc[:, elem][self.lookback_window[0]:self.lookback_window[1]].values
+
+                centroid = return_centroid / len(tickers)
+
+                cluster_composition[f'cluster {i}'] = {'tickers': tickers, 'centroid': centroid}
+
+        return cluster_composition
+
+
+
+    def constituent_weights(self): ## sigma corresponds to some dispersion cofficient
+        
         '''
         ----------------------------------------------------------------
         GENERAL IDEA : compute the constituent weights (i.e.
@@ -299,29 +352,38 @@ class PyFolioCC:
         ----------------------------------------------------------------
 
         ----------------------------------------------------------------
-        OUTPUT : numpy array containing the weights of each stock 
+        OUTPUT : modifies in-place the numpy ndarray returned by the 
+                cluster_composition_and_centroid function
         ----------------------------------------------------------------
         '''
 
-        constituent_weights = pd.DataFrame(index=['Weight'], columns=df_cleaned.columns)
-        total_weight = pd.DataFrame(index=['Total weight'], columns=[i for i in range(self.number_of_clusters)], data=np.zeros((1, self.number_of_clusters)))
+        constituent_weights = {}
 
-        ## we first compute the difference between the cluster centroid return and the cluster ticker return
-        for ticker in df_cleaned.columns:
-            df_cleaned[ticker][:-1] = df_cleaned[ticker][:-1] - centroid_returns[int(df_cleaned[ticker]['Cluster'])]
+        for cluster in self.cluster_composition.keys():
+            weights = []
+            total_cluster_weight = 0
 
-        ## we use this difference to compute the distance between each asset and its cluster centroid return 
-        for ticker in df_cleaned.columns:
-            constituent_weights[ticker] = np.exp(self.sigma*((np.linalg.norm(df_cleaned[ticker][:-1]))**2)/2)
-            total_weight[int(df_cleaned[ticker]['Cluster'])]['Total weight'] += np.exp(self.sigma*((np.linalg.norm(df_cleaned[ticker][:-1]))**2)/2)
+            for elem in self.cluster_composition[cluster]['tickers']:
 
-        ## we normalize the weights
-        for ticker in df_cleaned.columns:
-            constituent_weights[ticker] = constituent_weights[ticker]['Weight']/total_weight[int(df_cleaned[ticker]['Cluster'])]['Total weight']
+                elem_returns = self.historical_data.loc[:, elem][self.lookback_window[0]:self.lookback_window[1]].values
 
-        ## check whether the weights equal to 0 within each cluster: 
-        # constituent_weights[[ticker for ticker in df_cleaned.columns if df_cleaned[ticker]['Cluster']  == 1.0]].sum(axis=1)
-        
+                ## we compute the distance of the stock to the centroid of the cluster
+                distance_to_centroid = np.linalg.norm(self.cluster_composition[cluster]['centroid'] - elem_returns)**2 
+
+                ## we compute the norm exp(-|x|^2/2*sigma^2)
+                total_cluster_weight += np.exp(-distance_to_centroid / (2 * (self.sigma**2)))
+
+                weights.append(np.exp(-distance_to_centroid / (2 * (self.sigma**2))))
+
+            normalized_weights = [w / total_cluster_weight for w in weights]
+            constituent_weights[cluster] = dict(zip(self.cluster_composition[cluster]['tickers'], normalized_weights))
+
+        return constituent_weights
+
+
+
+    def cluster_return(self, lookback_window):
+
         '''
         ----------------------------------------------------------------
         GENERAL IDEA : compute the return of each cluster.
@@ -351,11 +413,163 @@ class PyFolioCC:
                 return of each cluster over the lookback_window days
         ----------------------------------------------------------------
         '''
-        cluster_return = pd.DataFrame(index=df_cleaned.index[:-1], columns=np.arange(self.number_of_clusters), data=np.zeros((df_cleaned.shape[0] - 1, self.number_of_clusters))) ## -1 and [:-1] because we don't want to take into account the last line 
-        ## that contains the label of the cluster for each stock
 
-        for ticker in df_cleaned.columns:
-            cluster_return[int(df_cleaned[ticker]['Cluster'])] = cluster_return[int(df_cleaned[ticker]['Cluster'])] + constituent_weights[ticker]['Weight'] * df_cleaned[ticker][:-1]
+        cluster_returns = pd.DataFrame(index = self.historical_data.index[lookback_window[0]:lookback_window[1]], columns= [f'cluster {i}' for i in range(1, len(self.constituent_weights_res) + 1)], data = np.zeros((len(self.historical_data.index[lookback_window[0]:lookback_window[1]]), len(self.constituent_weights_res))))
 
-        return cluster_return
-            
+        for cluster in self.constituent_weights_res.keys():
+
+            for ticker, weight in self.constituent_weights_res[cluster].items(): 
+
+                ## we transpose df_cleaned to have columns for each ticker
+                cluster_returns[cluster] = cluster_returns[cluster] + self.historical_data[ticker][lookback_window[0]:lookback_window[1]]*weight
+
+        return cluster_returns
+
+
+
+    def noised_array(self):
+
+        '''
+        ----------------------------------------------------------------
+        GENERAL IDEA : given an array y and a target correlation eta, 
+                    compute the array with the noise  
+        ----------------------------------------------------------------
+
+        ----------------------------------------------------------------
+        PARAMS : 
+
+        - y : numpy ndarray that we want to perturb
+
+        - eta : target correlation that we want to create between y and 
+                its perturbated version
+
+        ----------------------------------------------------------------
+
+        ----------------------------------------------------------------
+        OUTPUT : noised version of y that satisfies the targeted level 
+                of correlation
+        ----------------------------------------------------------------
+        '''
+        
+        # We compute with a small noise 
+        epsilon_std_dev = 0.001
+
+        # Calculer la corrélation initiale
+
+        correlation = 1
+        y = self.cluster_return(self, lookback_window=[self.lookback_window[1], self.lookback_window[1]+self.evaluation_window]).mean()
+        x = y.copy()
+
+        # Boucle pour ajuster l'écart-type du bruit jusqu'à ce que la corrélation atteigne eta
+
+        while correlation > self.eta:
+
+            # Generate a vector of Gaussian noise
+            noise = np.random.normal(0, epsilon_std_dev, len(y))
+
+            x = noise + y
+
+            correlation = x.corr(y.squeeze())
+
+            # Adjust the standard deviation of the noise
+            epsilon_std_dev += 0.0005
+
+        return x
+
+
+
+    def markowitz_weights(self):
+
+        '''
+        ----------------------------------------------------------------
+        GENERAL IDEA : compute the markowitz weights of each cluster in 
+                    the synthetic portfolio using the pypfopt package
+        ----------------------------------------------------------------
+
+        ----------------------------------------------------------------
+        PARAMS : 
+
+        - cluster_return : numpy array as returned by the 
+                        cluster_return function 
+
+        - df_cleaned : pandas dataframe containing the returns of the 
+                    stocks
+
+        - constituent_weights : numpy array as returned by the 
+                                constituent_weights function 
+
+        - lookback_window : list of length 2, [start, end] corresponding 
+                            to the range of the lookback_window
+
+        - evaluation_window : integer, corresponding to the number of 
+                            days that we look bakc at to make our 
+                            prevision
+
+        - eta : target correlation that we want to create between y and 
+                its perturbated version
+        ----------------------------------------------------------------
+
+        ----------------------------------------------------------------
+        OUTPUT : returns the markowitz weights of each cluster
+        ----------------------------------------------------------------
+        '''
+
+        ## on construit la matrice de corrélation associée à ces returns, c'est donc une matrice de corrélation de return de cluster
+
+        cov_matrix = self.cluster_returns.cov()
+
+        cov_matrix.fillna(0.)
+
+        ## on construit le vecteur d'expected return du cluster (252 jours de trading par an, on passe de rendements journaliers à rendements annualisés)
+                
+        expected_returns = self.noised_array()
+        
+        ef = EfficientFrontier(expected_returns=expected_returns, cov_matrix=cov_matrix, weight_bounds=(0, 1))
+        
+        ef.efficient_return(target_return=expected_returns.mean())
+
+        markowitz_weights = ef.clean_weights()
+
+        return markowitz_weights
+
+
+    def final_W(self):
+
+        '''
+        ----------------------------------------------------------------
+        GENERAL IDEA : compute the final weights of each individual stock
+                    in the overal portfolio using both the constituent 
+                    and the markowitz weights
+        ----------------------------------------------------------------
+
+        ----------------------------------------------------------------
+        PARAMS : 
+
+        - markowitz_weights : numpy array as returned by the 
+                            markowitz_weights function 
+
+        - constituent_weights : integer, corresponding to the number of lookback 
+                                days (in terms of historcal returns)
+        ----------------------------------------------------------------
+
+        ----------------------------------------------------------------
+        OUTPUT : returns the final weights of each asset, i.e. the 
+                overall portfolio weights
+        ----------------------------------------------------------------
+        '''
+
+        ### On cherche désormais à calculer le poids de chaque actif dans le portefeuille total
+
+        W = {}
+
+        for cluster in self.constituent_weights_res.keys(): ## we range across all clusters
+
+            for tickers, weight in self.constituent_weights_res[cluster].items(): ## we range across all tickers in each cluster
+
+                W[tickers] = weight*self.markowitz_weights[cluster]
+
+        W = pd.DataFrame(list(W.items()), columns=['ticker', 'weights'])
+    
+        W.set_index('ticker', inplace=True)
+
+        return W
