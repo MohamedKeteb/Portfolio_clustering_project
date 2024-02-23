@@ -588,7 +588,7 @@ class PyFolioC(PyFolio):
         
         self.number_of_repetitions = number_of_repetitions
         self.consolidated_weight = self.consolidated_W()
-        self.portfolio_return = self.portfolio_returns()
+        # self.portfolio_return = self.portfolio_returns()
 
     def consolidated_W(self):
 
