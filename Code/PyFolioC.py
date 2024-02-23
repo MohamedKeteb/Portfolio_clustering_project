@@ -588,7 +588,7 @@ class PyFolioC(PyFolio):
         
         self.number_of_repetitions = number_of_repetitions
         self.consolidated_weight = self.consolidated_W()
-        # self.portfolio_return = self.portfolio_returns()
+        self.portfolio_return = self.portfolio_returns()
 
     def consolidated_W(self):
 
@@ -641,7 +641,6 @@ class PyFolioC(PyFolio):
 
             # Concatenate the results into columns
             consolidated_W = pd.concat([consolidated_W, weights_df], axis=1)
-            print('*')
 
         # Calculate the average along axis 1
         average_weights = consolidated_W.mean(axis=1)
@@ -695,7 +694,7 @@ class PyFolioC(PyFolio):
         for ticker in self.consolidated_weight.columns: 
 
         ##  each time we add :            the present value of the return + the weighted "contribution" of the stock 'ticker' times is weight in the portfolio
-            portfolio_returns['return'] = portfolio_returns['return'] + self.historical_data.loc[ticker][self.lookback_window[1]:self.lookback_window[1]+self.evaluation_window]*self.consolidated_weight[ticker]['weight']
+            portfolio_returns['return'] = portfolio_returns['return'] + self.historical_data[ticker][self.lookback_window[1]:self.lookback_window[1]+self.evaluation_window]*self.consolidated_weight[ticker]['weight']
 
         return portfolio_returns
     
