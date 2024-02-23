@@ -641,6 +641,7 @@ class PyFolioC(PyFolio):
 
             # Concatenate the results into columns
             consolidated_W = pd.concat([consolidated_W, weights_df], axis=1)
+            print('*')
 
         # Calculate the average along axis 1
         average_weights = consolidated_W.mean(axis=1)
