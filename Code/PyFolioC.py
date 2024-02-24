@@ -705,20 +705,18 @@ class PyFolioC(PyFolio):
         daily_PnL = []
         overall_return = pd.DataFrame()
         portfolio_value=[1] #we start with a value of 1, the list contain : the porfolio value at the start of each evaluation period
-        lookback_window = self.lookback_window
+        lookback_window_0 = self.lookback_window
 
         for i in range(1, number_of_window + 1):
 
-            consolidated_W_res = self.consolidated_weight(number_of_repetitions=self.number_of_repetition, lookback_window=lookback_window, df_cleaned=self.historical_data, number_of_clusters=self.number_of_clusters, sigma=self.sigma, evaluation_window=self.evaluation_window, eta=self.eta, clustering_method=self.clustering_method)
+            consolidated_portfolio = PyFolioC(number_of_repetitions=self.number_of_repetitions, historical_data=self.historical_data, lookback_window=lookback_window_0, evaluation_window=self.evaluation_window, number_of_clusters=self.number_of_clusters, sigma=self.sigma, eta=self.eta, clustering_method=self.clustering_method)
 
-            portfolio_return = self.portfolio_returns(evaluation_window=self.evaluation_window, df_cleaned=self.historical_data, lookback_window=lookback_window, consolidated_W=consolidated_W_res)
+            overall_return = pd.concat([overall_return, consolidated_portfolio.portfolio_return])
 
-            overall_return = pd.concat([overall_return, portfolio_return])
+            lookback_window_0 = [self.lookback_window[0] + self.evaluation_window*i, self.lookback_window_0[1] + self.evaluation_window*i]
 
-            lookback_window = [self.lookback_window[0] + self.evaluation_window*i, self.lookback_window_0[1] + self.evaluation_window*i]
-
-            PnL = np.concatenate((PnL, np.reshape(np.cumprod(1 + portfolio_return)*portfolio_value[-1] - portfolio_value[-1], (self.evaluation_window,))))## car on réinvestit immédiatement après
-            daily_PnL = np.concatenate((daily_PnL, np.reshape(np.cumprod(1 + portfolio_return)*portfolio_value[-1] - portfolio_value[-1], (self.evaluation_window,))))## car on réinvestit immédiatement après
+            PnL = np.concatenate((PnL, np.reshape(np.cumprod(1 + consolidated_portfolio.portfolio_return)*portfolio_value[-1] - portfolio_value[-1], (self.evaluation_window,))))## car on réinvestit immédiatement après
+            daily_PnL = np.concatenate((daily_PnL, np.reshape(np.cumprod(1 + consolidated_portfolio.portfolio_return)*portfolio_value[-1] - portfolio_value[-1], (self.evaluation_window,))))## car on réinvestit immédiatement après
 
             portfolio_value.append(portfolio_value[-1]+PnL[-1])
 
