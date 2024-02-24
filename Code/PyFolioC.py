@@ -713,7 +713,7 @@ class PyFolioC(PyFolio):
 
             overall_return = pd.concat([overall_return, consolidated_portfolio.portfolio_return])
 
-            lookback_window_0 = [self.lookback_window[0] + self.evaluation_window*i, self.lookback_window_0[1] + self.evaluation_window*i]
+            lookback_window_0 = [self.lookback_window[0] + self.evaluation_window*i, self.lookback_window[1] + self.evaluation_window*i]
 
             PnL = np.concatenate((PnL, np.reshape(np.cumprod(1 + consolidated_portfolio.portfolio_return)*portfolio_value[-1] - portfolio_value[-1], (self.evaluation_window,))))## car on réinvestit immédiatement après
             daily_PnL = np.concatenate((daily_PnL, np.reshape(np.cumprod(1 + consolidated_portfolio.portfolio_return)*portfolio_value[-1] - portfolio_value[-1], (self.evaluation_window,))))## car on réinvestit immédiatement après
