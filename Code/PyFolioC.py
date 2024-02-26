@@ -4,10 +4,29 @@ import sys
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy import sparse
-from pypfopt.efficient_frontier import EfficientFrontier
 import warnings
 
 warnings.filterwarnings('ignore')
+
+# ----------------------------------------------------------------
+
+try:
+
+    from pypfopt.efficient_frontier import EfficientFrontier
+
+except ImportError:
+
+    print("PyPortfolioOpt package not found. Installing...")
+
+    try:
+
+        import subprocess
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "PyPortfolioOpt"])
+        from pypfopt.efficient_frontier import EfficientFrontier
+        
+    except Exception as e:
+        print(f"Error installing PyPortfolioOpt package: {e}")
+        sys.exit(1)
 
 # ----------------------------------------------------------------
 
@@ -70,15 +89,16 @@ class PyFolio:
     =================================================================================================================================
     '''
 
-    def __init__(self, historical_data, lookback_window, evaluation_window, number_of_clusters, sigma, eta, clustering_method='SPONGE'):
+    def __init__(self, historical_data, lookback_window, evaluation_window, number_of_clusters, sigma, eta, short_selling=False, clustering_method='SPONGE'):
         self.historical_data = historical_data
         self.lookback_window = lookback_window
         self.evaluation_window = evaluation_window
         self.number_of_clusters = number_of_clusters
         self.clustering_method = clustering_method
-        self.correlation_matrix = self.corr_matrix()
+        self.short_selling = short_selling
         self.sigma = sigma
         self.eta = eta
+        self.correlation_matrix = self.corr_matrix()
         self.cluster_composition = self.cluster_composition_and_centroid()
         self.constituent_weights_res = self.constituent_weights()
         self.cluster_returns = self.cluster_return(lookback_window)
@@ -522,8 +542,12 @@ class PyFolio:
         ## on construit le vecteur d'expected return du cluster (252 jours de trading par an, on passe de rendements journaliers à rendements annualisés)
                 
         expected_returns = self.noised_array()
-        
-        ef = EfficientFrontier(expected_returns=expected_returns, cov_matrix=cov_matrix, weight_bounds=(0, 1))
+
+        if self.short_selling:
+            ef = EfficientFrontier(expected_returns=expected_returns, cov_matrix=cov_matrix, weight_bounds=(-1, 1))
+
+        else:
+            ef = EfficientFrontier(expected_returns=expected_returns, cov_matrix=cov_matrix, weight_bounds=(0, 1))
         
         ef.efficient_return(target_return=expected_returns.mean())
 
