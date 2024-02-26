@@ -805,7 +805,7 @@ class PyFolioC(PyFolio):
 
         for i in range(1, number_of_window + 1):
 
-            consolidated_portfolio = PyFolioC(number_of_repetitions=self.number_of_repetitions, historical_data=self.historical_data, lookback_window=lookback_window_0, evaluation_window=self.evaluation_window, number_of_clusters=self.number_of_clusters, sigma=self.sigma, eta=self.eta, clustering_method=self.clustering_method)
+            consolidated_portfolio = PyFolioC(number_of_repetitions=self.number_of_repetitions, historical_data=self.historical_data, lookback_window=self.lookback_window, evaluation_window=self.evaluation_window, number_of_clusters=self.number_of_clusters, sigma=self.sigma, eta=self.eta, short_selling=self.short_selling, cov_method=self.cov_method, beta=self.beta, number_folds=self.number_folds)
 
             overall_return = pd.concat([overall_return, consolidated_portfolio.portfolio_return])
 
