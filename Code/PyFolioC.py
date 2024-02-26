@@ -670,7 +670,7 @@ class PyFolio:
  
 class PyFolioC(PyFolio):
 
-    def __init__(self, number_of_repetitions, historical_data, lookback_window, evaluation_window, number_of_clusters, sigma, eta, clustering_method='SPONGE'):
+    def __init__(self, number_of_repetitions, historical_data, lookback_window, evaluation_window, number_of_clusters, sigma, eta, short_selling=False, cov_method='SPONGE', beta=None, number_folds=None):
         
         super().__init__(historical_data=historical_data, 
                          lookback_window=lookback_window, 
