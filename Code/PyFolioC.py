@@ -672,13 +672,15 @@ class PyFolioC(PyFolio):
 
     def __init__(self, number_of_repetitions, historical_data, lookback_window, evaluation_window, number_of_clusters, sigma, eta, short_selling=False, cov_method='SPONGE', beta=None, number_folds=None):
         
-        super().__init__(historical_data=historical_data, 
-                         lookback_window=lookback_window, 
-                         evaluation_window=evaluation_window, 
-                         number_of_clusters=number_of_clusters, 
-                         sigma=sigma, 
-                         eta=eta, 
-                         clustering_method=clustering_method)
+        super().__init__(historical_data, 
+                         lookback_window, 
+                         evaluation_window, 
+                         number_of_clusters, 
+                         sigma, eta, 
+                         short_selling, 
+                         cov_method, 
+                         beta, 
+                         number_folds)
         
         self.number_of_repetitions = number_of_repetitions
         self.consolidated_weight = self.consolidated_W()
@@ -729,7 +731,7 @@ class PyFolioC(PyFolio):
         for _ in range(self.number_of_repetitions):
 
             # Assuming training() returns a DataFrame with 'weights' as the column name
-            portfolio = PyFolio(historical_data=self.historical_data, lookback_window=self.lookback_window, evaluation_window=self.evaluation_window, number_of_clusters=self.number_of_clusters, sigma=self.sigma, eta=self.eta, cov_method=self.cov_method)
+            portfolio = PyFolio(historical_data=self.historical_data, lookback_window=self.lookback_window, evaluation_window=self.evaluation_window, number_of_clusters=self.number_of_clusters, sigma=self.sigma, eta=self.eta, short_selling=self.short_selling, cov_method=self.cov_method, beta=self.beta, number_folds=self.number_folds)
 
             weights_df = portfolio.final_weights
 
