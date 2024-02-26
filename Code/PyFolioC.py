@@ -107,6 +107,10 @@ class PyFolio:
                 self.beta = beta
 
             self.number_folds = number_folds ## tester si (lookback_window[1] - lookback_window[0])/number_folds
+            self.correlation_matrix = None
+            self.cluster_composition = None
+            self.constituent_weights_res = None
+            self.cluster_returns = None
 
         if self.cov_method == 'SPONGE' or self.cov_method == 'SPONGE_sym' or self.cov_method == 'signed_laplacian':
 
@@ -114,6 +118,8 @@ class PyFolio:
             self.cluster_composition = self.cluster_composition_and_centroid()
             self.constituent_weights_res = self.constituent_weights()
             self.cluster_returns = self.cluster_return(lookback_window)
+            self.beta = None
+            self.number_folds = None
 
         self.cov = self.cov()
         self.markowitz_weights_res = self.markowitz_weights()
@@ -644,7 +650,7 @@ class PyFolio:
 
         if self.cov_method == 'forecast':
             
-            W = pd.DataFrame(index=['weight'], columns=self.historical_data.columns, data=self.markowitz_weights)
+            W = pd.DataFrame(index=['weight'], columns=self.historical_data.columns, data=self.markowitz_weights_res)
 
         else:
             W = {}
