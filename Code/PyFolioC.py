@@ -82,26 +82,40 @@ class PyFolio:
 
     - number_of_clusters : Integer corresponding to the number of clusters in which we split the portfolio. 
 
-    - clustering_method : String corresponding to the clustering method that we use in the portfolio construction phase.
+    - cov_method : String corresponding to the method we use in for the covariance estimation/construction.
 
     =================================================================================================================================
     #################################################################################################################################
     =================================================================================================================================
     '''
 
-    def __init__(self, historical_data, lookback_window, evaluation_window, number_of_clusters, sigma, eta, short_selling=False, clustering_method='SPONGE'):
+    def __init__(self, historical_data, lookback_window, evaluation_window, number_of_clusters, sigma, eta, short_selling=False, cov_method='SPONGE', beta=None, number_folds=None):
         self.historical_data = historical_data
         self.lookback_window = lookback_window
         self.evaluation_window = evaluation_window
         self.number_of_clusters = number_of_clusters
-        self.clustering_method = clustering_method
-        self.short_selling = short_selling
+        self.cov_method = cov_method
         self.sigma = sigma
         self.eta = eta
-        self.correlation_matrix = self.corr_matrix()
-        self.cluster_composition = self.cluster_composition_and_centroid()
-        self.constituent_weights_res = self.constituent_weights()
-        self.cluster_returns = self.cluster_return(lookback_window)
+        self.short_selling = short_selling
+
+        if self.cov_method == 'forecast':
+
+            if beta == None:
+                print('Beta cannot be "None" is the covariance estimation method is "forecast".')
+            else:
+                self.beta = beta
+
+            self.number_folds = number_folds ## tester si (lookback_window[1] - lookback_window[0])/number_folds
+
+        if self.cov_method == 'SPONGE' or self.cov_method == 'SPONGE_sym' or self.cov_method == 'signed_laplacian':
+
+            self.correlation_matrix = self.corr_matrix()
+            self.cluster_composition = self.cluster_composition_and_centroid()
+            self.constituent_weights_res = self.constituent_weights()
+            self.cluster_returns = self.cluster_return(lookback_window)
+
+        self.cov = self.cov()
         self.markowitz_weights_res = self.markowitz_weights()
         self.final_weights = self.final_W()
 
@@ -315,13 +329,13 @@ class PyFolio:
         ##         the correlation matrix correlation_matrix ==> we store the results in result
 
         ### 1 + pd.DataFrame(...) because we want the number of clusters to range between 1 un number_of_clusters
-        if self.clustering_method == 'SPONGE':
+        if self.cov_method == 'SPONGE':
             result = 1 + pd.DataFrame(index=list(self.correlation_matrix.columns), columns=['Cluster label'], data=self.apply_SPONGE())
 
-        if self.clustering_method == 'signed_laplacian':
+        if self.cov_method == 'signed_laplacian':
             result = 1 + pd.DataFrame(index=list(self.correlation_matrix.columns), columns=['Cluster label'], data=self.apply_signed_laplacian())
 
-        if self.clustering_method == 'SPONGE_sym':
+        if self.cov_method == 'SPONGE_sym':
             result = 1 + pd.DataFrame(index=list(self.correlation_matrix.columns), columns=['Cluster label'], data=self.apply_SPONGE_sym())
 
 
@@ -476,7 +490,13 @@ class PyFolio:
         # Calculer la corrélation initiale
 
         correlation = 1
-        y = self.cluster_return(lookback_window=[self.lookback_window[1], self.lookback_window[1]+self.evaluation_window]).mean()
+
+        if self.cov_method == 'forecast':
+            y = self.historical_data.iloc[self.lookback_window[1]: self.lookback_window[1]+self.evaluation_window,:].mean()
+
+        else:
+            y = self.cluster_return(lookback_window=[self.lookback_window[1], self.lookback_window[1]+self.evaluation_window]).mean()
+
         x = y.copy()
 
         # Boucle pour ajuster l'écart-type du bruit jusqu'à ce que la corrélation atteigne eta
@@ -495,6 +515,49 @@ class PyFolio:
 
         return x
 
+
+    def cov(self):
+
+        if self.cov_method == 'forecast':
+
+            N = len(self.historical_data.columns)  # Number of assets, BEWARE TO THE SHAPE OF THE DATA FOR
+
+            Ik_length = int((self.lookback_window[1]-self.lookback_window[0])/self.number_folds) # Number of days in each fold for the cross validation, has to be an integer
+
+            # Initialize epsilon as a zero array with N elements
+            epsilon = np.zeros(N)
+
+            for k in range(self.number_folds):
+                # Calculate EWA matrix 
+                weighted_matrices = [(self.beta**(Ik_length-t)) * np.outer(self.historical_data.iloc[t + Ik_length*k], self.historical_data.iloc[t + Ik_length*k]) for t in range(Ik_length)]
+                summed_weighted_matrices = np.sum(weighted_matrices, axis=0)
+                E_matrix = (1 - self.beta) / (1 - self.beta**Ik_length) * summed_weighted_matrices
+                
+                # Calculate eigenvectors for the E matrix
+                _, eigenvectors = np.linalg.eigh(E_matrix)
+
+                # Calculate epsilon terms for each eigenvector
+                for i in range(N):
+                    ui = eigenvectors[:, i]
+                    # For each day in the Ik segment, project the data onto the eigenvector and square it
+                    epsilon_i_sum = np.sum([(np.dot(ui, self.historical_data.iloc[t + Ik_length*k])**2) for t in range(Ik_length)])
+                    # Accumulate the results in epsilon
+                    epsilon[i] += epsilon_i_sum.real / Ik_length
+
+            # Average epsilon over K segments
+            epsilon /= self.number_folds
+
+            # Now, we calculate the forecasts using the last set of eigenvectors
+            cov = pd.DataFrame(index=self.historical_data.columns, columns=self.historical_data.columns, data=np.sum([epsilon[i] * np.outer(eigenvectors[:, i], eigenvectors[:, i]) for i in range(N)], axis=0)).fillna(0.)
+
+        
+        if self.cov_method == 'SPONGE' or self.cov_method == 'SPONGE_sym' or self.cov_method == 'signed_laplacian':
+
+            cov = self.cluster_returns.cov()
+
+            cov = cov.fillna(0.)
+
+        return cov
 
 
     def markowitz_weights(self):
@@ -533,22 +596,18 @@ class PyFolio:
         ----------------------------------------------------------------
         '''
 
-        ## on construit la matrice de corrélation associée à ces returns, c'est donc une matrice de corrélation de return de cluster
-
-        cov_matrix = self.cluster_returns.cov()
-
-        cov_matrix.fillna(0.)
-
         ## on construit le vecteur d'expected return du cluster (252 jours de trading par an, on passe de rendements journaliers à rendements annualisés)
                 
         expected_returns = self.noised_array()
 
-        if self.short_selling:
-            ef = EfficientFrontier(expected_returns=expected_returns, cov_matrix=cov_matrix, weight_bounds=(-1, 1))
-
-        else:
-            ef = EfficientFrontier(expected_returns=expected_returns, cov_matrix=cov_matrix, weight_bounds=(0, 1))
+        if self.short_selling: ## if we allow short-selling, then weights are not constrained to take nonnegative values, 
+                               ## hence the (-1, 1) bounds
         
+            ef = EfficientFrontier(expected_returns=expected_returns, cov_matrix=self.cov, weight_bounds=(-1, 1)) 
+        
+        else: 
+            ef = EfficientFrontier(expected_returns=expected_returns, cov_matrix=self.cov, weight_bounds=(0, 1))
+
         ef.efficient_return(target_return=expected_returns.mean())
 
         markowitz_weights = ef.clean_weights()
@@ -583,17 +642,22 @@ class PyFolio:
 
         ### On cherche désormais à calculer le poids de chaque actif dans le portefeuille total
 
-        W = {}
+        if self.cov_method == 'forecast':
+            
+            W = pd.DataFrame(index=['weight'], columns=self.historical_data.columns, data=self.markowitz_weights)
 
-        for cluster in self.constituent_weights_res.keys(): ## we range across all clusters
+        else:
+            W = {}
 
-            for tickers, weight in self.constituent_weights_res[cluster].items(): ## we range across all tickers in each cluster
+            for cluster in self.constituent_weights_res.keys(): ## we range across all clusters
 
-                W[tickers] = weight*self.markowitz_weights_res[cluster]
+                for tickers, weight in self.constituent_weights_res[cluster].items(): ## we range across all tickers in each cluster
 
-        W = pd.DataFrame(list(W.items()), columns=['ticker', 'weights'])
-    
-        W.set_index('ticker', inplace=True)
+                    W[tickers] = weight*self.markowitz_weights_res[cluster]
+
+            W = pd.DataFrame(list(W.items()), columns=['ticker', 'weights'])
+        
+            W.set_index('ticker', inplace=True)
 
         return W
     
@@ -659,7 +723,7 @@ class PyFolioC(PyFolio):
         for _ in range(self.number_of_repetitions):
 
             # Assuming training() returns a DataFrame with 'weights' as the column name
-            portfolio = PyFolio(historical_data=self.historical_data, lookback_window=self.lookback_window, evaluation_window=self.evaluation_window, number_of_clusters=self.number_of_clusters, sigma=self.sigma, eta=self.eta, clustering_method=self.clustering_method)
+            portfolio = PyFolio(historical_data=self.historical_data, lookback_window=self.lookback_window, evaluation_window=self.evaluation_window, number_of_clusters=self.number_of_clusters, sigma=self.sigma, eta=self.eta, cov_method=self.cov_method)
 
             weights_df = portfolio.final_weights
 
@@ -757,5 +821,3 @@ class PyFolioC(PyFolio):
                 PnL[j*self.evaluation_window + i - 1] = PnL[j*self.evaluation_window + i - 1] + PnL[j*self.evaluation_window - 1]
         
         return overall_return, PnL, portfolio_value, daily_PnL
-    
-    
