@@ -816,9 +816,7 @@ class PyFolioC(PyFolio):
 
             portfolio_value.append(portfolio_value[-1]+PnL[-1])
 
-            print(portfolio_value[-1])
-            
-            print(f'step {i}')
+            print(f'step {i}/{number_of_window}, portfolio value: {portfolio_value[-1]:.4f}')
 
         n = len(PnL)//self.evaluation_window
 
