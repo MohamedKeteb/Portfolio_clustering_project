@@ -535,7 +535,7 @@ class PyFolio:
 
             for k in range(self.number_folds):
                 # Calculate EWA matrix 
-                weighted_matrices = [(self.beta**(Ik_length-t)) * np.outer(self.historical_data.iloc[t + Ik_length*k], self.historical_data.iloc[t + Ik_length*k]) for t in range(Ik_length)]
+                weighted_matrices = [(self.beta**(Ik_length-t)) * np.outer(self.historical_data.iloc[self.lookback_window[0] + t + Ik_length*k], self.historical_data.iloc[t + Ik_length*k]) for t in range(Ik_length)]
                 summed_weighted_matrices = np.sum(weighted_matrices, axis=0)
                 E_matrix = (1 - self.beta) / (1 - self.beta**Ik_length) * summed_weighted_matrices
                 
@@ -546,7 +546,7 @@ class PyFolio:
                 for i in range(N):
                     ui = eigenvectors[:, i]
                     # For each day in the Ik segment, project the data onto the eigenvector and square it
-                    epsilon_i_sum = np.sum([(np.dot(ui, self.historical_data.iloc[t + Ik_length*k])**2) for t in range(Ik_length)])
+                    epsilon_i_sum = np.sum([(np.dot(ui, self.historical_data.iloc[t + self.lookback_window[0]])**2) for t in range(Ik_length * self.number_folds) if not (Ik_length * k <= t < Ik_length * (k + 1))])
                     # Accumulate the results in epsilon
                     epsilon[i] += epsilon_i_sum.real / Ik_length
 
