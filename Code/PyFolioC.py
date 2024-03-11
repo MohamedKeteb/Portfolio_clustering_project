@@ -535,7 +535,7 @@ class PyFolio:
 
             for k in range(self.number_folds):
                 # Calculate EWA matrix 
-                weighted_matrices = [(self.beta**(Ik_length-t)) * np.outer(self.historical_data.iloc[self.lookback_window[0] + t + Ik_length*k], self.historical_data.iloc[t + Ik_length*k]) for t in range(Ik_length)]
+                weighted_matrices = [(self.beta**(Ik_length-t)) * np.outer(self.historical_data.iloc[self.lookback_window[0] + t + Ik_length*k], self.historical_data.iloc[self.lookback_window[0]+ t + Ik_length*k]) for t in range(Ik_length)]
                 summed_weighted_matrices = np.sum(weighted_matrices, axis=0)
                 E_matrix = (1 - self.beta) / (1 - self.beta**Ik_length) * summed_weighted_matrices
                 
