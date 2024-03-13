@@ -522,29 +522,35 @@ class PyFolio:
         return x"""
 
     def noised_array(self):
-        # Extraction des rendements des actifs sur la période d'évaluation
-        if self.cov_method == 'forecast':
-            asset_returns = self.historical_data.iloc[self.lookback_window[1]: self.lookback_window[1]+self.evaluation_window,:]
+        if self.eta==0:
+            if self.cov_method == 'forecast':
+                return(self.historical_data.iloc[self.lookback_window[0]: self.lookback_window[1],:].mean())
+            else:
+                return(self.cluster_return(self.lookback_window).mean())
         else:
-            asset_returns = self.cluster_return(lookback_window=[self.lookback_window[1], self.lookback_window[1]+self.evaluation_window])
+            # Extraction des rendements des actifs sur la période d'évaluation
+            if self.cov_method == 'forecast':
+                asset_returns = self.historical_data.iloc[self.lookback_window[1]: self.lookback_window[1]+self.evaluation_window,:]
+            else:
+                asset_returns = self.cluster_return(lookback_window=[self.lookback_window[1], self.lookback_window[1]+self.evaluation_window])
 
-        # Calcul des moyennes et des écarts-types des rendements pour chaque actif
-        asset_means = asset_returns.mean()
-        asset_std_devs = asset_returns.std()
+            # Calcul des moyennes et des écarts-types des rendements pour chaque actif
+            asset_means = asset_returns.mean()
+            asset_std_devs = asset_returns.std()
 
-        # Initialisation du DataFrame pour stocker les rendements bruités
-        noised_returns = asset_means.copy()
+            # Initialisation du DataFrame pour stocker les rendements bruités
+            noised_returns = asset_means.copy()
 
-        # Itération sur chaque colonne (actif) pour ajouter du bruit
-        for asset in asset_means.columns:
-            # Calcul de l'écart-type du bruit pour cet actif
-            noise_std_dev = asset_std_devs[asset] / self.eta
+            # Itération sur chaque colonne (actif) pour ajouter du bruit
+            for asset in asset_means.columns:
+                # Calcul de l'écart-type du bruit pour cet actif
+                noise_std_dev = asset_std_devs[asset] / self.eta
 
-            # Génération du bruit
-            noise = np.random.normal(0, noise_std_dev, len(asset_returns))
+                # Génération du bruit
+                noise = np.random.normal(0, noise_std_dev, len(asset_returns))
 
-            # Ajout du bruit aux rendements de l'actif
-            noised_returns[asset] = asset_means[asset] + noise
+                # Ajout du bruit aux rendements de l'actif
+                noised_returns[asset] = asset_means[asset] + noise
 
         return noised_returns
     def cov(self):
