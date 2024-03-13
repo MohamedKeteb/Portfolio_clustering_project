@@ -466,7 +466,7 @@ class PyFolio:
 
 
 
-    def noised_array(self):
+    """def noised_array(self):
 
         '''
         ----------------------------------------------------------------
@@ -519,9 +519,34 @@ class PyFolio:
             # Adjust the standard deviation of the noise
             epsilon_std_dev += 0.0005
 
-        return x
+        return x"""
 
+    def noised_array(self):
+        # Extraction des rendements des actifs sur la période d'évaluation
+        if self.cov_method == 'forecast':
+            asset_returns = self.historical_data.iloc[self.lookback_window[1]: self.lookback_window[1]+self.evaluation_window,:]
+        else:
+            asset_returns = self.cluster_return(lookback_window=[self.lookback_window[1], self.lookback_window[1]+self.evaluation_window])
 
+        # Calcul des moyennes et des écarts-types des rendements pour chaque actif
+        asset_means = asset_returns.mean()
+        asset_std_devs = asset_returns.std()
+
+        # Initialisation du DataFrame pour stocker les rendements bruités
+        noised_returns = asset_means.copy()
+
+        # Itération sur chaque colonne (actif) pour ajouter du bruit
+        for asset in asset_means.columns:
+            # Calcul de l'écart-type du bruit pour cet actif
+            noise_std_dev = asset_std_devs[asset] / self.eta
+
+            # Génération du bruit
+            noise = np.random.normal(0, noise_std_dev, len(asset_returns))
+
+            # Ajout du bruit aux rendements de l'actif
+            noised_returns[asset] = asset_means[asset] + noise
+
+        return noised_returns
     def cov(self):
 
         if self.cov_method == 'forecast':
@@ -535,7 +560,7 @@ class PyFolio:
 
             for k in range(self.number_folds):
                 # Calculate EWA matrix 
-                weighted_matrices = [(self.beta**(Ik_length-t)) * np.outer(self.historical_data.iloc[self.lookback_window[0] + t + Ik_length*k], self.historical_data.iloc[self.lookback_window[0]+ t + Ik_length*k]) for t in range(Ik_length)]
+                weighted_matrices = [(self.beta**(Ik_length-t)) * np.outer(self.historical_data.iloc[self.lookback_window[0] + t + Ik_length*k], self.historical_data.iloc[self.lookback_window[0]+t + Ik_length*k]) for t in range(Ik_length)]
                 summed_weighted_matrices = np.sum(weighted_matrices, axis=0)
                 E_matrix = (1 - self.beta) / (1 - self.beta**Ik_length) * summed_weighted_matrices
                 
