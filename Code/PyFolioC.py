@@ -547,7 +547,7 @@ class PyFolio:
                 noised_returns = asset_means.copy()
 
                 # Itération sur chaque colonne (actif) pour ajouter du bruit
-                for asset in asset_means.columns:
+                for asset in asset_means.index:
                     # Calcul de l'écart-type du bruit pour cet actif
                     noise_std_dev = np.sqrt(asset_std_devs[asset]**2 / self.eta - asset_std_devs[asset]**2)
 
