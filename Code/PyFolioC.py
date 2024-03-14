@@ -522,11 +522,16 @@ class PyFolio:
         return x"""
 
     def noised_array(self):
-        if self.eta==0:
-            if self.cov_method == 'forecast':
+
+        if self.eta==0: ## si eta = 0, expected_return = moyenne des returns sur la période d'évaluation
+
+            if self.cov_method == 'forecast': 
+
                 return(self.historical_data.iloc[self.lookback_window[0]: self.lookback_window[1],:].mean())
+            
             else:
                 return(self.cluster_return(self.lookback_window).mean())
+            
         else:
             # Extraction des rendements des actifs sur la période d'évaluation
             if self.cov_method == 'forecast':
