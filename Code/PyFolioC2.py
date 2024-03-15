@@ -89,7 +89,7 @@ class PyFolio:
     =================================================================================================================================
     '''
 
-    def __init__(self, historical_data, lookback_window, evaluation_window, number_of_clusters, sigma, eta, short_selling=False, cov_method='SPONGE'):
+    def __init__(self, historical_data, lookback_window, evaluation_window, number_of_clusters, sigma, eta, short_selling=False, cov_method='SPONGE', beta=None, number_folds=None):
         self.historical_data = historical_data
         self.lookback_window = lookback_window
         self.evaluation_window = evaluation_window
@@ -97,13 +97,29 @@ class PyFolio:
         self.cov_method = cov_method
         self.sigma = sigma
         self.eta = eta
-
         self.short_selling = short_selling
-        self.correlation_matrix = self.corr_matrix()
-        self.cluster_composition = self.cluster_composition_and_centroid()
-        self.constituent_weights_res = self.constituent_weights()
-        self.cluster_returns = self.cluster_return(lookback_window)
 
+        if self.cov_method == 'forecast':
+
+            if beta == None:
+                print('Beta cannot be "None" is the covariance estimation method is "forecast".')
+            else:
+                self.beta = beta
+
+            self.number_folds = number_folds ## tester si (lookback_window[1] - lookback_window[0])/number_folds
+            self.correlation_matrix = None
+            self.cluster_composition = None
+            self.constituent_weights_res = None
+            self.cluster_returns = None
+
+        if self.cov_method == 'SPONGE' or self.cov_method == 'SPONGE_sym' or self.cov_method == 'signed_laplacian':
+
+            self.correlation_matrix = self.corr_matrix()
+            self.cluster_composition = self.cluster_composition_and_centroid()
+            self.constituent_weights_res = self.constituent_weights()
+            self.cluster_returns = self.cluster_return(lookback_window)
+            self.beta = None
+            self.number_folds = None
 
         self.cov = self.cov()
         self.markowitz_weights_res = self.markowitz_weights()
@@ -509,14 +525,24 @@ class PyFolio:
 
         if self.eta==0: ## si eta = 0, expected_return = moyenne des returns sur la période d'évaluation
 
+            if self.cov_method == 'forecast': 
+
+                return(self.historical_data.iloc[self.lookback_window[0]: self.lookback_window[1],:].mean())
+            
+            else:
                 return(self.cluster_return(self.lookback_window).mean())
             
         else:
             # Extraction des rendements des actifs sur la période d'évaluation
-
-            asset_returns = self.cluster_return(lookback_window=[self.lookback_window[1], self.lookback_window[1]+self.evaluation_window])
+            if self.cov_method == 'forecast':
+                asset_returns = self.historical_data.iloc[self.lookback_window[1]: self.lookback_window[1]+self.evaluation_window,:]
+            else:
+                asset_returns = self.cluster_return(lookback_window=[self.lookback_window[1], self.lookback_window[1]+self.evaluation_window])
             if self.eta==1:
-                return(self.cluster_return(lookback_window=[self.lookback_window[1], self.lookback_window[1]+self.evaluation_window]).mean())
+                if self.cov_method == 'forecast':
+                    return(self.historical_data.iloc[self.lookback_window[1]: self.lookback_window[1]+self.evaluation_window,:].mean())
+                else:
+                    return(self.cluster_return(lookback_window=[self.lookback_window[1], self.lookback_window[1]+self.evaluation_window]).mean())
             else:
                 # Calcul des moyennes et des écarts-types des rendements pour chaque actif
                 asset_means = asset_returns.mean()
