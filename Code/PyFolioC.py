@@ -104,8 +104,6 @@ class PyFolio:
         self.constituent_weights_res = self.constituent_weights()
         self.cluster_returns = self.cluster_return(lookback_window)
 
-
-        self.cov = self.cov()
         self.markowitz_weights_res = self.markowitz_weights()
         self.final_weights = self.final_W()
 
@@ -515,8 +513,11 @@ class PyFolio:
             # Extraction des rendements des actifs sur la période d'évaluation
 
             asset_returns = self.cluster_return(lookback_window=[self.lookback_window[1], self.lookback_window[1]+self.evaluation_window])
+
             if self.eta==1:
+
                 return(self.cluster_return(lookback_window=[self.lookback_window[1], self.lookback_window[1]+self.evaluation_window]).mean())
+            
             else:
                 # Calcul des moyennes et des écarts-types des rendements pour chaque actif
                 asset_means = asset_returns.mean()
@@ -538,48 +539,6 @@ class PyFolio:
 
                 return noised_returns
     
-    def cov(self):
-
-        if self.cov_method == 'forecast':
-
-            N = len(self.historical_data.columns)  # Number of assets, BEWARE TO THE SHAPE OF THE DATA FOR
-
-            Ik_length = int((self.lookback_window[1]-self.lookback_window[0])/self.number_folds) # Number of days in each fold for the cross validation, has to be an integer
-
-            # Initialize epsilon as a zero array with N elements
-            epsilon = np.zeros(N)
-
-            for k in range(self.number_folds):
-                # Calculate EWA matrix 
-                weighted_matrices = [(self.beta**(Ik_length-t)) * np.outer(self.historical_data.iloc[self.lookback_window[0] + t + Ik_length*k], self.historical_data.iloc[self.lookback_window[0]+t + Ik_length*k]) for t in range(Ik_length)]
-                summed_weighted_matrices = np.sum(weighted_matrices, axis=0)
-                E_matrix = (1 - self.beta) / (1 - self.beta**Ik_length) * summed_weighted_matrices
-                
-                # Calculate eigenvectors for the E matrix
-                _, eigenvectors = np.linalg.eigh(E_matrix)
-
-                # Calculate epsilon terms for each eigenvector
-                for i in range(N):
-                    ui = eigenvectors[:, i]
-                    # For each day in the Ik segment, project the data onto the eigenvector and square it
-                    epsilon_i_sum = np.sum([(np.dot(ui, self.historical_data.iloc[t + self.lookback_window[0]])**2) for t in range(Ik_length * self.number_folds) if not (Ik_length * k <= t < Ik_length * (k + 1))])
-                    # Accumulate the results in epsilon
-                    epsilon[i] += epsilon_i_sum.real / Ik_length
-
-            # Average epsilon over K segments
-            epsilon /= self.number_folds
-
-            # Now, we calculate the forecasts using the last set of eigenvectors
-            cov = pd.DataFrame(index=self.historical_data.columns, columns=self.historical_data.columns, data=np.sum([epsilon[i] * np.outer(eigenvectors[:, i], eigenvectors[:, i]) for i in range(N)], axis=0)).fillna(0.)
-
-        
-        if self.cov_method == 'SPONGE' or self.cov_method == 'SPONGE_sym' or self.cov_method == 'signed_laplacian':
-
-            cov = self.cluster_returns.cov()
-
-            cov = cov.fillna(0.)
-
-        return cov
 
 
     def markowitz_weights(self):
@@ -618,6 +577,10 @@ class PyFolio:
         ----------------------------------------------------------------
         '''
 
+        cov = self.cluster_returns.cov()
+
+        cov = cov.fillna(0.)
+
         ## on construit le vecteur d'expected return du cluster (252 jours de trading par an, on passe de rendements journaliers à rendements annualisés)
                 
         expected_returns = self.noised_array()
@@ -625,10 +588,10 @@ class PyFolio:
         if self.short_selling: ## if we allow short-selling, then weights are not constrained to take nonnegative values, 
                                ## hence the (-1, 1) bounds
         
-            ef = EfficientFrontier(expected_returns=expected_returns, cov_matrix=self.cov, weight_bounds=(-1, 1)) 
+            ef = EfficientFrontier(expected_returns=expected_returns, cov_matrix=cov, weight_bounds=(-1, 1)) 
         
         else: 
-            ef = EfficientFrontier(expected_returns=expected_returns, cov_matrix=self.cov, weight_bounds=(0, 1))
+            ef = EfficientFrontier(expected_returns=expected_returns, cov_matrix=cov, weight_bounds=(0, 1))
 
         ef.efficient_return(target_return=expected_returns.mean()) ## pourquoi .mean()
 
@@ -664,22 +627,17 @@ class PyFolio:
 
         ### On cherche désormais à calculer le poids de chaque actif dans le portefeuille total
 
-        if self.cov_method == 'forecast':
-            
-            W = pd.DataFrame(index=['weight'], columns=self.historical_data.columns, data=self.markowitz_weights_res)
+        W = {}
 
-        else:
-            W = {}
+        for cluster in self.constituent_weights_res.keys(): ## we range across all clusters
 
-            for cluster in self.constituent_weights_res.keys(): ## we range across all clusters
+            for tickers, weight in self.constituent_weights_res[cluster].items(): ## we range across all tickers in each cluster
 
-                for tickers, weight in self.constituent_weights_res[cluster].items(): ## we range across all tickers in each cluster
+                W[tickers] = weight*self.markowitz_weights_res[cluster]
 
-                    W[tickers] = weight*self.markowitz_weights_res[cluster]
-
-            W = pd.DataFrame(list(W.items()), columns=['ticker', 'weights'])
-        
-            W.set_index('ticker', inplace=True)
+        W = pd.DataFrame(list(W.items()), columns=['ticker', 'weights'])
+    
+        W.set_index('ticker', inplace=True)
 
         return W
     
@@ -694,9 +652,7 @@ class PyFolioC(PyFolio):
                          number_of_clusters, 
                          sigma, eta, 
                          short_selling, 
-                         cov_method, 
-                         beta, 
-                         number_folds)
+                         cov_method)
         
         self.number_of_repetitions = number_of_repetitions
         self.consolidated_weight = self.consolidated_W()
