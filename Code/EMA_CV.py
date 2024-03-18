@@ -35,7 +35,7 @@ class EMA_CV:
         self.beta = beta
         self.number_of_folds = number_of_folds
         self.xi = self.eigenvalue_estimator()
-        self.EMA_CV = self.EMA_CV()
+        self.EMA_CV = self.EMA()
 
 
     ######################### 1. We start by randomizing the auxiliary observation matrix  ̃X from Equation (5) along the time axis #########################
@@ -148,7 +148,7 @@ class EMA_CV:
         return xi
 
 
-    def EMA_CV(self):
+    def EMA(self):
 
         days = len(self.lookback_window)
         ## compute the sample exponential moving average correlation matrix
