@@ -34,7 +34,6 @@ class EMA_CV:
         self.lookback_window = lookback_window
         self.beta = beta
         self.number_of_folds = number_of_folds
-        self.xi = self.eigenvalue_estimator()
         self.EMA_CV = self.EMA()
 
 
