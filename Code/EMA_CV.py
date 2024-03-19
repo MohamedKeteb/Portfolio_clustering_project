@@ -147,7 +147,7 @@ class EMA_CV:
         xi = np.zeros(number_of_stocks)  # initialisation de x
 
         for i in tqdm(range(number_of_stocks), desc='Calcul en cours', unit='itération'):
-            xi[i] = self.average_loss(splits=self.splits, index=i)   
+            xi[i] = self.average_loss(index=i)   
                         
         return xi
 
