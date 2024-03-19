@@ -161,7 +161,7 @@ class EMA_CV:
         _, eigenvectors = np.linalg.eigh(S)
 
         ## computes the estimator 
-        eigenvalue_est = self.eigenvalue_estimator(splits=self.splits)
+        eigenvalue_est = self.eigenvalue_estimator()
 
         # Initialisation de Sigma avec des zéros
         Sigma = np.zeros((S.shape[0], S.shape[1]), dtype=np.complex128)
