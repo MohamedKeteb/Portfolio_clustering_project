@@ -34,20 +34,25 @@ class EMA_CV:
         self.lookback_window = lookback_window
         self.beta = beta
         self.number_of_folds = number_of_folds
+        # Compute the weight matrix : shape (days, days) (if days = 250, shape (250, 250))
+        self.W = np.sqrt(np.diag(len(self.lookback_window) * (1 - self.beta) * self.beta**(np.arange(self.lookback_window[0], self.lookback_window[1])[::-1]) / (1 - self.beta**len(self.lookback_window))))  
+        self.auxilary_matrix = self.auxilary_mat()
+        self.splits = self.shuffle_split()
         self.EMA_CV = self.EMA()
+        
+
 
 
     ######################### 1. We start by randomizing the auxiliary observation matrix  ̃X from Equation (5) along the time axis #########################
-    def auxilary_matrix(self):
+    def auxilary_mat(self):
 
         ## 1. We extract the data corresponding to the returns of our assets (columns) during these d days (lines)
         X = self.historcal_data.iloc[self.lookback_window[0]:self.lookback_window[1],:] ## shape days * number of stocks
-        days = len(self.lookback_window)
         ## 2. We slightly adjust the matrix of observations to get the auxiliary matrix that puts more weight on recent dates
 
         # Compute the weight matrix : shape (days, days) (if days = 250, shape (250, 250))
-        W = np.sqrt(np.diag(days * (1 - self.beta) * self.beta**(np.arange(self.lookback_window[0], self.lookback_window[1])[::-1]) / (1 - self.beta**days)))  
-        X_tilde = pd.DataFrame(index=X.index, columns=X.columns, data=np.dot(W, X))
+
+        X_tilde = pd.DataFrame(index=X.index, columns=X.columns, data=np.dot(self.W, X))
 
         ## 3. We randomize the auxiliary matrix of observations according to the time axis
         # Randomized_X = X_tilde.transpose().sample(frac=1, axis=1, random_state=42) ## we transpose X as we want to have daily observations of the whole dataset !
@@ -116,11 +121,11 @@ class EMA_CV:
 
         return result
     
-    def average_loss(self, splits, index):
+    def average_loss(self, index):
 
         res = 0 ## to stock the overall loss
 
-        for (train_fold, test_fold) in splits:
+        for (train_fold, test_fold) in self.splits:
 
             ## sur chaque fold, on calcule les sample eigenvectors à partir du training fold correspondant
 
@@ -130,39 +135,33 @@ class EMA_CV:
 
             res = res + self.intra_fold_loss(test_fold=test_fold, sample_eigenvector_i=sample_eigenvector_i)
 
-        res = res / len(splits) ## we average by the number of folds (which corresponds to the lengths of the splits)
+        res = res / len(self.splits) ## we average by the number of folds (which corresponds to the lengths of the splits)
 
         return res
     
 
-    def eigenvalue_estimator(self, splits):
+    def eigenvalue_estimator(self):
 
         number_of_stocks = len(self.historcal_data.columns) ## COLUMNS HAVE TO BE COMPOSED OF THE STOCKS TICKERS
 
         xi = np.zeros(number_of_stocks)  # initialisation de x
 
         for i in tqdm(range(number_of_stocks), desc='Calcul en cours', unit='itération'):
-            xi[i] = self.average_loss(splits=splits, index=i)   
+            xi[i] = self.average_loss(splits=self.splits, index=i)   
                         
         return xi
 
 
     def EMA(self):
 
-        days = len(self.lookback_window)
-        ## compute the sample exponential moving average correlation matrix
-        X = self.historcal_data.iloc[self.lookback_window[0]:self.lookback_window[1],:]
-        W = np.sqrt(np.diag(days * (1 - self.beta) * self.beta**(np.arange(self.lookback_window[0], self.lookback_window[1])[::-1]) / (1 - self.beta**days)))  
-        X_tilde = np.dot(W, X)  # Produit matriciel de X' et W
-        S = np.dot(X_tilde.T, X_tilde)
+        ## compute the sample exponential moving average
+        S = np.dot(self.auxilary_matrix.T, self.auxilary_matrix)
 
         ## compute the eigenvectors of S
         _, eigenvectors = np.linalg.eigh(S)
 
         ## computes the estimator 
-        X_tilde = self.auxilary_matrix()
-        splits = self.shuffle_split()
-        eigenvalue_est = self.eigenvalue_estimator(splits=splits)
+        eigenvalue_est = self.eigenvalue_estimator(splits=self.splits)
 
         # Initialisation de Sigma avec des zéros
         Sigma = np.zeros((S.shape[0], S.shape[1]), dtype=np.complex128)
