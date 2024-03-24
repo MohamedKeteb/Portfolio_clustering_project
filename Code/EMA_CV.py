@@ -27,6 +27,7 @@ except ImportError:
 
 # ----------------------------------------------------------------
 
+################################################################ EMA_CV #################################################################
 
 
 ######################### 1. We start by randomizing the auxiliary observation matrix  ̃X from Equation (5) along the time axis #########################
@@ -166,3 +167,83 @@ def EMA_CV(data, beta, lookback_window, number_of_folds):
 
     return Sigma
 
+################################################# NAIVE PORTFOLIO #########################################################
+
+def naive_returns(historical_data, lookback_window, evaluation_window):
+
+    '''
+    ----------------------------------------------------------------
+    GENERAL IDEA : given the overall weights of each asset in the 
+                portfolio, compute the portfolio return over an 
+                evaluation window that does not overlap with the 
+                lookback_window. 
+    ----------------------------------------------------------------
+
+    ----------------------------------------------------------------
+    PARAMS : 
+
+    - evaluation_window : integer, corresponding to the number of 
+                        future days (in terms of historcal returns) 
+                        on which we evaluate the portfolio
+
+    - lookback_window : list of length 2, [start, end] corresponding 
+                        to the range of the lookback_window
+
+    - historical_data : cleaned pandas dataframe containing the returns 
+                        of the stocks (!!! THE SHAPE OF THE DATA HAS TO BE
+                        THE FOLLOWING: TICKERS NAME IN COLUMNS)
+
+    - consolidated_W : numpy ndarray, containing the final weights 
+                    of each asset, i.e. the overall portfolio 
+                    weights
+
+    - df : pandas dataframe containing the raw data
+    ----------------------------------------------------------------
+
+    ----------------------------------------------------------------
+    OUTPUT : returns the portfolio return of each cluster in a 
+            pandas dataframe
+    ----------------------------------------------------------------
+    '''
+
+    portfolio_returns = pd.DataFrame(index=historical_data.iloc[lookback_window[1]:lookback_window[1]+evaluation_window, :].index, columns=['return'], data=np.zeros(len(historical_data.iloc[lookback_window[1]:lookback_window[1]+evaluation_window, :].index)))
+
+    for ticker in historical_data.columns: 
+
+    ##  each time we add :            the present value of the return + the weighted "contribution" of the stock 'ticker' times is weight in the portfolio
+        portfolio_returns['return'] = portfolio_returns['return'] + historical_data[ticker][lookback_window[1]:lookback_window[1]+evaluation_window]*(1/len(historical_data.columns))
+
+    return portfolio_returns
+
+
+def naive_sliding_window(historical_data, lookback_window, evaluation_window, number_of_window):
+
+    PnL = []
+    daily_PnL = []
+    overall_return = pd.DataFrame()
+    portfolio_value=[1] #we start with a value of 1, the list contain : the porfolio value at the start of each evaluation period
+    lookback_window_0 = lookback_window
+
+    for i in range(1, number_of_window + 1):
+
+        naive_returns_res = naive_returns(historical_data, lookback_window_0, evaluation_window)
+        overall_return = pd.concat([overall_return, naive_returns_res])
+
+        lookback_window_0 = [lookback_window[0] + evaluation_window*i, lookback_window[1] + evaluation_window*i]
+
+        PnL = np.concatenate((PnL, np.reshape(np.cumprod(1 + naive_returns_res)*portfolio_value[-1] - portfolio_value[-1], (evaluation_window,))))## car on réinvestit immédiatement après
+        daily_PnL = np.concatenate((daily_PnL, np.reshape(np.cumprod(1 + naive_returns_res)*portfolio_value[-1] - portfolio_value[-1], (evaluation_window,))))## car on réinvestit immédiatement après
+
+        portfolio_value.append(portfolio_value[-1]+PnL[-1])
+
+        print(f'step {i}/{number_of_window}, portfolio value: {portfolio_value[-1]:.4f}')
+
+    n = len(PnL)//evaluation_window
+
+    for j in range(1, n):
+
+        for i in range(1, evaluation_window+1):
+            
+            PnL[j*evaluation_window + i - 1] = PnL[j*evaluation_window + i - 1] + PnL[j*evaluation_window - 1]
+    
+    return overall_return, PnL, portfolio_value, daily_PnL
