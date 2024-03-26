@@ -660,7 +660,6 @@ class PyFolioC(PyFolio):
         self.portfolio_return = self.portfolio_returns()
         
     def consolidated_W(self):
-
         '''
         ----------------------------------------------------------------
         GENERAL IDEA : consolidate the numpy array of weights by 
@@ -668,46 +667,33 @@ class PyFolioC(PyFolio):
                     phase a certain number of times 
                     (number_of_repetitions).
         ----------------------------------------------------------------
-
         ----------------------------------------------------------------
         PARAMS : 
-
         - number_of_repetitions : number of time we repeat the training
                                 phase and the consequent averaging 
                                 method
-
         - lookback_window : list of length 2, [start, end] corresponding 
                             to the range of the lookback_window
-
         - df_cleaned : cleaned pandas dataframe containing the returns 
                     of the stocks
-
         - number_of_clusters : integer, corresponding to the number of 
                             clusters
-
         - sigma : float, corresponding to the dispersion in the intra-
                 cluster weights
-
         - df : pandas dataframe containing the raw data
-
         ----------------------------------------------------------------
-
         ----------------------------------------------------------------
-        OUTPUT : numpy ndarray containing the returns of the overall weights of each cluster
+        OUTPUT : DataFrame with 'weight' as the column name, containing the normalized weights
         ----------------------------------------------------------------
         '''
-
         # Initialize an empty DataFrame to store the results
         consolidated_W = pd.DataFrame()
 
         # Run the training function n times and concatenate the results
         for _ in range(self.number_of_repetitions):
-
             # Assuming training() returns a DataFrame with 'weights' as the column name
             portfolio = PyFolio(historical_data=self.historical_data, lookback_window=self.lookback_window, evaluation_window=self.evaluation_window, number_of_clusters=self.number_of_clusters, sigma=self.sigma, eta=self.eta, short_selling=self.short_selling, cov_method=self.cov_method)
-
             weights_df = portfolio.final_weights
-
             # Concatenate the results into columns
             consolidated_W = pd.concat([consolidated_W, weights_df], axis=1)
 
@@ -721,9 +707,12 @@ class PyFolioC(PyFolio):
 
         # Updating historical weights for next comparison
         self.histo[0] = self.histo[1]
-        self.histo[1] = normalized_weights.to_frame().T
+        self.histo[1] = normalized_weights
 
-        return normalized_weights.to_frame().T
+        # Creating the final DataFrame with 'weight' as column name
+        final_df = normalized_weights.to_frame(name='weight').T
+
+        return final_df
 
 
 
