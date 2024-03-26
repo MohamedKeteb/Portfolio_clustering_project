@@ -593,7 +593,7 @@ class PyFolio:
         else: 
             ef = EfficientFrontier(expected_returns=expected_returns, cov_matrix=cov, weight_bounds=(0, 1))
 
-        ef.efficient_return(target_return = (1+expected_returns[expected_returns>0].mean())**252-1)## 
+        ef.efficient_return(target_return = 0.15)## 
 
         markowitz_weights = ef.clean_weights()
 
