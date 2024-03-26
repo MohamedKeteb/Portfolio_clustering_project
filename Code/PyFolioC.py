@@ -507,7 +507,7 @@ class PyFolio:
 
         if self.eta==0: ## si eta = 0, expected_return = moyenne des returns sur la période d'évaluation
 
-                return(self.cluster_return(self.lookback_window).mean())
+            return(self.cluster_return(self.lookback_window).mean())
             
         else:
             # Extraction des rendements des actifs sur la période d'évaluation
