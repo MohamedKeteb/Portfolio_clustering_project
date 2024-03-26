@@ -713,12 +713,17 @@ class PyFolioC(PyFolio):
         # Calculate the average along axis 1
         average_weights = consolidated_W.mean(axis=1)
 
-        # Create a DataFrame with the average weights
-        consolidated_W = pd.DataFrame({'weight': average_weights})
+        # Adjust for transaction costs and normalize
+        transaction_cost_rate = 0.001  # Example transaction cost rate
+        adjusted_weights = average_weights - abs(average_weights - self.histo[0].squeeze()) * transaction_cost_rate
+        normalized_weights = adjusted_weights / adjusted_weights.sum()
 
-        consolidated_W = consolidated_W.transpose()
+        # Updating historical weights for next comparison
+        self.histo[0] = self.histo[1]
+        self.histo[1] = normalized_weights.to_frame().T
 
-        return consolidated_W
+        return normalized_weights.to_frame().T
+
 
 
     def portfolio_returns(self):
