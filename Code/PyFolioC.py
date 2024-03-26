@@ -106,8 +106,6 @@ class PyFolio:
 
         self.markowitz_weights_res = self.markowitz_weights()
         self.final_weights = self.final_W()
-        self.histo = [pd.DataFrame(0, index=[0], columns=[f'Asset_{i}' for i in range(663)]),
-                      pd.DataFrame(0, index=[0], columns=[f'Asset_{i}' for i in range(663)])]
     '''
     ###################################################### CLUSTERING METHODS ######################################################
 
@@ -683,12 +681,11 @@ class PyFolioC(PyFolio):
         - df : pandas dataframe containing the raw data
         ----------------------------------------------------------------
         ----------------------------------------------------------------
-        OUTPUT : DataFrame with 'weight' as the column name, containing the normalized weights
+        OUTPUT : numpy ndarray containing the returns of the overall weights of each cluster
         ----------------------------------------------------------------
         '''
         # Initialize an empty DataFrame to store the results
         consolidated_W = pd.DataFrame()
-
         # Run the training function n times and concatenate the results
         for _ in range(self.number_of_repetitions):
             # Assuming training() returns a DataFrame with 'weights' as the column name
@@ -696,23 +693,12 @@ class PyFolioC(PyFolio):
             weights_df = portfolio.final_weights
             # Concatenate the results into columns
             consolidated_W = pd.concat([consolidated_W, weights_df], axis=1)
-
         # Calculate the average along axis 1
         average_weights = consolidated_W.mean(axis=1)
-
-        # Adjust for transaction costs and normalize
-        transaction_cost_rate = 0.001  # Example transaction cost rate
-        adjusted_weights = average_weights - abs(average_weights - self.histo[0].squeeze()) * transaction_cost_rate
-        normalized_weights = adjusted_weights / adjusted_weights.sum()
-
-        # Updating historical weights for next comparison
-        self.histo[0] = self.histo[1]
-        self.histo[1] = normalized_weights
-
-        # Creating the final DataFrame with 'weight' as column name
-        final_df = normalized_weights.to_frame(name='weight').T
-
-        return final_df
+        # Create a DataFrame with the average weights
+        consolidated_W = pd.DataFrame({'weight': average_weights})
+        consolidated_W = consolidated_W.transpose()
+        return consolidated_W
 
 
 
