@@ -657,7 +657,8 @@ class PyFolioC(PyFolio):
         self.number_of_repetitions = number_of_repetitions
         self.consolidated_weight = self.consolidated_W()
         self.portfolio_return = self.portfolio_returns()
-
+        self.histo = [pd.DataFrame(0, index=[0], columns=[f'Asset_{i}' for i in range(663)]),
+                      pd.DataFrame(0, index=[0], columns=[f'Asset_{i}' for i in range(663)])]
     def consolidated_W(self):
 
         '''
