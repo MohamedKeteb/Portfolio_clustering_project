@@ -579,7 +579,7 @@ class PyFolio:
         '''
         if w_prev is None:
             # Initialiser w_prev avec des poids égaux ou une autre stratégie par défaut
-            num_assets = len(self.cluster_returns.columns)
+            num_assets = self.number_of_clusters
             w_prev = np.ones(num_assets) / num_assets
         cov = self.cluster_returns.cov()
 
@@ -766,7 +766,7 @@ class PyFolioC(PyFolio):
         w_prev = None
         for i in range(1, number_of_window + 1):
             if i == 1:
-                num_assets = len(self.historical_data.columns)
+                num_assets = self.number_of_clusters
                 w_prev = np.ones(num_assets) / num_assets
             else:
                 w_prev = consolidated_portfolio.final_weights.to_numpy()
