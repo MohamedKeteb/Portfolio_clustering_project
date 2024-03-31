@@ -13,6 +13,7 @@ warnings.filterwarnings('ignore')
 try:
 
     from pypfopt.efficient_frontier import EfficientFrontier
+    from pypfopt import objective_functions
 
 except ImportError:
 
@@ -23,6 +24,7 @@ except ImportError:
         import subprocess
         subprocess.check_call([sys.executable, "-m", "pip", "install", "PyPortfolioOpt"])
         from pypfopt.efficient_frontier import EfficientFrontier
+        from pypfopt import objective_functions
         
     except Exception as e:
         print(f"Error installing PyPortfolioOpt package: {e}")
@@ -540,7 +542,7 @@ class PyFolio:
     
 
 
-    def markowitz_weights(self):
+    def markowitz_weights(self, w_prev=None):
 
         '''
         ----------------------------------------------------------------
@@ -575,7 +577,13 @@ class PyFolio:
         OUTPUT : returns the markowitz weights of each cluster
         ----------------------------------------------------------------
         '''
-
+        if w_prev is None:
+            # Initialize w_prev with equal weights or another strategy
+            num_assets = len(self.cluster_returns.columns)
+            w_prev = np.ones(num_assets) / num_assets
+        else:
+            # Ensure w_prev is in the correct format if it's not None
+            w_prev = np.array(w_prev)
         cov = self.cluster_returns.cov()
 
         cov = cov.fillna(0.)
@@ -592,7 +600,9 @@ class PyFolio:
         else: 
             ef = EfficientFrontier(expected_returns=expected_returns, cov_matrix=cov, weight_bounds=(0, 1))
 
-        ef.efficient_return(target_return = 0.15)## 
+        ef.add_objective(objective_functions.transaction_cost, w_prev=w_prev, k=0.001)
+
+        ef.efficient_return(target_return = 0.10)## 
 
         markowitz_weights = ef.clean_weights()
 
@@ -698,6 +708,7 @@ class PyFolioC(PyFolio):
         # Create a DataFrame with the average weights
         consolidated_W = pd.DataFrame({'weight': average_weights})
         consolidated_W = consolidated_W.transpose()
+
         return consolidated_W
 
 
@@ -755,11 +766,17 @@ class PyFolioC(PyFolio):
         overall_return = pd.DataFrame()
         portfolio_value=[1] #we start with a value of 1, the list contain : the porfolio value at the start of each evaluation period
         lookback_window_0 = self.lookback_window
-
+        w_prev = None
         for i in range(1, number_of_window + 1):
-
+            if i == 1:
+                
+                num_assets = len(self.historical_data.columns)
+                w_prev = np.ones(num_assets) / num_assets
+            else:
+                w_prev = consolidated_portfolio.final_weights.to_numpy()
+                
             consolidated_portfolio = PyFolioC(number_of_repetitions=self.number_of_repetitions, historical_data=self.historical_data, lookback_window=lookback_window_0, evaluation_window=self.evaluation_window, number_of_clusters=self.number_of_clusters, sigma=self.sigma, eta=self.eta, short_selling=self.short_selling, cov_method=self.cov_method)
-
+            consolidated_portfolio.markowitz_weights(w_prev=w_prev)
             overall_return = pd.concat([overall_return, consolidated_portfolio.portfolio_return])
 
             lookback_window_0 = [self.lookback_window[0] + self.evaluation_window*i, self.lookback_window[1] + self.evaluation_window*i]
