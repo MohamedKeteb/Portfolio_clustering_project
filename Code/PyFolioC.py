@@ -100,14 +100,30 @@ class PyFolio:
         self.sigma = sigma
         self.eta = eta
 
-        self.short_selling = short_selling
+        print("Calcul de la matrice de corrélation...")
         self.correlation_matrix = self.corr_matrix()
+        print("correlation_matrix:", self.correlation_matrix)
+        
+        print("Calcul de la composition des clusters et du centroïde...")
         self.cluster_composition = self.cluster_composition_and_centroid()
+        print("cluster_composition:", self.cluster_composition)
+        
+        print("Calcul des poids des constituants...")
         self.constituent_weights_res = self.constituent_weights()
+        print("constituent_weights_res:", self.constituent_weights_res)
+        
+        print("Calcul des retours des clusters...")
         self.cluster_returns = self.cluster_return(lookback_window)
-
+        print("cluster_returns:", self.cluster_returns)
+        
+        print("Calcul des poids de Markowitz...")
         self.markowitz_weights_res = self.markowitz_weights()
+        print("markowitz_weights_res:", self.markowitz_weights_res)
+        
+        print("Calcul des poids finaux...")
         self.final_weights = self.final_W()
+        print("final_weights:", self.final_weights)
+        
     '''
     ###################################################### CLUSTERING METHODS ######################################################
 
