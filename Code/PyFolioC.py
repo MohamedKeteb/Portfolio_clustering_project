@@ -542,7 +542,7 @@ class PyFolio:
     
 
 
-    def markowitz_weights(self, w_prev):
+    def markowitz_weights(self, w_prev=None):
 
         '''
         ----------------------------------------------------------------
@@ -577,7 +577,10 @@ class PyFolio:
         OUTPUT : returns the markowitz weights of each cluster
         ----------------------------------------------------------------
         '''
-        
+        if w_prev is None:
+            # Initialiser w_prev avec des poids égaux ou une autre stratégie par défaut
+            num_assets = len(self.cluster_returns.columns)
+            w_prev = np.ones(num_assets) / num_assets
         cov = self.cluster_returns.cov()
 
         cov = cov.fillna(0.)
@@ -763,7 +766,6 @@ class PyFolioC(PyFolio):
         w_prev = None
         for i in range(1, number_of_window + 1):
             if i == 1:
-                
                 num_assets = len(self.historical_data.columns)
                 w_prev = np.ones(num_assets) / num_assets
             else:
