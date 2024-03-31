@@ -13,7 +13,6 @@ warnings.filterwarnings('ignore')
 try:
 
     from pypfopt.efficient_frontier import EfficientFrontier
-    from pypfopt import objective_functions
 
 except ImportError:
 
@@ -24,7 +23,6 @@ except ImportError:
         import subprocess
         subprocess.check_call([sys.executable, "-m", "pip", "install", "PyPortfolioOpt"])
         from pypfopt.efficient_frontier import EfficientFrontier
-        from pypfopt import objective_functions
         
     except Exception as e:
         print(f"Error installing PyPortfolioOpt package: {e}")
@@ -91,7 +89,7 @@ class PyFolio:
     =================================================================================================================================
     '''
 
-    def __init__(self, historical_data, lookback_window, evaluation_window, number_of_clusters, sigma, eta, short_selling=False, cov_method='SPONGE'):
+    def _init_(self, historical_data, lookback_window, evaluation_window, number_of_clusters, sigma, eta, short_selling=False, cov_method='SPONGE'):
         self.historical_data = historical_data
         self.lookback_window = lookback_window
         self.evaluation_window = evaluation_window
@@ -108,9 +106,7 @@ class PyFolio:
 
         self.markowitz_weights_res = self.markowitz_weights()
         self.final_weights = self.final_W()
-        self.histo = [pd.DataFrame(0, index=[0], columns=[f'Asset_{i}' for i in range(663)]),
-                      pd.DataFrame(0, index=[0], columns=[f'Asset_{i}' for i in range(663)])]
-        
+
     '''
     ###################################################### CLUSTERING METHODS ######################################################
 
@@ -511,7 +507,7 @@ class PyFolio:
 
         if self.eta==0: ## si eta = 0, expected_return = moyenne des returns sur la période d'évaluation
 
-            return(self.cluster_return(self.lookback_window).mean())
+                return(self.cluster_return(self.lookback_window).mean())
             
         else:
             # Extraction des rendements des actifs sur la période d'évaluation
@@ -533,7 +529,7 @@ class PyFolio:
                 # Itération sur chaque colonne (actif) pour ajouter du bruit
                 for asset in asset_means.index:
                     # Calcul de l'écart-type du bruit pour cet actif
-                    noise_std_dev = np.sqrt(asset_std_devs[asset]**2 / self.eta - asset_std_devs[asset]**2)
+                    noise_std_dev = np.sqrt(asset_std_devs[asset]*2 / self.eta - asset_std_devs[asset]*2)
 
                     # Génération du bruit
                     noise = np.random.normal(0, noise_std_dev)
@@ -545,7 +541,7 @@ class PyFolio:
     
 
 
-    def markowitz_weights(self, w_prev=None):
+    def markowitz_weights(self):
 
         '''
         ----------------------------------------------------------------
@@ -580,10 +576,7 @@ class PyFolio:
         OUTPUT : returns the markowitz weights of each cluster
         ----------------------------------------------------------------
         '''
-        if w_prev is None:
-            # Initialiser w_prev avec des poids égaux ou une autre stratégie par défaut
-            num_assets = 38
-            w_prev = np.ones(num_assets) / num_assets
+
         cov = self.cluster_returns.cov()
 
         cov = cov.fillna(0.)
@@ -600,9 +593,7 @@ class PyFolio:
         else: 
             ef = EfficientFrontier(expected_returns=expected_returns, cov_matrix=cov, weight_bounds=(0, 1))
 
-        ef.add_objective(objective_functions.transaction_cost, w_prev=w_prev, k=0.001)
-
-        ef.efficient_return(target_return = 0.10)## 
+        ef.efficient_return(target_return = 0.15)## 
 
         markowitz_weights = ef.clean_weights()
 
@@ -653,9 +644,9 @@ class PyFolio:
  
 class PyFolioC(PyFolio):
 
-    def __init__(self, number_of_repetitions, historical_data, lookback_window, evaluation_window, number_of_clusters, sigma, eta, short_selling=False, cov_method='SPONGE'):
+    def _init_(self, number_of_repetitions, historical_data, lookback_window, evaluation_window, number_of_clusters, sigma, eta, short_selling=False, cov_method='SPONGE'):
         
-        super().__init__(historical_data, 
+        super()._init_(historical_data, 
                          lookback_window, 
                          evaluation_window, 
                          number_of_clusters, 
@@ -666,8 +657,9 @@ class PyFolioC(PyFolio):
         self.number_of_repetitions = number_of_repetitions
         self.consolidated_weight = self.consolidated_W()
         self.portfolio_return = self.portfolio_returns()
-        
+
     def consolidated_W(self):
+
         '''
         ----------------------------------------------------------------
         GENERAL IDEA : consolidate the numpy array of weights by 
@@ -675,42 +667,58 @@ class PyFolioC(PyFolio):
                     phase a certain number of times 
                     (number_of_repetitions).
         ----------------------------------------------------------------
+
         ----------------------------------------------------------------
         PARAMS : 
+
         - number_of_repetitions : number of time we repeat the training
                                 phase and the consequent averaging 
                                 method
+
         - lookback_window : list of length 2, [start, end] corresponding 
                             to the range of the lookback_window
+
         - df_cleaned : cleaned pandas dataframe containing the returns 
                     of the stocks
+
         - number_of_clusters : integer, corresponding to the number of 
                             clusters
+
         - sigma : float, corresponding to the dispersion in the intra-
                 cluster weights
+
         - df : pandas dataframe containing the raw data
+
         ----------------------------------------------------------------
+
         ----------------------------------------------------------------
         OUTPUT : numpy ndarray containing the returns of the overall weights of each cluster
         ----------------------------------------------------------------
         '''
+
         # Initialize an empty DataFrame to store the results
         consolidated_W = pd.DataFrame()
+
         # Run the training function n times and concatenate the results
         for _ in range(self.number_of_repetitions):
+
             # Assuming training() returns a DataFrame with 'weights' as the column name
             portfolio = PyFolio(historical_data=self.historical_data, lookback_window=self.lookback_window, evaluation_window=self.evaluation_window, number_of_clusters=self.number_of_clusters, sigma=self.sigma, eta=self.eta, short_selling=self.short_selling, cov_method=self.cov_method)
+
             weights_df = portfolio.final_weights
+
             # Concatenate the results into columns
             consolidated_W = pd.concat([consolidated_W, weights_df], axis=1)
+
         # Calculate the average along axis 1
         average_weights = consolidated_W.mean(axis=1)
+
         # Create a DataFrame with the average weights
         consolidated_W = pd.DataFrame({'weight': average_weights})
+
         consolidated_W = consolidated_W.transpose()
 
         return consolidated_W
-
 
 
     def portfolio_returns(self):
@@ -766,17 +774,11 @@ class PyFolioC(PyFolio):
         overall_return = pd.DataFrame()
         portfolio_value=[1] #we start with a value of 1, the list contain : the porfolio value at the start of each evaluation period
         lookback_window_0 = self.lookback_window
-        w_prev = None
+
         for i in range(1, number_of_window + 1):
-            
-                
+
             consolidated_portfolio = PyFolioC(number_of_repetitions=self.number_of_repetitions, historical_data=self.historical_data, lookback_window=lookback_window_0, evaluation_window=self.evaluation_window, number_of_clusters=self.number_of_clusters, sigma=self.sigma, eta=self.eta, short_selling=self.short_selling, cov_method=self.cov_method)
-            if i == 1:
-                num_assets = 38
-                w_prev = np.ones(num_assets) / num_assets
-            else:
-                w_prev = consolidated_portfolio.final_weights.to_numpy()
-            consolidated_portfolio.markowitz_weights(w_prev=w_prev)
+
             overall_return = pd.concat([overall_return, consolidated_portfolio.portfolio_return])
 
             lookback_window_0 = [self.lookback_window[0] + self.evaluation_window*i, self.lookback_window[1] + self.evaluation_window*i]
