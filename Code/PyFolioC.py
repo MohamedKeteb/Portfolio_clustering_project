@@ -89,7 +89,7 @@ class PyFolio:
     =================================================================================================================================
     '''
 
-    def _init_(self, historical_data, lookback_window, evaluation_window, number_of_clusters, sigma, eta, short_selling=False, cov_method='SPONGE'):
+    def __init__(self, historical_data, lookback_window, evaluation_window, number_of_clusters, sigma, eta, short_selling=False, cov_method='SPONGE'):
         self.historical_data = historical_data
         self.lookback_window = lookback_window
         self.evaluation_window = evaluation_window
