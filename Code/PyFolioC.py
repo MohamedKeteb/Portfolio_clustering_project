@@ -663,7 +663,7 @@ class PyFolioC(PyFolio):
                          sigma, 
                          eta, 
                          beta, 
-                         EWA_cov
+                         EWA_cov,
                          short_selling, 
                          cov_method)
         
