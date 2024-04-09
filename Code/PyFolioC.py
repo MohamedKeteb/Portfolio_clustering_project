@@ -717,7 +717,7 @@ class PyFolioC(PyFolio):
         for _ in range(self.number_of_repetitions):
 
             # Assuming training() returns a DataFrame with 'weights' as the column name
-            portfolio = PyFolio(historical_data=self.historical_data, lookback_window=self.lookback_window, evaluation_window=self.evaluation_window, number_of_clusters=self.number_of_clusters, sigma=self.sigma, eta=self.eta, short_selling=self.short_selling, cov_method=self.cov_method)
+            portfolio = PyFolio(historical_data=self.historical_data, lookback_window=self.lookback_window, evaluation_window=self.evaluation_window, number_of_clusters=self.number_of_clusters, sigma=self.sigma, eta=self.eta, beta=self.beta, EWA_cov=self.EWA_cov, short_selling=self.short_selling, cov_method=self.cov_method)
 
             weights_df = portfolio.final_weights
 
