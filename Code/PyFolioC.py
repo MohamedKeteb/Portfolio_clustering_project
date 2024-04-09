@@ -654,13 +654,16 @@ class PyFolio:
  
 class PyFolioC(PyFolio):
 
-    def __init__(self, number_of_repetitions, historical_data, lookback_window, evaluation_window, number_of_clusters, sigma, eta, short_selling=False, cov_method='SPONGE'):
+    def __init__(self, number_of_repetitions, historical_data, lookback_window, evaluation_window, number_of_clusters, sigma, eta, beta, EWA_cov = False, short_selling=False, cov_method='SPONGE'):
         
         super().__init__(historical_data, 
                          lookback_window, 
                          evaluation_window, 
                          number_of_clusters, 
-                         sigma, eta, 
+                         sigma, 
+                         eta, 
+                         beta, 
+                         EWA_cov
                          short_selling, 
                          cov_method)
         
