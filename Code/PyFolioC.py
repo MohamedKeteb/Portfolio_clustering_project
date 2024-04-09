@@ -580,10 +580,11 @@ class PyFolio:
         '''
 
         if self.EWA_cov:
+
             X = self.cluster_returns.transpose()
             _, n_days = X.shape
             cov = ((1 - self.beta)/(1 - self.beta ** n_days)) * sum((self.beta**(n_days - 1 - t)*np.outer(X.iloc[:, t].values, X.iloc[:, t].values)) for t in range(n_days)).transpose()
-            cov = pd.DataFrame(index=self.cluster_returns.columns, columns=self.cluster_returns.columns, data=E)
+            cov = pd.DataFrame(index=self.cluster_returns.columns, columns=self.cluster_returns.columns, data=cov)
 
         else:  
             cov = self.cluster_returns.cov()
