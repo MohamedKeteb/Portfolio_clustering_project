@@ -89,7 +89,7 @@ class PyFolio:
     =================================================================================================================================
     '''
 
-    def __init__(self, historical_data, lookback_window, evaluation_window, number_of_clusters, sigma, eta, short_selling=False, cov_method='SPONGE'):
+    def __init__(self, historical_data, lookback_window, evaluation_window, number_of_clusters, sigma, eta, EWA_cov = False, beta, short_selling=False, cov_method='SPONGE'):
         self.historical_data = historical_data
         self.lookback_window = lookback_window
         self.evaluation_window = evaluation_window
@@ -97,6 +97,8 @@ class PyFolio:
         self.cov_method = cov_method
         self.sigma = sigma
         self.eta = eta
+        self.beta = beta
+        self.EWA_cov = EWA_cov
 
         self.short_selling = short_selling
         self.correlation_matrix = self.corr_matrix()
@@ -577,7 +579,14 @@ class PyFolio:
         ----------------------------------------------------------------
         '''
 
-        cov = self.cluster_returns.cov()
+        if self.EWA_cov:
+            X = self.cluster_returns.transpose()
+            _, n_days = X.shape
+            cov = ((1 - self.beta)/(1 - self.beta ** n_days)) * sum((self.beta**(n_days - 1 - t)*np.outer(X.iloc[:, t].values, X.iloc[:, t].values)) for t in range(n_days)).transpose()
+            cov = pd.DataFrame(index=self.cluster_returns.columns, columns=self.cluster_returns.columns, data=E)
+
+        else:  
+            cov = self.cluster_returns.cov()
 
         cov = cov.fillna(0.)
 
@@ -591,6 +600,7 @@ class PyFolio:
             ef = EfficientFrontier(expected_returns=expected_returns, cov_matrix=cov, weight_bounds=(-1, 1)) 
         
         else: 
+            
             ef = EfficientFrontier(expected_returns=expected_returns, cov_matrix=cov, weight_bounds=(0, 1))
 
         ef.min_volatility()
