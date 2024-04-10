@@ -507,9 +507,10 @@ class PyFolio:
 
     def noised_array(self):
 
-        if self.eta==0: ## si eta = 0, expected_return = moyenne des returns sur la période d'évaluation
+        if self.eta==0: ## si eta = 0, expected_return = moyenne des returns sur la période d'entrainement
 
-                return(self.cluster_return(self.lookback_window).mean())
+                return(self.cluster_return(self.lookback_window).mean()) ## si eta = 0, on choisit l'approche naïve qui consiste à ne pas 
+                                                                         ## introduire du tout d'alpha et de prédiction
             
         else:
             # Extraction des rendements des actifs sur la période d'évaluation
