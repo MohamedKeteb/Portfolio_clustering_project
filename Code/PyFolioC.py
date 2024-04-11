@@ -843,10 +843,10 @@ class PyFolioC(PyFolio):
             else:
                 Turnover = np.sum(np.abs(current_weights - self.previous_weights))
             transaction_costs = Turnover*self.transaction_cost_rate if include_transaction_costs else 0
-            overall_return = pd.concat([overall_return, consolidated_portfolio.portfolio_return-transaction_costs / self.evaluation_window])
+            overall_return = pd.concat([overall_return, consolidated_portfolio.portfolio_return -transaction_costs / self.evaluation_window])
 
-            PnL = np.concatenate((PnL, np.reshape(np.cumprod(1 + consolidated_portfolio.portfolio_return-transaction_costs / self.evaluation_window)*portfolio_value[-1] - portfolio_value[-1], (self.evaluation_window,))))## car on réinvestit immédiatement après
-            daily_PnL = np.concatenate((daily_PnL, np.reshape(np.cumprod(1 + consolidated_portfolio.portfolio_return-transaction_costs / self.evaluation_window)*portfolio_value[-1] - portfolio_value[-1], (self.evaluation_window,))))## car on réinvestit immédiatement après
+            PnL = np.concatenate((PnL, np.reshape(np.cumprod(1 + consolidated_portfolio.portfolio_return['return'] -transaction_costs / self.evaluation_window)*portfolio_value[-1] - portfolio_value[-1], (self.evaluation_window,))))## car on réinvestit immédiatement après
+            daily_PnL = np.concatenate((daily_PnL, np.reshape(np.cumprod(1 + consolidated_portfolio.portfolio_return['return'] -transaction_costs / self.evaluation_window)*portfolio_value[-1] - portfolio_value[-1], (self.evaluation_window,))))## car on réinvestit immédiatement après
             portfolio_value.append(portfolio_value[-1]+PnL[-1])
 
             print(f'step {i}/{number_of_window}, portfolio value: {portfolio_value[-1]:.4f}')
