@@ -845,7 +845,13 @@ class PyFolioC(PyFolio):
             transaction_costs = Turnover*self.transaction_cost_rate if include_transaction_costs else 0
             overall_return = pd.concat([overall_return, consolidated_portfolio.portfolio_return -transaction_costs / self.evaluation_window])
 
-            PnL = np.concatenate((PnL, np.reshape(np.cumprod(1 + consolidated_portfolio.portfolio_return)*portfolio_value[-1] - portfolio_value[-1], (self.evaluation_window,))))## car on réinvestit immédiatement après
+            adjusted_returns = consolidated_portfolio.portfolio_return['return'] - (transaction_costs / self.evaluation_window)
+
+            # Now calculate the cumulative product of the adjusted returns
+            cumulative_returns = np.cumprod(1 + adjusted_returns) * portfolio_value[-1] - portfolio_value[-1]
+
+            # Reshape the cumulative returns to match the expected evaluation window size and concatenate to the PnL array
+            PnL = np.concatenate((PnL, np.reshape(cumulative_returns, (self.evaluation_window,))))
             daily_PnL = np.concatenate((daily_PnL, np.reshape(np.cumprod(1 + consolidated_portfolio.portfolio_return)*portfolio_value[-1] - portfolio_value[-1], (self.evaluation_window,))))
             portfolio_value.append(portfolio_value[-1]+PnL[-1])
 
