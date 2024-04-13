@@ -31,11 +31,11 @@ except ImportError:
 
 
 ######################### 1. We start by randomizing the auxiliary observation matrix  ̃X from Equation (5) along the time axis #########################
-def auxilary_matrix(lookback_window, beta, df_cleaned):
+def auxilary_matrix(beta, X, lookback_window):
 
     ## 1. We extract the data corresponding to the returns of our assets (columns) during these d days (lines)
-    X = df_cleaned.iloc[lookback_window[0]:lookback_window[1],:] ## shape days * number of stocks
-    days = len(lookback_window)
+    days = X.shape[0] ## shape days * number of stocks
+
     ## 2. We slightly adjust the matrix of observations to get the auxiliary matrix that puts more weight on recent dates
 
     # Compute the weight matrix : shape (days, days) (if days = 250, shape (250, 250))
@@ -134,11 +134,10 @@ def eigenvalue_estimator(data, splits, beta):
                        
     return xi
 
-def EMA_CV(data, beta, lookback_window, number_of_folds):
+def EMA_CV(data, beta, X, lookback_window, number_of_folds):
 
     days = len(lookback_window)
     ## compute the sample exponential moving average correlation matrix
-    X = data.iloc[lookback_window[0]:lookback_window[1],:]
     W = np.sqrt(np.diag(days * (1 - beta) * beta**(np.arange(lookback_window[0], lookback_window[1])[::-1]) / (1 - beta**days)))  
     X_tilde = np.dot(W, X)  # Produit matriciel de X' et W
     S = np.dot(X_tilde.T, X_tilde)
