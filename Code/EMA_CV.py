@@ -31,16 +31,16 @@ except ImportError:
 
 
 ######################### 1. We start by randomizing the auxiliary observation matrix  ̃X from Equation (5) along the time axis #########################
-def auxilary_matrix(beta, X, lookback_window):
+def auxilary_matrix(beta, data, lookback_window):
 
     ## 1. We extract the data corresponding to the returns of our assets (columns) during these d days (lines)
-    days = X.shape[0] ## shape days * number of stocks
+    days = data.shape[0] ## shape days * number of stocks
 
     ## 2. We slightly adjust the matrix of observations to get the auxiliary matrix that puts more weight on recent dates
 
     # Compute the weight matrix : shape (days, days) (if days = 250, shape (250, 250))
     W = np.sqrt(np.diag(days * (1 - beta) * beta**(np.arange(lookback_window[0], lookback_window[1])[::-1]) / (1 - beta**days)))  
-    X_tilde = pd.DataFrame(index=X.index, columns=X.columns, data=np.dot(W, X))
+    X_tilde = pd.DataFrame(index=data.index, columns=data.columns, data=np.dot(W, data))
 
     ## 3. We randomize the auxiliary matrix of observations according to the time axis
     # Randomized_X = X_tilde.transpose().sample(frac=1, axis=1, random_state=42) ## we transpose X as we want to have daily observations of the whole dataset !
