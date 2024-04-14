@@ -134,12 +134,12 @@ def eigenvalue_estimator(data, splits, beta):
                        
     return xi
 
-def EMA_CV(data, beta, X, lookback_window, number_of_folds):
+def EMA_CV(data, beta, lookback_window, number_of_folds):
 
     days = len(lookback_window)
     ## compute the sample exponential moving average correlation matrix
     W = np.sqrt(np.diag(days * (1 - beta) * beta**(np.arange(lookback_window[0], lookback_window[1])[::-1]) / (1 - beta**days)))  
-    X_tilde = np.dot(W, X)  # Produit matriciel de X' et W
+    X_tilde = np.dot(W, data)  # Produit matriciel de X' et W
     S = np.dot(X_tilde.T, X_tilde)
 
     ## compute the eigenvectors of S
