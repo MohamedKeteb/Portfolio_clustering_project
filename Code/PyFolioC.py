@@ -710,7 +710,7 @@ class PyFolio:
  
 class PyFolioC(PyFolio):
 
-    def __init__(self, number_of_repetitions, historical_data, lookback_window, evaluation_window, number_of_clusters, sigma, eta, beta, EWA_cov = False, short_selling=False, cov_method='SPONGE', transaction_cost_rate=0.0001):
+    def __init__(self, number_of_repetitions, historical_data, lookback_window, evaluation_window, number_of_clusters, sigma, eta, beta, EWA_cov = False, short_selling=False, cov_method='SPONGE', markowitz_type='min_variance', transaction_cost_rate=0.0001):
         
         super().__init__(historical_data, 
                          lookback_window, 
@@ -721,7 +721,8 @@ class PyFolioC(PyFolio):
                          beta, 
                          EWA_cov,
                          short_selling, 
-                         cov_method)
+                         cov_method,
+                         markowitz_type)
         
         self.number_of_repetitions = number_of_repetitions
         self.transaction_cost_rate = transaction_cost_rate
@@ -774,7 +775,7 @@ class PyFolioC(PyFolio):
         for _ in range(self.number_of_repetitions):
 
             # Assuming training() returns a DataFrame with 'weights' as the column name
-            portfolio = PyFolio(historical_data=self.historical_data, lookback_window=self.lookback_window, evaluation_window=self.evaluation_window, number_of_clusters=self.number_of_clusters, sigma=self.sigma, eta=self.eta, beta=self.beta, EWA_cov=self.EWA_cov, short_selling=self.short_selling, cov_method=self.cov_method)
+            portfolio = PyFolio(historical_data=self.historical_data, lookback_window=self.lookback_window, evaluation_window=self.evaluation_window, number_of_clusters=self.number_of_clusters, sigma=self.sigma, eta=self.eta, beta=self.beta, EWA_cov=self.EWA_cov, short_selling=self.short_selling, cov_method=self.cov_method, markowitz_type=self.markowitz_type)
 
             weights_df = portfolio.final_weights
 
@@ -847,12 +848,17 @@ class PyFolioC(PyFolio):
         lookback_window_0 = self.lookback_window
         for i in range(1, number_of_window + 1):
 
-            consolidated_portfolio = PyFolioC(number_of_repetitions=self.number_of_repetitions, historical_data=self.historical_data, lookback_window=lookback_window_0, evaluation_window=self.evaluation_window, number_of_clusters=self.number_of_clusters, sigma=self.sigma, eta=self.eta, beta=self.beta, EWA_cov=self.EWA_cov, short_selling=self.short_selling, cov_method=self.cov_method)
+            consolidated_portfolio = PyFolioC(number_of_repetitions=self.number_of_repetitions, historical_data=self.historical_data, lookback_window=lookback_window_0, evaluation_window=self.evaluation_window, number_of_clusters=self.number_of_clusters, sigma=self.sigma, eta=self.eta, beta=self.beta, EWA_cov=self.EWA_cov, short_selling=self.short_selling, cov_method=self.cov_method, markowitz_type=self.markowitz_type)
             current_weights= self.consolidated_weight
+
             if self.previous_weights is None:
+
                 Turnover = 1.0
+
             else:
+
                 Turnover = np.sum(np.abs(current_weights.squeeze() - self.previous_weights.squeeze()))
+
             transaction_costs = Turnover*self.transaction_cost_rate if include_transaction_costs else 0
             overall_return = pd.concat([overall_return, consolidated_portfolio.portfolio_return -transaction_costs / self.evaluation_window])
 
@@ -863,12 +869,17 @@ class PyFolioC(PyFolio):
 
             # Reshape the cumulative returns to match the expected evaluation window size and concatenate to the PnL array
             PnL = np.concatenate((PnL, np.reshape(cumulative_returns, (self.evaluation_window,))))
+
             daily_PnL = np.concatenate((daily_PnL, np.reshape(np.cumprod(1 + consolidated_portfolio.portfolio_return)*portfolio_value[-1] - portfolio_value[-1], (self.evaluation_window,))))
+
             portfolio_value.append(portfolio_value[-1]+PnL[-1])
 
             print(f'step {i}/{number_of_window}, portfolio value: {portfolio_value[-1]:.4f}')
+
             self.previous_weights = current_weights
+
             lookback_window_0 = [self.lookback_window[0] + self.evaluation_window*i, self.lookback_window[1] + self.evaluation_window*i]
+            
         n = len(PnL)//self.evaluation_window
 
         for j in range(1, n):
