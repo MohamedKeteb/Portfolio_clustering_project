@@ -840,52 +840,52 @@ class PyFolioC(PyFolio):
     
 
     def sliding_window(self, number_of_window, include_transaction_costs=True):
-    
+
         PnL = []
         daily_PnL = []
         overall_return = pd.DataFrame()
-        portfolio_value=[1] #we start with a value of 1, the list contain : the porfolio value at the start of each evaluation period
+        portfolio_value = [1]  # we start with a value of 1, the list contain : the porfolio value at the start of each evaluation period
         lookback_window_0 = self.lookback_window
+
         for i in range(1, number_of_window + 1):
+            try:
+                consolidated_portfolio = PyFolioC(number_of_repetitions=self.number_of_repetitions, historical_data=self.historical_data, lookback_window=lookback_window_0, evaluation_window=self.evaluation_window, number_of_clusters=self.number_of_clusters, sigma=self.sigma, eta=self.eta, beta=self.beta, EWA_cov=self.EWA_cov, short_selling=self.short_selling, cov_method=self.cov_method, markowitz_type=self.markowitz_type)
+                current_weights = self.consolidated_weight
 
-            consolidated_portfolio = PyFolioC(number_of_repetitions=self.number_of_repetitions, historical_data=self.historical_data, lookback_window=lookback_window_0, evaluation_window=self.evaluation_window, number_of_clusters=self.number_of_clusters, sigma=self.sigma, eta=self.eta, beta=self.beta, EWA_cov=self.EWA_cov, short_selling=self.short_selling, cov_method=self.cov_method, markowitz_type=self.markowitz_type)
-            current_weights= self.consolidated_weight
+                if self.previous_weights is None:
+                    Turnover = 1.0
+                else:
+                    Turnover = np.sum(np.abs(current_weights.squeeze() - self.previous_weights.squeeze()))
 
-            if self.previous_weights is None:
+                transaction_costs = Turnover * self.transaction_cost_rate if include_transaction_costs else 0
+                overall_return = pd.concat([overall_return, consolidated_portfolio.portfolio_return - transaction_costs / self.evaluation_window])
 
-                Turnover = 1.0
+                adjusted_returns = consolidated_portfolio.portfolio_return['return'] - (transaction_costs / self.evaluation_window)
 
-            else:
+                # Now calculate the cumulative product of the adjusted returns
+                cumulative_returns = np.cumprod(1 + adjusted_returns) * portfolio_value[-1] - portfolio_value[-1]
 
-                Turnover = np.sum(np.abs(current_weights.squeeze() - self.previous_weights.squeeze()))
+                # Reshape the cumulative returns to match the expected evaluation window size and concatenate to the PnL array
+                PnL = np.concatenate((PnL, np.reshape(cumulative_returns, (self.evaluation_window,))))
 
-            transaction_costs = Turnover*self.transaction_cost_rate if include_transaction_costs else 0
-            overall_return = pd.concat([overall_return, consolidated_portfolio.portfolio_return -transaction_costs / self.evaluation_window])
+                daily_PnL = np.concatenate((daily_PnL, np.reshape(np.cumprod(1 + consolidated_portfolio.portfolio_return) * portfolio_value[-1] - portfolio_value[-1], (self.evaluation_window,))))
 
-            adjusted_returns = consolidated_portfolio.portfolio_return['return'] - (transaction_costs / self.evaluation_window)
+                portfolio_value.append(portfolio_value[-1] + PnL[-1])
 
-            # Now calculate the cumulative product of the adjusted returns
-            cumulative_returns = np.cumprod(1 + adjusted_returns) * portfolio_value[-1] - portfolio_value[-1]
+                print(f'step {i}/{number_of_window}, portfolio value: {portfolio_value[-1]:.4f}')
 
-            # Reshape the cumulative returns to match the expected evaluation window size and concatenate to the PnL array
-            PnL = np.concatenate((PnL, np.reshape(cumulative_returns, (self.evaluation_window,))))
+                self.previous_weights = current_weights
 
-            daily_PnL = np.concatenate((daily_PnL, np.reshape(np.cumprod(1 + consolidated_portfolio.portfolio_return)*portfolio_value[-1] - portfolio_value[-1], (self.evaluation_window,))))
+                lookback_window_0 = [self.lookback_window[0] + self.evaluation_window * i, self.lookback_window[1] + self.evaluation_window * i]
 
-            portfolio_value.append(portfolio_value[-1]+PnL[-1])
+            except Exception as e:
+                print(f"Error occurred at step {i}: {e}")
+                return overall_return, PnL, portfolio_value, daily_PnL
 
-            print(f'step {i}/{number_of_window}, portfolio value: {portfolio_value[-1]:.4f}')
-
-            self.previous_weights = current_weights
-
-            lookback_window_0 = [self.lookback_window[0] + self.evaluation_window*i, self.lookback_window[1] + self.evaluation_window*i]
-            
-        n = len(PnL)//self.evaluation_window
+        n = len(PnL) // self.evaluation_window
 
         for j in range(1, n):
+            for i in range(1, self.evaluation_window + 1):
+                PnL[j * self.evaluation_window + i - 1] = PnL[j * self.evaluation_window + i - 1] + PnL[j * self.evaluation_window - 1]
 
-            for i in range(1, self.evaluation_window+1):
-                
-                PnL[j*self.evaluation_window + i - 1] = PnL[j*self.evaluation_window + i - 1] + PnL[j*self.evaluation_window - 1]
-        
         return overall_return, PnL, portfolio_value, daily_PnL
