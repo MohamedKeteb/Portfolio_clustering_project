@@ -90,7 +90,7 @@ class PyFolio:
     =================================================================================================================================
     '''
 
-    def __init__(self, historical_data, lookback_window, evaluation_window, number_of_clusters, sigma, eta, beta, EWA_cov = False, short_selling=False, cov_method='SPONGE'):
+    def __init__(self, historical_data, lookback_window, evaluation_window, number_of_clusters, sigma, eta, beta, EWA_cov = False, short_selling=False, cov_method='SPONGE', markowitz_type='min_variance'):
         self.historical_data = historical_data
         self.lookback_window = lookback_window
         self.evaluation_window = evaluation_window
@@ -99,6 +99,7 @@ class PyFolio:
         self.sigma = sigma
         self.eta = eta
         self.beta = beta
+        self.markowitz_type = markowitz_type
         self.EWA_cov = EWA_cov
 
         self.short_selling = short_selling
@@ -648,7 +649,15 @@ class PyFolio:
 
             ef = EfficientFrontier(expected_returns=expected_returns, cov_matrix=cov, weight_bounds=(0, 1))
 
-        ef.min_volatility()
+        if self.markowitz_type == 'min_variance':
+
+            ef.min_volatility()
+
+        elif self.markowitz_type == 'max_sharpe':
+            ef.max_sharpe(risk_free_rate=0)
+        
+        elif self.markowitz_type == 'expected_returns':
+            ef.efficient_return(target_return=expected_returns)
 
         markowitz_weights = ef.clean_weights()
 
