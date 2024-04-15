@@ -654,9 +654,11 @@ class PyFolio:
             ef.min_volatility()
 
         elif self.markowitz_type == 'max_sharpe':
+
             ef.max_sharpe(risk_free_rate=0)
         
         elif self.markowitz_type == 'expected_returns':
+            
             ef.efficient_return(target_return=expected_returns)
 
         markowitz_weights = ef.clean_weights()
