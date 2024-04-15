@@ -31,7 +31,32 @@ except ImportError:
 
 
 ######################### 1. We start by randomizing the auxiliary observation matrix  ̃X from Equation (5) along the time axis #########################
-def auxilary_matrix(beta, data, lookback_window):
+def EWA(beta, data, lookback_window):
+
+    '''
+    ----------------------------------------------------------------
+    GENERAL IDEA : compute the auxiliary matrix associated with a
+                    matrix of observations in order to later 
+                    compute the EMA-SC.
+    ----------------------------------------------------------------
+
+    ----------------------------------------------------------------
+    PARAMS : 
+
+    - beta : float in (0, 1) called the exponential decay rate
+
+    - lookback_window : list of length 2, [start, end] corresponding 
+                        to the range of the lookback_window
+    
+    - data : matrix of observations of shape (d, n) where d is the 
+                number of days observed and n is the number of assets
+                that compose our portfolio
+    ----------------------------------------------------------------
+
+    ----------------------------------------------------------------
+    OUTPUT : output the auxiliary matrix as defined in the paper
+    ----------------------------------------------------------------
+    '''
 
     ## 1. We extract the data corresponding to the returns of our assets (columns) during these d days (lines)
     days = data.shape[0] ## shape days * number of stocks
@@ -39,13 +64,13 @@ def auxilary_matrix(beta, data, lookback_window):
     ## 2. We slightly adjust the matrix of observations to get the auxiliary matrix that puts more weight on recent dates
 
     # Compute the weight matrix : shape (days, days) (if days = 250, shape (250, 250))
-    W = np.sqrt(np.diag(days * (1 - beta) * beta**(np.arange(lookback_window[0], lookback_window[1])[::-1]) / (1 - beta**days)))  
+    W = np.sqrt(days * ((1 - beta)/(1 - beta**days)) * np.diag( * beta**(np.arange(lookback_window[0], lookback_window[1])[::-1]) / (1 - beta**days)))
     X_tilde = pd.DataFrame(index=data.index, columns=data.columns, data=np.dot(W, data))
 
     ## 3. We randomize the auxiliary matrix of observations according to the time axis
     # Randomized_X = X_tilde.transpose().sample(frac=1, axis=1, random_state=42) ## we transpose X as we want to have daily observations of the whole dataset !
 
-    return X_tilde ## shape (days, 695)
+    return (1/days)*np.dot(X_tilde.T, X_tilde) ## shape (695, 695)
 
 ######################### 2. We then split the (randomized) auxiliary observations into K non-overlapping folds of equal size #########################
 def shuffle_split(data, K):
