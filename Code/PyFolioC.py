@@ -659,7 +659,7 @@ class PyFolio:
         
         elif self.markowitz_type == 'expected_returns':
             
-            ef.efficient_return(target_return=expected_returns)
+            ef.efficient_return(target_return=max(0, expected_returns.mean())
 
         markowitz_weights = ef.clean_weights()
 
