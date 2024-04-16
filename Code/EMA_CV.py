@@ -83,7 +83,7 @@ def EWA(beta, data, lookback_window):
     ----------------------------------------------------------------
     '''
 
-    data = data.iloc[lookback_window[0]:lookback_window[1], :]
+    X = data.iloc[lookback_window[0]:lookback_window[1], :]
 
     ## 1. We extract the data corresponding to the returns of our assets (columns) during these d days (lines)
     days = lookback_window[1]-lookback_window[0] ## shape days * number of stocks
@@ -92,7 +92,7 @@ def EWA(beta, data, lookback_window):
 
     # Compute the weight matrix : shape (days, days) (if days = 250, shape (250, 250))
     W = np.sqrt(days * ((1 - beta)/(1 - beta**days)) * np.diag(beta**(np.arange(lookback_window[0], lookback_window[1])[::-1]) / (1 - beta**days)))
-    X_tilde = pd.DataFrame(index=data.index, columns=data.columns, data=np.dot(W, data))
+    X_tilde = pd.DataFrame(index=X.index, columns=X.columns, data=np.dot(W, X))
 
     ## 3. We randomize the auxiliary matrix of observations according to the time axis
     # Randomized_X = X_tilde.transpose().sample(frac=1, axis=1, random_state=42) ## we transpose X as we want to have daily observations of the whole dataset !
