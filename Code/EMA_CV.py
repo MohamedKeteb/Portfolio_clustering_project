@@ -83,8 +83,10 @@ def EWA(beta, data, lookback_window):
     ----------------------------------------------------------------
     '''
 
+    data = data.iloc[lookback_window[0]:lookback_window[1], :]
+
     ## 1. We extract the data corresponding to the returns of our assets (columns) during these d days (lines)
-    days = data.shape[0] ## shape days * number of stocks
+    days = lookback_window[1]-lookback_window[0] ## shape days * number of stocks
 
     ## 2. We slightly adjust the matrix of observations to get the auxiliary matrix that puts more weight on recent dates
 
