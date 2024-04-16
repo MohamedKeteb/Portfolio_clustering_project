@@ -72,6 +72,7 @@ def EWA(beta, data, lookback_window):
 
     return (1/days)*np.dot(X_tilde.T, X_tilde) ## shape (695, 695)
 
+
 ######################### 2. We then split the (randomized) auxiliary observations into K non-overlapping folds of equal size #########################
 def shuffle_split(data, K):
     # Initialize ShuffleSplit
