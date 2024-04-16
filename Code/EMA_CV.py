@@ -27,9 +27,34 @@ except ImportError:
 
 # ----------------------------------------------------------------
 
-################################################################ EMA_CV #################################################################
+# ----------------------------------------------------------------
 
+try:
 
+    from pypfopt.efficient_frontier import EfficientFrontier
+
+except ImportError:
+
+    print("PyPortfolioOpt package not found. Installing...")
+
+    try:
+
+        import subprocess
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "PyPortfolioOpt"])
+        from pypfopt.efficient_frontier import EfficientFrontier
+        
+    except Exception as e:
+        print(f"Error installing PyPortfolioOpt package: {e}")
+        sys.exit(1)
+
+# ----------------------------------------------------------------
+
+###########################################################################################################################
+###########################################################################################################################
+#################################################### EWA STRAT ############################################################
+###########################################################################################################################
+###########################################################################################################################
+        
 ######################### 1. We start by randomizing the auxiliary observation matrix  ̃X from Equation (5) along the time axis #########################
 def EWA(beta, data, lookback_window):
 
@@ -73,6 +98,216 @@ def EWA(beta, data, lookback_window):
     return (1/days)*np.dot(X_tilde.T, X_tilde) ## shape (695, 695)
 
 
+def noised_array(eta, beta, data, lookback_window, evaluation_window):
+
+    # Extraction des rendements des actifs sur la période d'évaluation
+
+    asset_returns = EWA(beta= beta, data=data, lookback_window=[lookback_window[1], lookback_window[1]+evaluation_window])
+
+    if eta==1:
+
+        return(EWA(beta= beta, data=data, lookback_window=[lookback_window[1], lookback_window[1]+evaluation_window]).mean())
+    
+    else:
+        # Calcul des moyennes et des écarts-types des rendements pour chaque actif
+        asset_means = asset_returns.mean()
+        asset_std_devs = asset_returns.std()
+
+        # Initialisation du DataFrame pour stocker les rendements bruités
+        noised_returns = asset_means.copy()
+
+        # Itération sur chaque colonne (actif) pour ajouter du bruit
+        for asset in asset_means.index:
+            # Calcul de l'écart-type du bruit pour cet actif
+            noise_std_dev = np.sqrt(asset_std_devs[asset]*2 / eta - asset_std_devs[asset]*2)
+
+            # Génération du bruit
+            noise = np.random.normal(0, noise_std_dev)
+
+            # Ajout du bruit aux rendements de l'actif
+            noised_returns[asset] = asset_means[asset] + noise
+
+        return noised_returns
+    
+
+def EWA_strat_returns(eta, beta, data, lookback_window, evaluation_window, short_selling=False, markowitz_type='min_volatility'):
+
+    cov_matrix = EWA(beta, data, lookback_window)
+
+    expected_returns = noised_array(eta, beta, data, lookback_window, evaluation_window)
+
+    if short_selling: ## if we allow short-selling, then weights are not constrained to take nonnegative values, 
+                      ## hence the (-1, 1) bounds
+    
+        ef = EfficientFrontier(expected_returns=expected_returns, cov_matrix=cov_matrix, weight_bounds=(-1, 1)) 
+    
+    else: 
+
+        ef = EfficientFrontier(expected_returns=expected_returns, cov_matrix=cov_matrix, weight_bounds=(0, 1))
+
+    if markowitz_type == 'min_variance':
+
+        ef.min_volatility()
+
+    elif markowitz_type == 'max_sharpe':
+
+        ef.max_sharpe(risk_free_rate=0)
+    
+    elif markowitz_type == 'expected_returns':
+        
+        ef.efficient_return(target_return=max(0, expected_returns.mean()))
+
+    ## we get Markowitz weights 
+    markowitz_weights = ef.clean_weights()
+
+    ## we now compute the returns of the strategy
+    EWA_portfolio_returns = pd.DataFrame(index=data.iloc[lookback_window[1]:lookback_window[1]+evaluation_window, :].index, columns=['return'], data=np.zeros(len(data.iloc[lookback_window[1]:lookback_window[1]+evaluation_window, :].index)))
+
+    for ticker in data.columns: 
+
+    ##  each time we add : the current value of the return + the weighted "contribution" of the stock 'ticker' times is weight in the portfolio
+        EWA_portfolio_returns['return'] = EWA_portfolio_returns['return'] + data[ticker][lookback_window[1]:lookback_window[1]+evaluation_window]*markowitz_weights[ticker]
+
+    return EWA_portfolio_returns
+
+
+def EWA_sliding_window(number_of_window, eta, beta, data, lookback_window, evaluation_window, short_selling=False, markowitz_type='min_volatility'):
+
+    PnL = []
+    daily_PnL = []
+    overall_return = pd.DataFrame()
+    portfolio_value=[1] #we start with a value of 1, the list contain : the porfolio value at the start of each evaluation period
+    lookback_window_0 = lookback_window
+
+    for i in range(1, number_of_window + 1):
+
+        try:
+
+            EWA_returns_res = EWA_strat_returns(eta, beta, data, lookback_window_0, evaluation_window, short_selling=False, markowitz_type='min_volatility')
+
+            overall_return = pd.concat([overall_return, EWA_returns_res])
+
+            lookback_window_0 = [lookback_window[0] + evaluation_window*i, lookback_window[1] + evaluation_window*i]
+
+            PnL = np.concatenate((PnL, np.reshape(np.cumprod(1 + EWA_returns_res)*portfolio_value[-1] - portfolio_value[-1], (evaluation_window,))))## car on réinvestit immédiatement après
+
+            daily_PnL = np.concatenate((daily_PnL, np.reshape(np.cumprod(1 + EWA_returns_res)*portfolio_value[-1] - portfolio_value[-1], (evaluation_window,))))## car on réinvestit immédiatement après
+
+            portfolio_value.append(portfolio_value[-1]+PnL[-1])
+
+            print(f'step {i}/{number_of_window}, portfolio value: {portfolio_value[-1]:.4f}')
+
+        except Exception as e:
+
+            print(f"Error occurred at step {i}: {e}")
+
+            return overall_return, PnL, portfolio_value, daily_PnL
+
+    n = len(PnL)//evaluation_window
+
+    for j in range(1, n):
+
+        for i in range(1, evaluation_window+1):
+            
+            PnL[j*evaluation_window + i - 1] = PnL[j*evaluation_window + i - 1] + PnL[j*evaluation_window - 1]
+    
+    return overall_return, PnL, portfolio_value, daily_PnL
+
+
+
+
+
+###########################################################################################################################
+###########################################################################################################################
+################################################# NAIVE PORTFOLIO #########################################################
+###########################################################################################################################
+###########################################################################################################################
+
+def naive_returns(historical_data, lookback_window, evaluation_window):
+
+    '''
+    ----------------------------------------------------------------
+    GENERAL IDEA : given the overall weights of each asset in the 
+                portfolio, compute the portfolio return over an 
+                evaluation window that does not overlap with the 
+                lookback_window. 
+    ----------------------------------------------------------------
+
+    ----------------------------------------------------------------
+    PARAMS : 
+
+    - evaluation_window : integer, corresponding to the number of 
+                        future days (in terms of historcal returns) 
+                        on which we evaluate the portfolio
+
+    - lookback_window : list of length 2, [start, end] corresponding 
+                        to the range of the lookback_window
+
+    - historical_data : cleaned pandas dataframe containing the returns 
+                        of the stocks (!!! THE SHAPE OF THE DATA HAS TO BE
+                        THE FOLLOWING: TICKERS NAME IN COLUMNS)
+
+    - consolidated_W : numpy ndarray, containing the final weights 
+                    of each asset, i.e. the overall portfolio 
+                    weights
+
+    - df : pandas dataframe containing the raw data
+    ----------------------------------------------------------------
+
+    ----------------------------------------------------------------
+    OUTPUT : returns the portfolio return of each cluster in a 
+            pandas dataframe
+    ----------------------------------------------------------------
+    '''
+
+    portfolio_returns = pd.DataFrame(index=historical_data.iloc[lookback_window[1]:lookback_window[1]+evaluation_window, :].index, columns=['return'], data=np.zeros(len(historical_data.iloc[lookback_window[1]:lookback_window[1]+evaluation_window, :].index)))
+
+    for ticker in historical_data.columns: 
+
+    ##  each time we add :            the present value of the return + the weighted "contribution" of the stock 'ticker' times is weight in the portfolio
+        portfolio_returns['return'] = portfolio_returns['return'] + historical_data[ticker][lookback_window[1]:lookback_window[1]+evaluation_window]*(1/len(historical_data.columns))
+
+    return portfolio_returns
+
+
+def naive_sliding_window(historical_data, lookback_window, evaluation_window, number_of_window):
+
+    PnL = []
+    daily_PnL = []
+    overall_return = pd.DataFrame()
+    portfolio_value=[1] #we start with a value of 1, the list contain : the porfolio value at the start of each evaluation period
+    lookback_window_0 = lookback_window
+
+    for i in range(1, number_of_window + 1):
+
+        naive_returns_res = naive_returns(historical_data, lookback_window_0, evaluation_window)
+        overall_return = pd.concat([overall_return, naive_returns_res])
+
+        lookback_window_0 = [lookback_window[0] + evaluation_window*i, lookback_window[1] + evaluation_window*i]
+
+        PnL = np.concatenate((PnL, np.reshape(np.cumprod(1 + naive_returns_res)*portfolio_value[-1] - portfolio_value[-1], (evaluation_window,))))## car on réinvestit immédiatement après
+        daily_PnL = np.concatenate((daily_PnL, np.reshape(np.cumprod(1 + naive_returns_res)*portfolio_value[-1] - portfolio_value[-1], (evaluation_window,))))## car on réinvestit immédiatement après
+
+        portfolio_value.append(portfolio_value[-1]+PnL[-1])
+
+        print(f'step {i}/{number_of_window}, portfolio value: {portfolio_value[-1]:.4f}')
+
+    n = len(PnL)//evaluation_window
+
+    for j in range(1, n):
+
+        for i in range(1, evaluation_window+1):
+            
+            PnL[j*evaluation_window + i - 1] = PnL[j*evaluation_window + i - 1] + PnL[j*evaluation_window - 1]
+    
+    return overall_return, PnL, portfolio_value, daily_PnL
+
+
+
+
+
+
+
 ######################### 2. We then split the (randomized) auxiliary observations into K non-overlapping folds of equal size #########################
 def shuffle_split(data, K):
     # Initialize ShuffleSplit
@@ -89,6 +324,8 @@ def shuffle_split(data, K):
         splits.append((train_fold, test_fold)) ## attention à cette structure
 
     return splits
+
+
 
 ######################### 3. For each K fold configuration, we estimate the sample eigenvectors from the training set #########################
 
@@ -191,84 +428,3 @@ def EMA_CV(data, beta, lookback_window, number_of_folds):
     Sigma = pd.DataFrame(index=data.columns, columns=data.columns, data=np.real(Sigma))
 
     return Sigma
-
-################################################# NAIVE PORTFOLIO #########################################################
-
-def naive_returns(historical_data, lookback_window, evaluation_window):
-
-    '''
-    ----------------------------------------------------------------
-    GENERAL IDEA : given the overall weights of each asset in the 
-                portfolio, compute the portfolio return over an 
-                evaluation window that does not overlap with the 
-                lookback_window. 
-    ----------------------------------------------------------------
-
-    ----------------------------------------------------------------
-    PARAMS : 
-
-    - evaluation_window : integer, corresponding to the number of 
-                        future days (in terms of historcal returns) 
-                        on which we evaluate the portfolio
-
-    - lookback_window : list of length 2, [start, end] corresponding 
-                        to the range of the lookback_window
-
-    - historical_data : cleaned pandas dataframe containing the returns 
-                        of the stocks (!!! THE SHAPE OF THE DATA HAS TO BE
-                        THE FOLLOWING: TICKERS NAME IN COLUMNS)
-
-    - consolidated_W : numpy ndarray, containing the final weights 
-                    of each asset, i.e. the overall portfolio 
-                    weights
-
-    - df : pandas dataframe containing the raw data
-    ----------------------------------------------------------------
-
-    ----------------------------------------------------------------
-    OUTPUT : returns the portfolio return of each cluster in a 
-            pandas dataframe
-    ----------------------------------------------------------------
-    '''
-
-    portfolio_returns = pd.DataFrame(index=historical_data.iloc[lookback_window[1]:lookback_window[1]+evaluation_window, :].index, columns=['return'], data=np.zeros(len(historical_data.iloc[lookback_window[1]:lookback_window[1]+evaluation_window, :].index)))
-
-    for ticker in historical_data.columns: 
-
-    ##  each time we add :            the present value of the return + the weighted "contribution" of the stock 'ticker' times is weight in the portfolio
-        portfolio_returns['return'] = portfolio_returns['return'] + historical_data[ticker][lookback_window[1]:lookback_window[1]+evaluation_window]*(1/len(historical_data.columns))
-
-    return portfolio_returns
-
-
-def naive_sliding_window(historical_data, lookback_window, evaluation_window, number_of_window):
-
-    PnL = []
-    daily_PnL = []
-    overall_return = pd.DataFrame()
-    portfolio_value=[1] #we start with a value of 1, the list contain : the porfolio value at the start of each evaluation period
-    lookback_window_0 = lookback_window
-
-    for i in range(1, number_of_window + 1):
-
-        naive_returns_res = naive_returns(historical_data, lookback_window_0, evaluation_window)
-        overall_return = pd.concat([overall_return, naive_returns_res])
-
-        lookback_window_0 = [lookback_window[0] + evaluation_window*i, lookback_window[1] + evaluation_window*i]
-
-        PnL = np.concatenate((PnL, np.reshape(np.cumprod(1 + naive_returns_res)*portfolio_value[-1] - portfolio_value[-1], (evaluation_window,))))## car on réinvestit immédiatement après
-        daily_PnL = np.concatenate((daily_PnL, np.reshape(np.cumprod(1 + naive_returns_res)*portfolio_value[-1] - portfolio_value[-1], (evaluation_window,))))## car on réinvestit immédiatement après
-
-        portfolio_value.append(portfolio_value[-1]+PnL[-1])
-
-        print(f'step {i}/{number_of_window}, portfolio value: {portfolio_value[-1]:.4f}')
-
-    n = len(PnL)//evaluation_window
-
-    for j in range(1, n):
-
-        for i in range(1, evaluation_window+1):
-            
-            PnL[j*evaluation_window + i - 1] = PnL[j*evaluation_window + i - 1] + PnL[j*evaluation_window - 1]
-    
-    return overall_return, PnL, portfolio_value, daily_PnL
