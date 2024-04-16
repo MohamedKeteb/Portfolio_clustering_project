@@ -103,12 +103,12 @@ def EWA(beta, data, lookback_window):
 def noised_array(eta, beta, data, lookback_window, evaluation_window):
 
     # Extraction des rendements des actifs sur la période d'évaluation
-
-    asset_returns = EWA(beta= beta, data=data, lookback_window=[lookback_window[1], lookback_window[1]+evaluation_window])
+    lookback_window_1 = [lookback_window[1], lookback_window[1]+evaluation_window]
+    asset_returns = EWA(beta=beta, data=data, lookback_window=lookback_window_1)
 
     if eta==1:
 
-        return(EWA(beta= beta, data=data, lookback_window=[lookback_window[1], lookback_window[1]+evaluation_window]).mean())
+        return(EWA(beta= beta, data=data, lookback_window=lookback_window_1).mean())
     
     else:
         # Calcul des moyennes et des écarts-types des rendements pour chaque actif
