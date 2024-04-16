@@ -89,7 +89,7 @@ def EWA(beta, data, lookback_window):
     ## 2. We slightly adjust the matrix of observations to get the auxiliary matrix that puts more weight on recent dates
 
     # Compute the weight matrix : shape (days, days) (if days = 250, shape (250, 250))
-    W = np.sqrt(days * ((1 - beta)/(1 - beta**days)) * np.diag( * beta**(np.arange(lookback_window[0], lookback_window[1])[::-1]) / (1 - beta**days)))
+    W = np.sqrt(days * ((1 - beta)/(1 - beta**days)) * np.diag(beta**(np.arange(lookback_window[0], lookback_window[1])[::-1]) / (1 - beta**days)))
     X_tilde = pd.DataFrame(index=data.index, columns=data.columns, data=np.dot(W, data))
 
     ## 3. We randomize the auxiliary matrix of observations according to the time axis
