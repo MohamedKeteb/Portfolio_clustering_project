@@ -307,7 +307,7 @@ def naive_sliding_window(historical_data, lookback_window, evaluation_window, nu
 
 
 
-
+'''
 
 
 ######################### 2. We then split the (randomized) auxiliary observations into K non-overlapping folds of equal size #########################
@@ -430,3 +430,5 @@ def EMA_CV(data, beta, lookback_window, number_of_folds):
     Sigma = pd.DataFrame(index=data.columns, columns=data.columns, data=np.real(Sigma))
 
     return Sigma
+
+'''
