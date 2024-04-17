@@ -100,15 +100,14 @@ def EWA(beta, data, lookback_window):
     return (1/days)*np.dot(X_tilde.T, X_tilde) ## shape (695, 695)
 
 
-def noised_array(eta, beta, data, lookback_window, evaluation_window):
+def noised_array(eta, data, lookback_window, evaluation_window):
 
     # Extraction des rendements des actifs sur la période d'évaluation
-    lookback_window_1 = [lookback_window[1], lookback_window[1]+evaluation_window]
-    asset_returns = EWA(beta, data, lookback_window_1)
+    asset_returns = data.iloc[lookback_window[1]:lookback_window[1] + evaluation_window, :]
 
     if eta==1:
 
-        return(EWA(beta= beta, data=data, lookback_window=lookback_window_1).mean())
+        return(asset_returns.mean())
     
     else:
         # Calcul des moyennes et des écarts-types des rendements pour chaque actif
@@ -136,7 +135,7 @@ def EWA_strat_returns(eta, beta, data, lookback_window, evaluation_window, short
 
     cov_matrix = EWA(beta, data, lookback_window)
 
-    expected_returns = noised_array(eta, beta, data, lookback_window, evaluation_window)
+    expected_returns = noised_array(eta, data, lookback_window, evaluation_window)
 
     if short_selling: ## if we allow short-selling, then weights are not constrained to take nonnegative values, 
                       ## hence the (-1, 1) bounds
