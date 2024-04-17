@@ -180,7 +180,7 @@ def EWA_sliding_window(number_of_window, eta, beta, data, lookback_window, evalu
 
         try:
 
-            EWA_returns_res = EWA_strat_returns(eta, beta, data, lookback_window_0, evaluation_window, short_selling=False, markowitz_type='min_volatility')
+            EWA_returns_res = EWA_strat_returns(eta, beta, data, lookback_window_0, evaluation_window, short_selling, markowitz_type)
 
             overall_return = pd.concat([overall_return, EWA_returns_res])
 
