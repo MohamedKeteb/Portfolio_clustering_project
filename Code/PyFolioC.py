@@ -6,6 +6,7 @@ import numpy as np
 from scipy import sparse
 import warnings
 from sklearn.cluster import KMeans
+from sklearn.cluster import SpectralClustering
 import EMA_CV
 
 warnings.filterwarnings('ignore')
@@ -95,7 +96,7 @@ class PyFolio:
         self.lookback_window = lookback_window
         self.evaluation_window = evaluation_window
         self.number_of_clusters = number_of_clusters
-        self.cov_method = cov_method ## 'SPONGE', 'signed_laplacian', 'SPONGE_sym', 'Kmeans'
+        self.cov_method = cov_method ## 'SPONGE', 'signed_laplacian', 'SPONGE_sym', 'Kmeans', 'spectral_clustering'
         self.sigma = sigma
         self.eta = eta
         self.beta = beta
@@ -286,6 +287,45 @@ class PyFolio:
 
         return labels
     
+    def apply_spectral_clustering(self): 
+
+        '''
+        ----------------------------------------------------------------
+        IDEA: Given a correlation matrix obtained from a database and 
+                Pearson similarity, return a vector associating each asset 
+                with the cluster number it belongs to after applying 
+                symmetric SPONGE (using the signet package).
+        ----------------------------------------------------------------
+
+        ----------------------------------------------------------------
+        PARAMS: 
+
+        - self.correlation_matrix: a square dataframe of size 
+                                    (number_of_stocks, number_of_stocks)
+
+        - self.number_of_clusters: the number of clusters to identify. 
+                                    If a list is given, the output is a 
+                                    corresponding list
+
+        ----------------------------------------------------------------
+
+        ----------------------------------------------------------------
+        OUTPUT: array of int, or list of array of int: Output assignment 
+                to clusters.
+        ----------------------------------------------------------------
+        '''
+        
+        data = self.correlation_matrix
+
+        model = SpectralClustering(n_clusters=self.number_of_clusters, affinity='precomputed', assign_labels='cluster_qr')
+        model.fit(data)
+        
+        labels = model.labels_
+
+        ## On applique la méthode spectral clustering.
+
+        return labels
+    
     '''
     ###################################################### ATTRIBUTES CONSTRUCTION ######################################################
 
@@ -376,6 +416,9 @@ class PyFolio:
 
         if self.cov_method == 'Kmeans':
             result = 1 + pd.DataFrame(index=list(self.correlation_matrix.columns), columns=['Cluster label'], data=self.apply_kmeans())
+
+        if self.cov_method == 'spectral_clustering':
+            result = 1 + pd.DataFrame(index=list(self.correlation_matrix.columns), columns=['Cluster label'], data=self.apply_spectral_clustering())
 
 
         ## STEP 2: compute the composition of each cluster (in terms of stocks)
