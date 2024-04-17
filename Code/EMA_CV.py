@@ -146,18 +146,19 @@ def EWA_strat_returns(eta, beta, data, lookback_window, evaluation_window, short
     if markowitz_type == 'min_variance':
         ef.min_volatility()
         ## we get Markowitz weights 
-        markowitz_weights = ef.clean_weights()
+        m_weights = ef.clean_weights()
 
     elif markowitz_type == 'max_sharpe':
         ef.max_sharpe(risk_free_rate=0)
         ## we get Markowitz weights 
-        markowitz_weights = ef.clean_weights()
+        m_weights = ef.clean_weights()
 
     elif markowitz_type == 'expected_returns':
         ef.efficient_return(target_return=max(0, expected_returns.mean()))
         ## we get Markowitz weights 
-        markowitz_weights = ef.clean_weights()
+        m_weights = ef.clean_weights()
 
+    markowitz_weights = m_weights
     ## we now compute the returns of the strategy
     EWA_portfolio_returns = pd.DataFrame(index=data.iloc[lookback_window[1]:lookback_window[1]+evaluation_window, :].index, columns=['return'], data=np.zeros(len(data.iloc[lookback_window[1]:lookback_window[1]+evaluation_window, :].index)))
 
