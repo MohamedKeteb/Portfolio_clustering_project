@@ -6,6 +6,7 @@ import numpy as np
 from scipy import sparse
 import warnings
 from sklearn.cluster import KMeans
+import EMA_CV
 
 warnings.filterwarnings('ignore')
 
@@ -314,8 +315,13 @@ class PyFolio:
         ----------------------------------------------------------------
         '''
     
+        if self.EWA_cov:
 
-        correlation_matrix = self.historical_data.iloc[self.lookback_window[0]:self.lookback_window[1], :].corr(method='pearson') ## MODIFIÉ
+            correlation_matrix = EMA_CV.EWA(self.beta, self.historical_data, self.lookback_window)
+
+        else: 
+            
+            correlation_matrix = self.historical_data.iloc[self.lookback_window[0]:self.lookback_window[1], :].corr(method='pearson') ## MODIFIÉ
 
         correlation_matrix = correlation_matrix.fillna(0) ## in case there are NaN values, we replace them with 0 
 
