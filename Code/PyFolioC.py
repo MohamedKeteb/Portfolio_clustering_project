@@ -317,7 +317,7 @@ class PyFolio:
     
         if self.EWA_cov:
 
-            correlation_matrix = EMA_CV.EWA(self.beta, self.historical_data, self.lookback_window)
+            correlation_matrix = pd.DataFrame(index=self.historical_data.columns, columns=self.historical_data.columns, data=EMA_CV.EWA(self.beta, self.historical_data, self.lookback_window))
 
         else: 
             
