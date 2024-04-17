@@ -130,32 +130,23 @@ def noised_array(eta, data, lookback_window, evaluation_window):
 
         return noised_returns
     
-
 def EWA_strat_returns(eta, beta, data, lookback_window, evaluation_window, short_selling=False, markowitz_type='min_volatility'):
 
     cov_matrix = EWA(beta, data, lookback_window)
 
     expected_returns = noised_array(eta, data, lookback_window, evaluation_window)
 
-    if short_selling: ## if we allow short-selling, then weights are not constrained to take nonnegative values, 
-                      ## hence the (-1, 1) bounds
-    
+    if short_selling: 
         ef = EfficientFrontier(expected_returns=expected_returns, cov_matrix=cov_matrix, weight_bounds=(-1, 1)) 
-    
+        ## if we allow short-selling, then weights are not constrained to take nonnegative values, hence the (-1, 1) bounds
     else: 
-
         ef = EfficientFrontier(expected_returns=expected_returns, cov_matrix=cov_matrix, weight_bounds=(0, 1))
 
     if markowitz_type == 'min_variance':
-
         ef.min_volatility()
-
     elif markowitz_type == 'max_sharpe':
-
         ef.max_sharpe(risk_free_rate=0)
-    
     elif markowitz_type == 'expected_returns':
-        
         ef.efficient_return(target_return=max(0, expected_returns.mean()))
 
     ## we get Markowitz weights 
@@ -164,12 +155,13 @@ def EWA_strat_returns(eta, beta, data, lookback_window, evaluation_window, short
     ## we now compute the returns of the strategy
     EWA_portfolio_returns = pd.DataFrame(index=data.iloc[lookback_window[1]:lookback_window[1]+evaluation_window, :].index, columns=['return'], data=np.zeros(len(data.iloc[lookback_window[1]:lookback_window[1]+evaluation_window, :].index)))
 
+    ##  each time we add : the current value of the return + the weighted "contribution" of the stock 'ticker' times 
+    ##  is weight in the portfolio
     for ticker in data.columns: 
-
-    ##  each time we add : the current value of the return + the weighted "contribution" of the stock 'ticker' times is weight in the portfolio
         EWA_portfolio_returns['return'] = EWA_portfolio_returns['return'] + data[ticker][lookback_window[1]:lookback_window[1]+evaluation_window]*markowitz_weights[ticker]
 
     return EWA_portfolio_returns
+
 
 
 def EWA_sliding_window(number_of_window, eta, beta, data, lookback_window, evaluation_window, short_selling=False, markowitz_type='min_volatility'):
@@ -177,7 +169,7 @@ def EWA_sliding_window(number_of_window, eta, beta, data, lookback_window, evalu
     PnL = []
     daily_PnL = []
     overall_return = pd.DataFrame()
-    portfolio_value=[1] #we start with a value of 1, the list contain : the porfolio value at the start of each evaluation period
+    portfolio_value=[1] # we start with a value of 1, the list contain : the porfolio value at the start of each evaluation period
     lookback_window_0 = lookback_window
 
     for i in range(1, number_of_window + 1):
