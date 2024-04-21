@@ -315,16 +315,17 @@ class PyFolio:
         ----------------------------------------------------------------
         '''
         
-        data = self.correlation_matrix
+        A_pos, A_neg = self.correlation_matrix.applymap(lambda x: x if x >= 0 else 0), self.correlation_matrix.applymap(lambda x: abs(x) if x < 0 else 0)
 
-        model = SpectralClustering(n_clusters=self.number_of_clusters, affinity='precomputed', assign_labels='cluster_qr')
-        model.fit(data)
-        
-        labels = model.labels_
+        A_pos_sparse = sparse.csc_matrix(A_pos.values)
+        A_neg_sparse = sparse.csc_matrix(A_neg.values)
 
-        ## On applique la méthode spectral clustering.
+        data = (A_pos_sparse, A_neg_sparse)
 
-        return labels
+        cluster = Cluster(data)
+
+        return cluster.spectral_cluster_adjacency(k=self.number_of_clusters)
+
     
     '''
     ###################################################### ATTRIBUTES CONSTRUCTION ######################################################
