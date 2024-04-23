@@ -317,8 +317,8 @@ class PyFolio:
         
         A_pos, A_neg = self.correlation_matrix.applymap(lambda x: x if x >= 0 else 0), self.correlation_matrix.applymap(lambda x: abs(x) if x < 0 else 0)
 
-        A_pos_sparse = sparse.csc_matrix(A_pos.values)
-        A_neg_sparse = sparse.csc_matrix(A_neg.values)
+        A_pos_sparse = np.abs(sparse.csc_matrix(A_pos.values))
+        A_neg_sparse = np.abs(sparse.csc_matrix(A_neg.values))
 
         data = (A_pos_sparse, A_neg_sparse)
 
