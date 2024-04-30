@@ -686,33 +686,37 @@ class PyFolio:
         cov = cov.fillna(0.)
 
         ## on construit le vecteur d'expected return du cluster (252 jours de trading par an, on passe de rendements journaliers à rendements annualisés)
-                
+          
         expected_returns = self.noised_array()
-
-        if self.short_selling: ## if we allow short-selling, then weights are not constrained to take nonnegative values, 
-                               ## hence the (-1, 1) bounds
-        
-            ef = EfficientFrontier(expected_returns=expected_returns, cov_matrix=cov, weight_bounds=(-1, 1)) 
-        
-        else: 
-
-            ef = EfficientFrontier(expected_returns=expected_returns, cov_matrix=cov, weight_bounds=(0, 1))
+        e=np.ones(len(expected_returns))
+        w_min_var=(np.linalg.inv(cov)@e)/(e.T@np.linalg.inv(cov)@e)
+        w_mk=(np.linalg.inv(cov)@expected_returns)/(e.T@np.linalg.inv(cov)@expected_returns)
+        target_return=0.0004 #approximatively daily return for 10% annual
+        alpha=(target_return-expected_returns@w_min_var)/(expected_returns@(w_mk-w_min_var))
 
         if self.markowitz_type == 'min_variance':
-
-            ef.min_volatility()
-
-        elif self.markowitz_type == 'max_sharpe':
-
-            ef.max_sharpe(risk_free_rate=0)
+            return(w_min_var)
         
         elif self.markowitz_type == 'expected_returns':
-            
+            if expected_returns@w_min_var>=target_return:
+                return(w_min_var)
+            else:
+                return(w_min_var+alpha*(w_mk-w_min_var))
+        
+        """
+        if self.short_selling: ## if we allow short-selling, then weights are not constrained to take nonnegative values, 
+                               ## hence the (-1, 1) bounds
+            ef = EfficientFrontier(expected_returns=expected_returns, cov_matrix=cov, weight_bounds=(-1, 1)) 
+        else: 
+            ef = EfficientFrontier(expected_returns=expected_returns, cov_matrix=cov, weight_bounds=(0, 1))
+        if self.markowitz_type == 'min_variance':
+            ef.min_volatility()
+        elif self.markowitz_type == 'max_sharpe':
+            ef.max_sharpe(risk_free_rate=0)   
+        elif self.markowitz_type == 'expected_returns':         
             ef.efficient_return(target_return=max(0, expected_returns.mean()))
-
         markowitz_weights = ef.clean_weights()
-
-        return markowitz_weights
+        return markowitz_weights"""
 
 
     def final_W(self):
