@@ -700,7 +700,7 @@ class PyFolio:
         
         elif self.markowitz_type == 'expected_returns':
             if expected_returns@w_min_var>=target_return:
-                return(w_min_var)
+                return(dict(zip(keys, w_min_var)))
             else:
                 return(dict(zip(keys, w_min_var+alpha*(w_mk-w_min_var))))
         
