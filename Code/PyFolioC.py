@@ -696,13 +696,13 @@ class PyFolio:
         keys = list(self.constituent_weights_res.keys())
 
         if self.markowitz_type == 'min_variance':
-            return(dict(zip(keys, w_min_var)))
+            return(w_min_var)
         
         elif self.markowitz_type == 'expected_returns':
             if expected_returns@w_min_var>=target_return:
-                return(dict(zip(keys, w_min_var)))
+                return(w_min_var)
             else:
-                return(dict(zip(keys, w_min_var+alpha*(w_mk-w_min_var))))
+                return(w_min_var+alpha*(w_mk-w_min_var))
         
         """
         if self.short_selling: ## if we allow short-selling, then weights are not constrained to take nonnegative values, 
@@ -748,13 +748,13 @@ class PyFolio:
         ### On cherche désormais à calculer le poids de chaque actif dans le portefeuille total
 
         W = {}
-
+        i=0
         for cluster in self.constituent_weights_res.keys(): ## we range across all clusters
 
             for tickers, weight in self.constituent_weights_res[cluster].items(): ## we range across all tickers in each cluster
 
-                W[tickers] = weight*self.markowitz_weights_res[cluster]
-
+                W[tickers] = weight*self.markowitz_weights_res[i]
+            i+=1
         W = pd.DataFrame(list(W.items()), columns=['ticker', 'weights'])
     
         W.set_index('ticker', inplace=True)
