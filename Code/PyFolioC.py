@@ -686,22 +686,23 @@ class PyFolio:
         cov = cov.fillna(0.)
 
         ## on construit le vecteur d'expected return du cluster (252 jours de trading par an, on passe de rendements journaliers à rendements annualisés)
-          
+        
         expected_returns = self.noised_array()
         e=np.ones(len(expected_returns))
         w_min_var=(np.linalg.inv(cov)@e)/(e.T@np.linalg.inv(cov)@e)
         w_mk=(np.linalg.inv(cov)@expected_returns)/(e.T@np.linalg.inv(cov)@expected_returns)
         target_return=0.0004 #approximatively daily return for 10% annual
         alpha=(target_return-expected_returns@w_min_var)/(expected_returns@(w_mk-w_min_var))
+        keys = list(self.constituent_weights_res.keys())
 
         if self.markowitz_type == 'min_variance':
-            return(w_min_var)
+            return(dict(zip(keys, w_min_var)))
         
         elif self.markowitz_type == 'expected_returns':
             if expected_returns@w_min_var>=target_return:
                 return(w_min_var)
             else:
-                return(w_min_var+alpha*(w_mk-w_min_var))
+                return(dict(zip(keys, w_min_var+alpha*(w_mk-w_min_var))))
         
         """
         if self.short_selling: ## if we allow short-selling, then weights are not constrained to take nonnegative values, 
