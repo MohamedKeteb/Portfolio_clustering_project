@@ -625,7 +625,7 @@ class PyFolio:
                 # Itération sur chaque colonne (actif) pour ajouter du bruit
                 for asset in asset_means.index:
                     # Calcul de l'écart-type du bruit pour cet actif
-                    noise_std_dev = np.sqrt(asset_std_devs[asset]*2 / self.eta - asset_std_devs[asset]*2)
+                    noise_std_dev = np.sqrt(asset_std_devs[asset]*2 / self.eta**2 - asset_std_devs[asset]*2)
 
                     # Génération du bruit
                     noise = np.random.normal(0, noise_std_dev)
