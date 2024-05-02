@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy import sparse
 import warnings
+from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
 from sklearn.cluster import SpectralClustering
 import EMA_CV
@@ -361,8 +362,8 @@ class PyFolio:
             correlation_matrix = pd.DataFrame(index=self.historical_data.columns, columns=self.historical_data.columns, data=EMA_CV.EWA(self.beta, self.historical_data, self.lookback_window))
 
         else: 
-            
-            correlation_matrix = self.historical_data.iloc[self.lookback_window[0]:self.lookback_window[1], :].corr(method='pearson') ## MODIFIÉ
+            normalized_data= StandardScaler().fit_transform(self.historical_data.iloc[self.lookback_window[0]:self.lookback_window[1], :])
+            correlation_matrix = normalized_data.corr(method='pearson') ## MODIFIÉ
 
         correlation_matrix = correlation_matrix.fillna(0) ## in case there are NaN values, we replace them with 0 
 
