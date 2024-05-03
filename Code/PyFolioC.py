@@ -901,8 +901,8 @@ class PyFolioC(PyFolio):
         overall_return = pd.DataFrame()
         portfolio_value = [1]  # we start with a value of 1, the list contain : the porfolio value at the start of each evaluation period
         lookback_window_0 = self.lookback_window
-
-        for i in range(1, number_of_window + 1):
+        Turnovers=[]
+        for i in range(number_of_window):
             try:
                 consolidated_portfolio = PyFolioC(number_of_repetitions=self.number_of_repetitions, historical_data=self.historical_data, lookback_window=lookback_window_0, evaluation_window=self.evaluation_window, number_of_clusters=self.number_of_clusters, sigma=self.sigma, eta=self.eta, beta=self.beta, EWA_cov=self.EWA_cov, short_selling=self.short_selling, cov_method=self.cov_method, markowitz_type=self.markowitz_type)
                 current_weights = self.consolidated_weight
@@ -911,7 +911,7 @@ class PyFolioC(PyFolio):
                     Turnover = 1.0
                 else:
                     Turnover = np.sum(np.abs(current_weights.squeeze() - self.previous_weights.squeeze()))
-
+                    Turnovers.append(Turnover)
                 transaction_costs = Turnover * self.transaction_cost_rate if include_transaction_costs else 0
                 overall_return = pd.concat([overall_return, consolidated_portfolio.portfolio_return - transaction_costs / self.evaluation_window])
 
@@ -943,7 +943,7 @@ class PyFolioC(PyFolio):
             for i in range(1, self.evaluation_window + 1):
                 PnL[j * self.evaluation_window + i - 1] = PnL[j * self.evaluation_window + i - 1] + PnL[j * self.evaluation_window - 1]
 
-        return overall_return, PnL, portfolio_value, daily_PnL
+        return overall_return, PnL, portfolio_value, daily_PnL, Turnovers
 
 
     def sliding_window_2(self, number_of_window, include_transaction_costs=True):
