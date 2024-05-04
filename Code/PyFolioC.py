@@ -930,7 +930,7 @@ class PyFolioC(PyFolio):
 
                 portfolio_value.append(portfolio_value[-1] + PnL[-1])
 
-                print(f'step {i}/{number_of_window}, portfolio value: {portfolio_value[-1]:.4f}')
+                print(f'step {i+1}/{number_of_window}, portfolio value: {portfolio_value[-1]:.4f}')
 
 
                 lookback_window_0 = [self.lookback_window[0] + self.evaluation_window * i, self.lookback_window[1] + self.evaluation_window * i]
