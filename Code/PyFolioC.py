@@ -913,7 +913,6 @@ class PyFolioC(PyFolio):
                     Turnover = np.sum(np.abs(current_weights.squeeze() - previous_weights[-1].squeeze()))
                 
                 Turnovers.append(Turnover)
-                previous_weights.append(current_weights)
                 transaction_costs = Turnover * self.transaction_cost_rate if include_transaction_costs else 0
                 overall_return = pd.concat([overall_return, consolidated_portfolio.portfolio_return - transaction_costs / self.evaluation_window])
                 
@@ -938,7 +937,7 @@ class PyFolioC(PyFolio):
             except Exception as e:
                 print(f"Error occurred at step {i}: {e}")
                 return overall_return, PnL, portfolio_value, daily_PnL
-
+            previous_weights.append(self.consolidated_weight)
         n = len(PnL) // self.evaluation_window
 
         for j in range(1, n):
