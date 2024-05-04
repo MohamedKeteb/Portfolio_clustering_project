@@ -911,8 +911,6 @@ class PyFolioC(PyFolio):
                     Turnover = 1.0
                 else:
                     d=np.abs(weights[-1].squeeze() - weights[-2].squeeze())
-                    print(weights[-1].squeeze())
-                    print(weights[-2].squeeze())
                     Turnover = np.sum(d)
                     print(Turnover)
                 
@@ -948,7 +946,7 @@ class PyFolioC(PyFolio):
             for i in range(1, self.evaluation_window + 1):
                 PnL[j * self.evaluation_window + i - 1] = PnL[j * self.evaluation_window + i - 1] + PnL[j * self.evaluation_window - 1]
 
-        return overall_return, PnL, portfolio_value, daily_PnL, Turnovers
+        return overall_return, PnL, portfolio_value, daily_PnL, weights
 
 
     def sliding_window_2(self, number_of_window, include_transaction_costs=True):
