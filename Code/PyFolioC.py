@@ -907,12 +907,12 @@ class PyFolioC(PyFolio):
                 consolidated_portfolio = PyFolioC(number_of_repetitions=self.number_of_repetitions, historical_data=self.historical_data, lookback_window=lookback_window_0, evaluation_window=self.evaluation_window, number_of_clusters=self.number_of_clusters, sigma=self.sigma, eta=self.eta, beta=self.beta, EWA_cov=self.EWA_cov, short_selling=self.short_selling, cov_method=self.cov_method, markowitz_type=self.markowitz_type)
                 current_weights = self.consolidated_weight
                 weights.append(current_weights)
+                print(current_weights.iloc[:,0])
                 if len(weights)==1:
                     Turnover = 1.0
                 else:
                     d=np.abs(weights[-1].squeeze() - weights[-2].squeeze())
                     Turnover = np.sum(d)
-                    print(Turnover)
                 
                 Turnovers.append(Turnover)
                 transaction_costs = Turnover * self.transaction_cost_rate if include_transaction_costs else 0
