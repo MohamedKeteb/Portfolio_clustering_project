@@ -694,7 +694,7 @@ class PyFolio:
         w_mk=(np.linalg.inv(cov)@expected_returns)/(e.T@np.linalg.inv(cov)@expected_returns)
         target_return=0.0004 #approximatively daily return for 10% annual
         alpha=(target_return-expected_returns@w_min_var)/(expected_returns@(w_mk-w_min_var))
-        keys = list(self.constituent_weights_res.keys())
+        
 
         if self.markowitz_type == 'min_variance':
             return(w_min_var)
@@ -781,7 +781,7 @@ class PyFolioC(PyFolio):
         
         self.number_of_repetitions = number_of_repetitions
         self.transaction_cost_rate = transaction_cost_rate
-        self.previous_weights = None 
+        self.previous_weights = []
         self.consolidated_weight = self.consolidated_W()
         self.portfolio_return = self.portfolio_returns()
 
@@ -907,13 +907,15 @@ class PyFolioC(PyFolio):
                 consolidated_portfolio = PyFolioC(number_of_repetitions=self.number_of_repetitions, historical_data=self.historical_data, lookback_window=lookback_window_0, evaluation_window=self.evaluation_window, number_of_clusters=self.number_of_clusters, sigma=self.sigma, eta=self.eta, beta=self.beta, EWA_cov=self.EWA_cov, short_selling=self.short_selling, cov_method=self.cov_method, markowitz_type=self.markowitz_type)
                 current_weights = self.consolidated_weight
 
-                if self.previous_weights is None:
+                if not self.previous_weights:
                     Turnover = 1.0
                 else:
-                    Turnover = np.sum(np.abs(current_weights.squeeze() - self.previous_weights.squeeze()))
+                    Turnover = np.sum(np.abs(current_weights.squeeze() - self.previous_weights[-1].squeeze()))
                     Turnovers.append(Turnover)
+                self.previous_weights.append(current_weights)
                 transaction_costs = Turnover * self.transaction_cost_rate if include_transaction_costs else 0
                 overall_return = pd.concat([overall_return, consolidated_portfolio.portfolio_return - transaction_costs / self.evaluation_window])
+                
 
                 adjusted_returns = consolidated_portfolio.portfolio_return['return'] - (transaction_costs / self.evaluation_window)
 
@@ -929,7 +931,6 @@ class PyFolioC(PyFolio):
 
                 print(f'step {i}/{number_of_window}, portfolio value: {portfolio_value[-1]:.4f}')
 
-                self.previous_weights = current_weights
 
                 lookback_window_0 = [self.lookback_window[0] + self.evaluation_window * i, self.lookback_window[1] + self.evaluation_window * i]
 
