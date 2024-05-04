@@ -911,7 +911,7 @@ class PyFolioC(PyFolio):
                     Turnover = 1.0
                 else:
                     d=np.abs(weights[-1].squeeze() - weights[-2].squeeze())
-                    print(d)
+                    print(weights[-1].squeeze())
                     Turnover = np.sum(d)
                     print(Turnover)
                 
