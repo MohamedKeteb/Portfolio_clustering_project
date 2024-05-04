@@ -910,7 +910,10 @@ class PyFolioC(PyFolio):
                 if len(weights)==1:
                     Turnover = 1.0
                 else:
-                    Turnover = np.sum(np.abs(weights[-1].squeeze() - weights[-2].squeeze()))
+                    d=np.abs(weights[-1].squeeze() - weights[-2].squeeze())
+                    print(d)
+                    Turnover = np.sum(d)
+                    print(Turnover)
                 
                 Turnovers.append(Turnover)
                 transaction_costs = Turnover * self.transaction_cost_rate if include_transaction_costs else 0
