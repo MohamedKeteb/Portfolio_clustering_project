@@ -905,7 +905,7 @@ class PyFolioC(PyFolio):
         for i in range(number_of_window):
             try:
                 consolidated_portfolio = PyFolioC(number_of_repetitions=self.number_of_repetitions, historical_data=self.historical_data, lookback_window=lookback_window_0, evaluation_window=self.evaluation_window, number_of_clusters=self.number_of_clusters, sigma=self.sigma, eta=self.eta, beta=self.beta, EWA_cov=self.EWA_cov, short_selling=self.short_selling, cov_method=self.cov_method, markowitz_type=self.markowitz_type)
-                current_weights = self.consolidated_weight
+                current_weights = consolidated_portfolio.consolidated_weight
                 weights.append(current_weights)
                 if len(weights)==1:
                     Turnover = 1.0
@@ -959,7 +959,7 @@ class PyFolioC(PyFolio):
         for i in range(1, number_of_window + 1):
             try:
                 consolidated_portfolio = PyFolioC(number_of_repetitions=self.number_of_repetitions, historical_data=self.historical_data, lookback_window=lookback_window_0, evaluation_window=self.evaluation_window, number_of_clusters=self.number_of_clusters, sigma=self.sigma, eta=self.eta, beta=self.beta, EWA_cov=self.EWA_cov, short_selling=self.short_selling, cov_method=self.cov_method, markowitz_type=self.markowitz_type)
-                current_weights = self.consolidated_weight
+                current_weights = consolidated_portfolio.consolidated_weight
 
                 if self.previous_weights is None:
                     Turnover = 1.0
@@ -971,13 +971,13 @@ class PyFolioC(PyFolio):
 
                 adjusted_returns = consolidated_portfolio.portfolio_return['return'] - (transaction_costs / self.evaluation_window)
 
-                # Now calculate the cumulative product of the adjusted returns
-                cumulative_returns = np.cumprod(1 + adjusted_returns) * portfolio_value[-1] - portfolio_value[-1]
+                # MODIFICATION ICI PAR RAPPORT A SLIDING_WINDOW_1 --> ON GARDE TOUJOURS UNE VALEUR INITIALE DE 1
+                cumulative_returns = np.cumprod(1 + adjusted_returns) * 1 - 1
 
                 # Reshape the cumulative returns to match the expected evaluation window size and concatenate to the PnL array
                 PnL = np.concatenate((PnL, np.reshape(cumulative_returns, (self.evaluation_window,))))
 
-                daily_PnL = np.concatenate((daily_PnL, np.reshape(np.cumprod(1 + consolidated_portfolio.portfolio_return) * portfolio_value[-1] - portfolio_value[-1], (self.evaluation_window,))))
+                daily_PnL = np.concatenate((daily_PnL, np.reshape(np.cumprod(1 + consolidated_portfolio.portfolio_return) - 1, (self.evaluation_window,))))
 
                 portfolio_value.append(portfolio_value[-1] + PnL[-1])
 
