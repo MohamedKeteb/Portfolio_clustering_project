@@ -893,7 +893,7 @@ class PyFolioC(PyFolio):
         return portfolio_returns
     
 
-    def sliding_window_1(self, number_of_window, include_transaction_costs=True):
+    def sliding_window_past_dep(self, number_of_window, include_transaction_costs=True):
 
         PnL = []
         daily_PnL = []
@@ -948,7 +948,7 @@ class PyFolioC(PyFolio):
         return overall_return, PnL, portfolio_value, daily_PnL
 
 
-    def sliding_window_2(self, number_of_window, include_transaction_costs=True):
+    def sliding_window_past_indep(self, number_of_window, include_transaction_costs=True):
 
         PnL = []
         daily_PnL = []
