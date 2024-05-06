@@ -623,9 +623,9 @@ class PyFolio:
                 # Initialisation du DataFrame pour stocker les rendements bruités
                 noised_returns = asset_means.copy()
                 if self.eta==0.01:
-                    noise_std_dev = 1.1
+                    noise_std_dev = 1.175
                 elif self.eta==0.02:
-                    noise_std_dev=0.55
+                    noise_std_dev=0.560
                 elif self.eta== 0.1:
                     noise_std_dev=0.11
                 elif self.eta==0.2:
@@ -642,7 +642,7 @@ class PyFolio:
 
                     # Ajout du bruit aux rendements de l'actif
                     noised_returns[asset] = asset_means[asset] + noise
-                    
+
                 x_min, x_max = asset_returns.min(), asset_returns.max()
                 y_min, y_max = noised_returns.min(), noised_returns.max()
                 # Mise à l'échelle de y pour qu'elle corresponde à l'échelle de x
@@ -705,7 +705,7 @@ class PyFolio:
         e=np.ones(len(expected_returns))
         w_min_var=(np.linalg.inv(cov)@e)/(e.T@np.linalg.inv(cov)@e)
         w_mk=(np.linalg.inv(cov)@expected_returns)/(e.T@np.linalg.inv(cov)@expected_returns)
-        target_return=0.0004 #approximatively daily return for 10% annual
+        target_return=0.0008 #approximatively daily return for 20% annual
         alpha=(target_return-expected_returns@w_min_var)/(expected_returns@(w_mk-w_min_var))
         
 
