@@ -618,23 +618,35 @@ class PyFolio:
             else:
                 # Calcul des moyennes et des écarts-types des rendements pour chaque actif
                 asset_means = asset_returns.mean()
-                asset_std_devs = asset_returns.std()
+          
 
                 # Initialisation du DataFrame pour stocker les rendements bruités
                 noised_returns = asset_means.copy()
-
+                if self.eta==0.01:
+                    noise_std_dev = 1.1
+                elif self.eta==0.02:
+                    noise_std_dev=0.55
+                elif self.eta== 0.1:
+                    noise_std_dev=0.11
+                elif self.eta==0.2:
+                    noise_std_dev=0.036
+                elif self.eta==0.5:
+                    noise_std_dev=0.018
+                elif self.eta==0.9:
+                    noise_std_dev=0.004
                 # Itération sur chaque colonne (actif) pour ajouter du bruit
                 for asset in asset_means.index:
-                    # Calcul de l'écart-type du bruit pour cet actif
-                    noise_std_dev = np.sqrt(asset_std_devs[asset]*2 / self.eta**2 - asset_std_devs[asset]*2)
-
+                    
                     # Génération du bruit
                     noise = np.random.normal(0, noise_std_dev)
 
                     # Ajout du bruit aux rendements de l'actif
                     noised_returns[asset] = asset_means[asset] + noise
-
-                return noised_returns
+                x_min, x_max = asset_returns.min(), asset_returns.max()
+                y_min, y_max = noised_returns.min(), noised_returns.max()
+                # Mise à l'échelle de y pour qu'elle corresponde à l'échelle de x
+                y_scaled = (noised_returns - y_min) / (y_max - y_min) * (x_max - x_min) + x_min
+                return y_scaled
     
 
 
