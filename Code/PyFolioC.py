@@ -642,10 +642,9 @@ class PyFolio:
 
                     # Ajout du bruit aux rendements de l'actif
                     noised_returns[asset] = asset_means[asset] + noise
-                x_min, x_max = asset_returns.min(), asset_returns.max()
-                y_min, y_max = noised_returns.min(), noised_returns.max()
+                y_max = noised_returns.max()
                 # Mise à l'échelle de y pour qu'elle corresponde à l'échelle de x
-                y_scaled = (noised_returns - y_min) / (y_max - y_min) * (x_max - x_min) + x_min
+                y_scaled = noised_returns /(50*y_max)
                 return y_scaled
     
 
