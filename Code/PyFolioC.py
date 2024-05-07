@@ -625,15 +625,17 @@ class PyFolio:
                 if self.eta==0.01:
                     noise_std_dev = 1.175
                 elif self.eta==0.02:
-                    noise_std_dev=0.560
+                    noise_std_dev=0.59
                 elif self.eta== 0.1:
-                    noise_std_dev=0.11
+                    noise_std_dev=0.12
                 elif self.eta==0.2:
-                    noise_std_dev=0.036
+                    noise_std_dev=0.059
                 elif self.eta==0.5:
-                    noise_std_dev=0.018
+                    noise_std_dev=0.019
                 elif self.eta==0.9:
                     noise_std_dev=0.004
+                else:
+                    print("eta must be in {0.01, 0.02, 0.1, 0.2, 0.5, 0.9}")
                 # Itération sur chaque colonne (actif) pour ajouter du bruit
                 for asset in asset_means.index:
                     
