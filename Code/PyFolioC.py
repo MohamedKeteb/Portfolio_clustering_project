@@ -630,6 +630,10 @@ class PyFolio:
                     noise_std_dev=0.12
                 elif self.eta==0.2:
                     noise_std_dev=0.059
+                elif self.eta==0.3:
+                    noise_std_dev=0.036
+                elif self.eta==0.4:
+                    noise_std_dev=0.025
                 elif self.eta==0.5:
                     noise_std_dev=0.019
                 elif self.eta==0.9:
