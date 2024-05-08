@@ -646,8 +646,7 @@ class PyFolio:
                     noised_returns[asset] = asset_means[asset] + noise
 
                 # Mise à l'échelle de noised pour qu'elle corresponde à l'échelle des returns
-                y_scaled = noised_returns / (noise_std_dev*1000)
-                return y_scaled
+                return noised_returns
     
 
 
