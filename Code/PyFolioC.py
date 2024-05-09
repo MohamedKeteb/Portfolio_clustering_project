@@ -636,6 +636,10 @@ class PyFolio:
                     noise_std_dev=0.025
                 elif self.eta==0.5:
                     noise_std_dev=0.019
+                elif self.eta==0.6:
+                    noise_std_dev=0.014
+                elif self.eta==0.7:
+                    noise_std_dev=0.007
                 elif self.eta==0.9:
                     noise_std_dev=0.004
                 else:
@@ -648,9 +652,14 @@ class PyFolio:
 
                     # Ajout du bruit aux rendements de l'actif
                     noised_returns[asset] = asset_means[asset] + noise
-
+                y_max = noised_returns.max()
+                y_min = noised_returns.min()
+                x_max= asset_returns.max()
+                x_min=asset_returns.min()
+                # Mise à l'échelle de y pour qu'elle corresponde à l'échelle de x
+                y_scaled = y_scaled = (noised_returns- y_min) * (x_max - x_min) / (y_max - y_min) + x_min
                 # Mise à l'échelle de noised pour qu'elle corresponde à l'échelle des returns
-                return noised_returns
+                return y_scaled
     
 
 
