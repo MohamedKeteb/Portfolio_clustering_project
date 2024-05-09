@@ -717,8 +717,15 @@ class PyFolio:
         
         expected_returns = self.noised_array()
         e=np.ones(len(expected_returns))
-        w_min_var=(np.linalg.inv(cov)@e)/(e.T@np.linalg.inv(cov)@e)
-        w_mk=(np.linalg.inv(cov)@expected_returns)/(e.T@np.linalg.inv(cov)@expected_returns)
+
+        if np.linalg.det(cov) == 0: ## si la matrice est singuliere
+            w_min_var=(np.linalg.pinv(cov)@e)/(e.T@np.linalg.pinv(cov)@e)
+            w_mk=(np.linalg.pinv(cov)@expected_returns)/(e.T@np.linalg.pinv(cov)@expected_returns)
+
+        else: 
+            w_min_var=(np.linalg.inv(cov)@e)/(e.T@np.linalg.inv(cov)@e)
+            w_mk=(np.linalg.inv(cov)@expected_returns)/(e.T@np.linalg.inv(cov)@expected_returns)
+            
         target_return=0.0008 #approximatively daily return for 20% annual
         alpha=(target_return-expected_returns@w_min_var)/(expected_returns@(w_mk-w_min_var))
         
