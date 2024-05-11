@@ -617,7 +617,9 @@ class PyFolio:
 
                 # Initialisation du DataFrame pour stocker les rendements bruités
                 noised_returns = asset_means.copy()
-                if self.eta==0.005:
+                if self.eta==0.001:
+                    noise_std_dev=12
+                elif self.eta==0.005:
                     noise_std_dev=2.2
                 elif self.eta==0.01:
                     noise_std_dev = 1.175
