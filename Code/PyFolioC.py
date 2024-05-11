@@ -357,13 +357,8 @@ class PyFolio:
         ----------------------------------------------------------------
         '''
     
-        if self.EWA_cov:
-
-            correlation_matrix = pd.DataFrame(index=self.historical_data.columns, columns=self.historical_data.columns, data=EMA_CV.EWA(self.beta, self.historical_data, self.lookback_window))
-
-        else: 
-            normalized_data= (self.historical_data.iloc[self.lookback_window[0]:self.lookback_window[1], :]-self.historical_data.iloc[self.lookback_window[0]:self.lookback_window[1], :].mean())/(self.historical_data.iloc[self.lookback_window[0]:self.lookback_window[1], :].std())
-            correlation_matrix = normalized_data.corr(method='pearson') ## MODIFIÉ
+        normalized_data= (self.historical_data.iloc[self.lookback_window[0]:self.lookback_window[1], :]-self.historical_data.iloc[self.lookback_window[0]:self.lookback_window[1], :].mean())/(self.historical_data.iloc[self.lookback_window[0]:self.lookback_window[1], :].std())
+        correlation_matrix = normalized_data.corr(method='pearson') ## MODIFIÉ
 
         correlation_matrix = correlation_matrix.fillna(0) ## in case there are NaN values, we replace them with 0 
 
