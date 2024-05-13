@@ -702,7 +702,10 @@ class PyFolio:
 
             X = self.cluster_returns.transpose()
             _, n_days = X.shape
-            cov = ((1 - self.beta)/(1 - self.beta ** n_days)) * sum((self.beta**(n_days - t)*np.outer(X.iloc[:, t - 1].values, X.iloc[:, t - 1].values)) for t in range(1, n_days + 1)).transpose()
+            means = X.mean(axis=1)
+            for i in range(len(means)):
+                X.iloc[i, :] -= means[i]
+            cov = ((1 - self.beta)/(1 - self.beta ** n_days)) * sum((self.beta**(n_days - t)*np.outer(X.iloc[:, t - 1].values, X.iloc[:, t - 1].values)) for t in range(1, n_days + 1))
             cov = pd.DataFrame(index=self.cluster_returns.columns, columns=self.cluster_returns.columns, data=cov)
 
         else:  
