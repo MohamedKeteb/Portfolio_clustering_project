@@ -8,7 +8,6 @@ import warnings
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
 from sklearn.cluster import SpectralClustering
-import EMA_CV
 
 warnings.filterwarnings('ignore')
 
@@ -248,7 +247,6 @@ class PyFolio:
 
         return cluster.SPONGE_sym(self.number_of_clusters)
 
-
     def apply_kmeans(self): 
 
         '''
@@ -437,8 +435,6 @@ class PyFolio:
 
         return cluster_composition
 
-
-
     def constituent_weights(self): ## sigma corresponds to some dispersion cofficient
         
         '''
@@ -492,8 +488,6 @@ class PyFolio:
 
         return constituent_weights
 
-
-
     def cluster_return(self, lookback_window):
 
         '''
@@ -536,8 +530,6 @@ class PyFolio:
                 cluster_returns[cluster] = cluster_returns[cluster] + self.historical_data[ticker][lookback_window[0]:lookback_window[1]]*weight
 
         return cluster_returns
-
-
 
     """def noised_array(self):
 
@@ -660,8 +652,6 @@ class PyFolio:
                 # Mise à l'échelle de noised pour qu'elle corresponde à l'échelle des returns
                 return y_scaled
     
-
-
     def markowitz_weights(self):
 
         '''
@@ -754,7 +744,6 @@ class PyFolio:
         markowitz_weights = ef.clean_weights()
         return markowitz_weights"""
 
-
     def final_W(self):
 
         '''
@@ -796,7 +785,6 @@ class PyFolio:
 
         return W
     
- 
 class PyFolioC(PyFolio):
 
     def __init__(self, number_of_repetitions, historical_data, lookback_window, evaluation_window, number_of_clusters, sigma, eta, beta, EWA_cov = False, short_selling=False, cov_method='SPONGE', markowitz_type='min_variance', transaction_cost_rate=0.0001):
@@ -880,7 +868,6 @@ class PyFolioC(PyFolio):
 
         return consolidated_W
 
-
     def portfolio_returns(self):
 
         '''
@@ -926,7 +913,6 @@ class PyFolioC(PyFolio):
 
         return portfolio_returns
     
-
     def sliding_window_past_dep(self, number_of_window, include_transaction_costs=True):
 
         PnL = []
@@ -980,7 +966,6 @@ class PyFolioC(PyFolio):
                 PnL[j * self.evaluation_window + i - 1] = PnL[j * self.evaluation_window + i - 1] + PnL[j * self.evaluation_window - 1]
 
         return overall_return, PnL, portfolio_value, daily_PnL, Turnovers
-
 
     def sliding_window_past_indep(self, number_of_window, include_transaction_costs=True):
 
