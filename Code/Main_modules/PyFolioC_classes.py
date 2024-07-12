@@ -53,6 +53,68 @@ except ImportError:
 # ----------------------------------------------------------------
 
 
+
+def most_corr_returns(portfolio, lookback_window, evaluation_window, df_cleaned):
+    
+    mean_corr_list = []
+
+    for name, cluster in portfolio.cluster_composition.items():
+        # on récupère les tickers des actifs au sein de chaque cluster
+        tickers = cluster['tickers']
+        tickers_df = df_cleaned[tickers].iloc[lookback_window[0]:lookback_window[1], :]
+        mean_corr = calculate_mean_correlation(tickers_df)
+        mean_corr_list.append((name, mean_corr, tickers))
+
+    sorted_cluster_corr_list = sorted(mean_corr_list, key=lambda x: x[1])
+
+    # on récupère le nom du cluster le plus corrélé 
+    most_corr_cluster = sorted_cluster_corr_list[-1]
+
+    # we compute the returns of the cluster on the evaluation period 
+    most_corr_cluster_returns = pd.DataFrame(index = df_cleaned.index[lookback_window[1]:lookback_window[1]+evaluation_window], columns=[most_corr_cluster[0]], data = np.zeros((evaluation_window, 1)))
+
+    for ticker, weight in portfolio.constituent_weights_res[most_corr_cluster[0]].items():
+
+        ## we transpose df_cleaned to have columns for each ticker
+        most_corr_cluster_returns[most_corr_cluster[0]] = most_corr_cluster_returns[most_corr_cluster[0]] + df_cleaned[ticker][lookback_window[1]:lookback_window[1]+evaluation_window]*weight
+
+    most_corr_cluster_returns
+
+    return most_corr_cluster_returns
+
+
+def most_corr_cluster(portfolio, lookback_window, df_cleaned, strat='correlation'):
+    mean_corr_list = []
+
+    for name, cluster in portfolio.cluster_composition.items():
+        # on récupère les tickers des actifs au sein de chaque cluster
+        tickers = cluster['tickers']
+        # we look at the most correlated cluster after the training (so on the lookback window)
+        tickers_df = df_cleaned[tickers].iloc[lookback_window[0]:lookback_window[1], :]
+        mean_corr = calculate_mean_correlation(tickers_df)
+        mean_corr_list.append((name, mean_corr, tickers))
+
+    sorted_cluster_corr_list = sorted(mean_corr_list, key=lambda x: x[1])
+
+    # on récupère le nom du cluster le plus corrélé 
+    most_corr_cluster = sorted_cluster_corr_list[-1]
+
+    return most_corr_cluster
+
+
+def most_corr_PnL(consolidated_portfolio, lookback_window, evaluation_window, df_cleaned, transaction_costs):
+
+    most_corr_returns = most_corr_returns(consolidated_portfolio, lookback_window, evaluation_window, df_cleaned)
+
+    overall_return = pd.concat([overall_return, consolidated_portfolio.portfolio_return - transaction_costs /evaluation_window])
+
+    adjusted_returns = consolidated_portfolio.portfolio_return['return'] - (transaction_costs / evaluation_window)
+
+    # MODIFICATION ICI PAR RAPPORT A SLIDING_WINDOW_1 --> ON GARDE TOUJOURS UNE VALEUR INITIALE DE 1
+    cumulative_returns = np.cumprod(1 + adjusted_returns) * 1 - 1
+    
+    return cumulative_returns
+
 class PyFolio:
 
 
@@ -976,6 +1038,8 @@ class PyFolioC(PyFolio):
         lookback_window_0 = self.lookback_window
         previous_weights = None
         Turnovers=[]
+        most_corr_contribution = []
+
         for i in range(1, number_of_window + 1):
             try:
                 consolidated_portfolio = PyFolioC(number_of_repetitions=self.number_of_repetitions, historical_data=self.historical_data, lookback_window=lookback_window_0, evaluation_window=self.evaluation_window, number_of_clusters=self.number_of_clusters, sigma=self.sigma, eta=self.eta, beta=self.beta, EWA_cov=self.EWA_cov, short_selling=self.short_selling, cov_method=self.cov_method, markowitz_type=self.markowitz_type)
@@ -994,6 +1058,9 @@ class PyFolioC(PyFolio):
                 # MODIFICATION ICI PAR RAPPORT A SLIDING_WINDOW_1 --> ON GARDE TOUJOURS UNE VALEUR INITIALE DE 1
                 cumulative_returns = np.cumprod(1 + adjusted_returns) * 1 - 1
 
+                most_corr_profit = most_corr_PnL(consolidated_portfolio=consolidated_portfolio, lookback_window=lookback_window_0, evaluation_window=self.evaluation_window, df_cleaned=self.historical_returns, transaction_costs=transaction_costs)
+                
+                most_corr_contribution.append(most_corr_profit/cumulative_returns)
                 # Reshape the cumulative returns to match the expected evaluation window size and concatenate to the PnL array
                 PnL = np.concatenate((PnL, np.reshape(cumulative_returns, (self.evaluation_window,))))
 
@@ -1002,7 +1069,7 @@ class PyFolioC(PyFolio):
                 portfolio_value.append(portfolio_value[-1] + PnL[-1])
 
                 print(f'step {i}/{number_of_window}, portfolio value: {portfolio_value[-1]:.4f}')
-
+                print(f'step {i}/{number_of_window}, contribution of the most correlated cluster: {most_corr_profit/cumulative_returns:.4f}')
                 previous_weights = current_weights
 
                 lookback_window_0 = [self.lookback_window[0] + self.evaluation_window * i, self.lookback_window[1] + self.evaluation_window * i]
@@ -1017,4 +1084,4 @@ class PyFolioC(PyFolio):
             for i in range(1, self.evaluation_window + 1):
                 PnL[j * self.evaluation_window + i - 1] = PnL[j * self.evaluation_window + i - 1] + PnL[j * self.evaluation_window - 1]
 
-        return overall_return, PnL, portfolio_value, daily_PnL, Turnovers
+        return overall_return, PnL, portfolio_value, daily_PnL, Turnovers, most_corr_contribution
