@@ -55,25 +55,18 @@ except ImportError:
 def calculate_mean_correlation(df):
     """
     Calculate the average correlation between columns of a DataFrame and optionally plot a heatmap.
-
     Args:
         df (pd.DataFrame): The DataFrame containing the data to analyze.
     Returns:
         float: The average correlation between columns of the DataFrame.
     """
-    # Check if the DataFrame is empty
     if df.empty:
         raise ValueError("The DataFrame is empty. Please provide a valid DataFrame.")
     
-    # Compute the Pearson correlation matrix
     correlation_matrix = df.corr()
-
-
-    # Extraire les valeurs de la matrice de corrélation, en excluant la diagonale
     correlation_values = correlation_matrix.values
-    n = correlation_values.shape[0]  # Nombre de colonnes
+    n = correlation_values.shape[0]
 
-    # Accumuler la somme des coefficients de corrélation (hors diagonale)
     total_correlation = 0
     count = 0
     
@@ -82,69 +75,49 @@ def calculate_mean_correlation(df):
             total_correlation += correlation_values[i, j]
             count += 1
 
-        # Calculer la corrélation moyenne
     mean_correlation = total_correlation / count if count != 0 else 0
-
     return mean_correlation
 
-def most_corr_returns(portfolio, lookback_window, evaluation_window, df_cleaned):
-    
+def get_most_corr_cluster(portfolio, lookback_window, df_cleaned, strat='correlation'):
     mean_corr_list = []
 
     for name, cluster in portfolio.cluster_composition.items():
-        # on récupère les tickers des actifs au sein de chaque cluster
         tickers = cluster['tickers']
         tickers_df = df_cleaned[tickers].iloc[lookback_window[0]:lookback_window[1], :]
         mean_corr = calculate_mean_correlation(tickers_df)
         mean_corr_list.append((name, mean_corr, tickers))
 
     sorted_cluster_corr_list = sorted(mean_corr_list, key=lambda x: x[1])
-
-    # on récupère le nom du cluster le plus corrélé 
-    most_corr_cluster = sorted_cluster_corr_list[-1]
-
-    # we compute the returns of the cluster on the evaluation period 
-    most_corr_cluster_returns = pd.DataFrame(index = df_cleaned.index[lookback_window[1]:lookback_window[1]+evaluation_window], columns=[most_corr_cluster[0]], data = np.zeros((evaluation_window, 1)))
-
-    for ticker, weight in portfolio.constituent_weights_res[most_corr_cluster[0]].items():
-
-        ## we transpose df_cleaned to have columns for each ticker
-        most_corr_cluster_returns[most_corr_cluster[0]] = most_corr_cluster_returns[most_corr_cluster[0]] + df_cleaned[ticker][lookback_window[1]:lookback_window[1]+evaluation_window]*weight
-
-    most_corr_cluster_returns
-
-    return most_corr_cluster_returns
-
-def most_corr_cluster(portfolio, lookback_window, df_cleaned, strat='correlation'):
-    mean_corr_list = []
-
-    for name, cluster in portfolio.cluster_composition.items():
-        # on récupère les tickers des actifs au sein de chaque cluster
-        tickers = cluster['tickers']
-        # we look at the most correlated cluster after the training (so on the lookback window)
-        tickers_df = df_cleaned[tickers].iloc[lookback_window[0]:lookback_window[1], :]
-        mean_corr = calculate_mean_correlation(tickers_df)
-        mean_corr_list.append((name, mean_corr, tickers))
-
-    sorted_cluster_corr_list = sorted(mean_corr_list, key=lambda x: x[1])
-
-    # on récupère le nom du cluster le plus corrélé 
     most_corr_cluster = sorted_cluster_corr_list[-1]
 
     return most_corr_cluster
 
-def most_corr_PnL(consolidated_portfolio, lookback_window, evaluation_window, df_cleaned, transaction_costs):
+def most_corr_returns(portfolio, lookback_window, evaluation_window, df_cleaned):
+    
+    # tuple of length 3: (cluster name, average correlation, cluster composition)
+    most_corr_cluster = get_most_corr_cluster(portfolio, lookback_window, df_cleaned, strat='correlation')
+    cluster_name = most_corr_cluster[0]
+    ticker_list = most_corr_cluster[2]
+
+    # we prepare an empty dataset
+    most_corr_cluster_returns = pd.DataFrame(
+        index=df_cleaned.index[lookback_window[1]:lookback_window[1]+evaluation_window], 
+        columns=[cluster_name], 
+        data=np.zeros((evaluation_window, 1))
+    )
+
+    for ticker in ticker_list:
+        most_corr_cluster_returns[cluster_name] += df_cleaned[ticker][lookback_window[1]:lookback_window[1]+evaluation_window] * portfolio.consolidated_weight[ticker].values[0]
+
+    return most_corr_cluster_returns
+
+def most_corr_PnL(consolidated_portfolio, lookback_window, evaluation_window, df_cleaned):
 
     most_corr_return = most_corr_returns(consolidated_portfolio, lookback_window, evaluation_window, df_cleaned)
 
-    overall_return = pd.concat([most_corr_return, consolidated_portfolio.portfolio_return - transaction_costs /evaluation_window])
+    cumulative_returns = np.cumprod(1 + most_corr_return) * 1 - 1
 
-    adjusted_returns = consolidated_portfolio.portfolio_return['return'] - (transaction_costs / evaluation_window)
-
-    # MODIFICATION ICI PAR RAPPORT A SLIDING_WINDOW_1 --> ON GARDE TOUJOURS UNE VALEUR INITIALE DE 1
-    cumulative_returns = np.cumprod(1 + adjusted_returns) * 1 - 1
-    
-    return cumulative_returns
+    return cumulative_returns.iloc[-1][0]
 
 class PyFolio:
 
@@ -1084,14 +1057,18 @@ class PyFolioC(PyFolio):
                 transaction_costs = Turnover * self.transaction_cost_rate if include_transaction_costs else 0
                 overall_return = pd.concat([overall_return, consolidated_portfolio.portfolio_return - transaction_costs / self.evaluation_window])
 
+                most_corr_profit = most_corr_PnL(consolidated_portfolio, lookback_window_0, self.evaluation_window, self.historical_data)
+
+                non_adjusted_returns = np.cumprod(consolidated_portfolio.portfolio_return['return'] + 1) - 1 
+
+                most_corr_contribution.append(most_corr_profit/non_adjusted_returns.iloc[-1][0])
+
                 adjusted_returns = consolidated_portfolio.portfolio_return['return'] - (transaction_costs / self.evaluation_window)
 
                 # MODIFICATION ICI PAR RAPPORT A SLIDING_WINDOW_1 --> ON GARDE TOUJOURS UNE VALEUR INITIALE DE 1
                 cumulative_returns = np.cumprod(1 + adjusted_returns) * 1 - 1
 
-                most_corr_profit = most_corr_PnL(consolidated_portfolio=consolidated_portfolio, lookback_window=lookback_window_0, evaluation_window=self.evaluation_window, df_cleaned=self.historical_data, transaction_costs=transaction_costs)
                 
-                most_corr_contribution.append(most_corr_profit/cumulative_returns)
                 # Reshape the cumulative returns to match the expected evaluation window size and concatenate to the PnL array
                 PnL = np.concatenate((PnL, np.reshape(cumulative_returns, (self.evaluation_window,))))
 
