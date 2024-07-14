@@ -122,7 +122,9 @@ def most_corr_PnL(consolidated_portfolio, lookback_window, evaluation_window, df
 
     cumulative_returns = np.cumprod(1 + most_corr_return) * 1 - 1
 
-    return cumulative_returns.iloc[-1][0]
+    most_corr_cluster = get_most_corr_cluster(consolidated_portfolio, lookback_window, df_cleaned, number)
+
+    return cumulative_returns.iloc[-1][0], most_corr_cluster
 
 class PyFolio:
 
@@ -1068,7 +1070,7 @@ class PyFolioC(PyFolio):
                 for k in range(self.number_of_clusters):
                     most_corr_profit_k = most_corr_PnL(consolidated_portfolio, lookback_window_0, self.evaluation_window, self.historical_data, k)
                     
-                    contribution = most_corr_profit_k/last_non_adjusted_return
+                    contribution = most_corr_profit_k[0]/last_non_adjusted_return - (len(most_corr_profit_k[1][2])/self.historical_data.shape[1])
 
                     most_corr_contribution[k].append(contribution)
 
